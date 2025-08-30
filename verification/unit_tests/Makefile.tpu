@@ -1,0 +1,107 @@
+# Makefile for TPU (Tensor Processing Unit) Tests
+# Tests the MAC array, systolic array, and compute array functionality
+
+# Simulation tool
+SIM = verilator
+WAVES = --trace --trace-depth 3
+
+# Directories
+RTL_DIR = ../../rtl
+ACCEL_DIR = $(RTL_DIR)/accelerators
+TEST_DIR = .
+
+# Source files
+TPU_SOURCES = \
+	$(ACCEL_DIR)/tpu_mac_unit.sv \
+	$(ACCEL_DIR)/tpu_systolic_array.sv \
+	$(ACCEL_DIR)/tpu_compute_array.sv \
+	$(ACCEL_DIR)/tpu_controller.sv \
+	$(ACCEL_DIR)/tpu_cache.sv \
+	$(ACCEL_DIR)/tpu_dma.sv \
+	$(ACCEL_DIR)/tpu.sv
+
+# Test files
+TPU_TESTS = \
+	test_tpu_mac_array.sv \
+	test_tpu_compute_array_enhanced.sv \
+	test_tpu_controller_cache.sv \
+	test_tpu_mac_simple.sv
+
+# Compiler flags
+VFLAGS = --cc --exe --build -Wall -Wno-UNUSED -Wno-UNOPTFLAT
+VFLAGS += --top-module
+VFLAGS += -I$(RTL_DIR) -I$(ACCEL_DIR)
+VFLAGS += $(WAVES)
+
+# Default target
+all: test_mac_simple test_controller_cache
+
+# Individual test targets
+test_mac_array: $(TPU_SOURCES) test_tpu_mac_array.sv
+	@echo "Building TPU MAC Array test..."
+	$(SIM) $(VFLAGS) test_tpu_mac_array $(TPU_SOURCES) test_tpu_mac_array.sv
+	@echo "Running TPU MAC Array test..."
+	./obj_dir/Vtest_tpu_mac_array
+
+test_compute_array: $(TPU_SOURCES) test_tpu_compute_array_enhanced.sv
+	@echo "Building TPU Compute Array test..."
+	$(SIM) $(VFLAGS) test_tpu_compute_array_enhanced $(TPU_SOURCES) test_tpu_compute_array_enhanced.sv
+	@echo "Running TPU Compute Array test..."
+	./obj_dir/Vtest_tpu_compute_array_enhanced
+
+test_controller_cache: $(TPU_SOURCES) test_tpu_controller_cache.sv
+	@echo "Building TPU Controller and Cache test..."
+	$(SIM) $(VFLAGS) test_tpu_controller_cache $(TPU_SOURCES) test_tpu_controller_cache.sv
+	@echo "Running TPU Controller and Cache test..."
+	./obj_dir/Vtest_tpu_controller_cache
+
+test_mac_simple: $(TPU_SOURCES) test_tpu_mac_simple.sv
+	@echo "Building Simple TPU MAC test..."
+	$(SIM) --cc --exe --build -Wall -Wno-UNUSED -Wno-UNOPTFLAT --timing --top-module test_tpu_mac_simple -I$(RTL_DIR) -I$(ACCEL_DIR) $(WAVES) $(ACCEL_DIR)/tpu_mac_unit.sv test_tpu_mac_simple.sv
+	@echo "Running Simple TPU MAC test..."
+	./obj_dir/Vtest_tpu_mac_simple
+
+# Comprehensive TPU test suite
+test_tpu_suite: test_mac_simple test_controller_cache test_compute_array
+	@echo "=== TPU Test Suite Complete ==="
+
+# Performance benchmarking
+benchmark_tpu: $(TPU_SOURCES) test_tpu_compute_array_enhanced.sv
+	@echo "Running TPU performance benchmark..."
+	$(SIM) $(VFLAGS) test_tpu_compute_array_enhanced $(TPU_SOURCES) test_tpu_compute_array_enhanced.sv -DBENCHMARK_MODE
+	./obj_dir/Vtest_tpu_compute_array_enhanced
+
+# Synthesis check
+synth_check: $(TPU_SOURCES)
+	@echo "Checking TPU synthesis..."
+	$(SIM) --lint-only $(TPU_SOURCES)
+
+# Coverage analysis
+coverage: $(TPU_SOURCES) $(TPU_TESTS)
+	@echo "Running coverage analysis..."
+	$(SIM) $(VFLAGS) --coverage test_tpu_compute_array_enhanced $(TPU_SOURCES) test_tpu_compute_array_enhanced.sv
+	./obj_dir/Vtest_tpu_compute_array_enhanced
+	@echo "Coverage report generated in coverage.dat"
+
+# Clean build artifacts
+clean:
+	rm -rf obj_dir/
+	rm -f *.vcd *.fst
+	rm -f coverage.dat
+
+# Help target
+help:
+	@echo "TPU Test Makefile"
+	@echo "=================="
+	@echo "Targets:"
+	@echo "  all              - Run all TPU tests"
+	@echo "  test_mac_array   - Test MAC unit and systolic array"
+	@echo "  test_compute_array - Test compute array with data flow"
+	@echo "  test_tpu_suite   - Run comprehensive TPU test suite"
+	@echo "  benchmark_tpu    - Run performance benchmarks"
+	@echo "  synth_check      - Check synthesis compatibility"
+	@echo "  coverage         - Generate coverage report"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  help             - Show this help"
+
+.PHONY: all test_mac_array test_compute_array test_tpu_suite benchmark_tpu synth_check coverage clean help

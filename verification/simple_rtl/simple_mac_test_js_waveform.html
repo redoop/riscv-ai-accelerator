@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>高级RTL波形查看器 - simple_mac_test.vcd</title>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .header { 
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white; 
+            padding: 25px; 
+            text-align: center;
+        }
+        .header h1 { margin: 0; font-size: 2.5em; }
+        .controls { 
+            background: #f8f9fa; 
+            padding: 20px; 
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group { 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        .control-group label { 
+            font-weight: bold; 
+            color: #495057;
+        }
+        .control-group input, .control-group select { 
+            padding: 8px 12px; 
+            border: 1px solid #ced4da; 
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .btn { 
+            padding: 10px 20px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .btn:hover { background: #0056b3; }
+        .btn.secondary { background: #6c757d; }
+        .btn.secondary:hover { background: #545b62; }
+        .waveform-container { 
+            padding: 20px; 
+            background: #ffffff;
+        }
+        .signal-row { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 15px; 
+            padding: 10px; 
+            background: #f8f9fa; 
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .signal-name { 
+            width: 200px; 
+            font-weight: bold; 
+            color: #2c3e50;
+            font-family: monospace;
+        }
+        .signal-canvas { 
+            flex: 1; 
+            height: 60px; 
+            border: 1px solid #dee2e6; 
+            border-radius: 5px;
+            background: white;
+        }
+        .signal-info { 
+            width: 150px; 
+            font-size: 12px; 
+            color: #6c757d;
+            text-align: right;
+        }
+        .stats { 
+            background: #e9ecef; 
+            padding: 20px; 
+            border-top: 1px solid #dee2e6;
+        }
+        .stats-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 15px;
+        }
+        .stat-card { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .stat-card h4 { 
+            margin: 0 0 10px 0; 
+            color: #2c3e50;
+        }
+        .stat-value { 
+            font-size: 1.5em; 
+            font-weight: bold; 
+            color: #007bff;
+        }
+        .timeline { 
+            height: 40px; 
+            background: #2c3e50; 
+            color: white; 
+            display: flex; 
+            align-items: center; 
+            padding: 0 20px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 高级RTL波形查看器</h1>
+            <p>文件: simple_mac_test.vcd | 大小: 1278 bytes</p>
+        </div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label>时间范围:</label>
+                <input type="number" id="timeStart" value="0" placeholder="开始时间">
+                <span>-</span>
+                <input type="number" id="timeEnd" value="1000" placeholder="结束时间">
+            </div>
+            <div class="control-group">
+                <label>缩放:</label>
+                <select id="zoomLevel">
+                    <option value="1">1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                    <option value="8">8x</option>
+                </select>
+            </div>
+            <button class="btn" onclick="updateWaveforms()">🔄 更新波形</button>
+            <button class="btn secondary" onclick="exportData()">💾 导出数据</button>
+            <button class="btn secondary" onclick="toggleSignals()">👁️ 切换信号</button>
+        </div>
+        
+        <div class="timeline" id="timeline">
+            时间轴将在这里显示
+        </div>
+        
+        <div class="waveform-container" id="waveformContainer">
+            <!-- 波形将在这里动态生成 -->
+        </div>
+        
+        <div class="stats">
+            <h3>📊 波形统计信息</h3>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h4>信号总数</h4>
+                    <div class="stat-value" id="signalCount">8</div>
+                </div>
+                <div class="stat-card">
+                    <h4>时间范围</h4>
+                    <div class="stat-value" id="timeRange">计算中...</div>
+                </div>
+                <div class="stat-card">
+                    <h4>状态变化</h4>
+                    <div class="stat-value" id="stateChanges">计算中...</div>
+                </div>
+                <div class="stat-card">
+                    <h4>文件大小</h4>
+                    <div class="stat-value">1278 B</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 波形数据
+        const signalData = [
+  {
+    "name": "a",
+    "type": "reg",
+    "width": "16",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        115000,
+        "10"
+      ],
+      [
+        155000,
+        "101"
+      ],
+      [
+        195000,
+        "0"
+      ]
+    ]
+  },
+  {
+    "name": "b",
+    "type": "reg",
+    "width": "16",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        115000,
+        "11"
+      ],
+      [
+        155000,
+        "111"
+      ],
+      [
+        195000,
+        "1100100"
+      ]
+    ]
+  },
+  {
+    "name": "c",
+    "type": "reg",
+    "width": "32",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        115000,
+        "100"
+      ],
+      [
+        155000,
+        "1"
+      ],
+      [
+        195000,
+        "110010"
+      ]
+    ]
+  },
+  {
+    "name": "clk",
+    "type": "reg",
+    "width": "1",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        5000,
+        "1"
+      ],
+      [
+        10000,
+        "0"
+      ],
+      [
+        15000,
+        "1"
+      ],
+      [
+        20000,
+        "0"
+      ],
+      [
+        25000,
+        "1"
+      ],
+      [
+        30000,
+        "0"
+      ],
+      [
+        35000,
+        "1"
+      ],
+      [
+        40000,
+        "0"
+      ],
+      [
+        45000,
+        "1"
+      ],
+      [
+        50000,
+        "0"
+      ],
+      [
+        55000,
+        "1"
+      ],
+      [
+        60000,
+        "0"
+      ],
+      [
+        65000,
+        "1"
+      ],
+      [
+        70000,
+        "0"
+      ],
+      [
+        75000,
+        "1"
+      ],
+      [
+        80000,
+        "0"
+      ],
+      [
+        85000,
+        "1"
+      ],
+      [
+        90000,
+        "0"
+      ],
+      [
+        95000,
+        "1"
+      ],
+      [
+        100000,
+        "0"
+      ],
+      [
+        105000,
+        "1"
+      ],
+      [
+        110000,
+        "0"
+      ],
+      [
+        115000,
+        "1"
+      ],
+      [
+        120000,
+        "0"
+      ],
+      [
+        125000,
+        "1"
+      ],
+      [
+        130000,
+        "0"
+      ],
+      [
+        135000,
+        "1"
+      ],
+      [
+        140000,
+        "0"
+      ],
+      [
+        145000,
+        "1"
+      ],
+      [
+        150000,
+        "0"
+      ],
+      [
+        155000,
+        "1"
+      ],
+      [
+        160000,
+        "0"
+      ],
+      [
+        165000,
+        "1"
+      ],
+      [
+        170000,
+        "0"
+      ],
+      [
+        175000,
+        "1"
+      ],
+      [
+        180000,
+        "0"
+      ],
+      [
+        185000,
+        "1"
+      ],
+      [
+        190000,
+        "0"
+      ],
+      [
+        195000,
+        "1"
+      ],
+      [
+        200000,
+        "0"
+      ],
+      [
+        205000,
+        "1"
+      ],
+      [
+        210000,
+        "0"
+      ],
+      [
+        215000,
+        "1"
+      ],
+      [
+        220000,
+        "0"
+      ],
+      [
+        225000,
+        "1"
+      ],
+      [
+        230000,
+        "0"
+      ],
+      [
+        235000,
+        "1"
+      ],
+      [
+        240000,
+        "0"
+      ],
+      [
+        245000,
+        "1"
+      ],
+      [
+        250000,
+        "0"
+      ],
+      [
+        255000,
+        "1"
+      ],
+      [
+        260000,
+        "0"
+      ],
+      [
+        265000,
+        "1"
+      ],
+      [
+        270000,
+        "0"
+      ],
+      [
+        275000,
+        "1"
+      ],
+      [
+        280000,
+        "0"
+      ],
+      [
+        285000,
+        "1"
+      ],
+      [
+        290000,
+        "0"
+      ],
+      [
+        295000,
+        "1"
+      ],
+      [
+        300000,
+        "0"
+      ],
+      [
+        305000,
+        "1"
+      ],
+      [
+        310000,
+        "0"
+      ],
+      [
+        315000,
+        "1"
+      ]
+    ]
+  },
+  {
+    "name": "ready",
+    "type": "reg",
+    "width": "1",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        125000,
+        "1"
+      ],
+      [
+        135000,
+        "0"
+      ],
+      [
+        165000,
+        "1"
+      ],
+      [
+        175000,
+        "0"
+      ],
+      [
+        205000,
+        "1"
+      ],
+      [
+        215000,
+        "0"
+      ]
+    ]
+  },
+  {
+    "name": "result",
+    "type": "reg",
+    "width": "32",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        125000,
+        "1010"
+      ],
+      [
+        165000,
+        "100100"
+      ],
+      [
+        205000,
+        "110010"
+      ]
+    ]
+  },
+  {
+    "name": "rst_n",
+    "type": "reg",
+    "width": "1",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        95000,
+        "1"
+      ]
+    ]
+  },
+  {
+    "name": "valid",
+    "type": "reg",
+    "width": "1",
+    "values": [
+      [
+        0,
+        "0"
+      ],
+      [
+        115000,
+        "1"
+      ],
+      [
+        125000,
+        "0"
+      ],
+      [
+        155000,
+        "1"
+      ],
+      [
+        165000,
+        "0"
+      ],
+      [
+        195000,
+        "1"
+      ],
+      [
+        205000,
+        "0"
+      ]
+    ]
+  }
+];
+        
+        // 全局变量
+        let currentTimeStart = 0;
+        let currentTimeEnd = 1000;
+        let currentZoom = 1;
+        let visibleSignals = new Set();
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSignals();
+            calculateStats();
+            renderWaveforms();
+        });
+        
+        function initializeSignals() {
+            // 默认显示所有信号
+            signalData.forEach((signal, index) => {
+                visibleSignals.add(index);
+            });
+        }
+        
+        function calculateStats() {
+            let totalChanges = 0;
+            let maxTime = 0;
+            
+            signalData.forEach(signal => {
+                totalChanges += signal.values.length;
+                signal.values.forEach(([time, value]) => {
+                    maxTime = Math.max(maxTime, time);
+                });
+            });
+            
+            document.getElementById('timeRange').textContent = `0 - ${maxTime} ps`;
+            document.getElementById('stateChanges').textContent = totalChanges;
+            
+            // 更新时间范围输入框
+            document.getElementById('timeEnd').value = maxTime;
+            currentTimeEnd = maxTime;
+        }
+        
+        function renderWaveforms() {
+            const container = document.getElementById('waveformContainer');
+            container.innerHTML = '';
+            
+            signalData.forEach((signal, index) => {
+                if (!visibleSignals.has(index)) return;
+                
+                const signalRow = document.createElement('div');
+                signalRow.className = 'signal-row';
+                
+                const signalName = document.createElement('div');
+                signalName.className = 'signal-name';
+                signalName.textContent = signal.name;
+                
+                const canvas = document.createElement('canvas');
+                canvas.className = 'signal-canvas';
+                canvas.width = 800;
+                canvas.height = 60;
+                
+                const signalInfo = document.createElement('div');
+                signalInfo.className = 'signal-info';
+                signalInfo.innerHTML = `
+                    类型: ${signal.type}<br>
+                    宽度: ${signal.width}<br>
+                    变化: ${signal.values.length}
+                `;
+                
+                signalRow.appendChild(signalName);
+                signalRow.appendChild(canvas);
+                signalRow.appendChild(signalInfo);
+                container.appendChild(signalRow);
+                
+                // 绘制波形
+                drawSignalWaveform(canvas, signal);
+            });
+            
+            updateTimeline();
+        }
+        
+        function drawSignalWaveform(canvas, signal) {
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // 清空画布
+            ctx.clearRect(0, 0, width, height);
+            
+            // 设置样式
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            ctx.font = '12px monospace';
+            
+            // 绘制背景网格
+            ctx.strokeStyle = '#e9ecef';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = (i / 10) * width;
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+                ctx.stroke();
+            }
+            
+            // 绘制波形
+            ctx.strokeStyle = '#007bff';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            let lastValue = '0';
+            let lastX = 0;
+            
+            signal.values.forEach(([time, value], index) => {
+                const x = ((time - currentTimeStart) / (currentTimeEnd - currentTimeStart)) * width;
+                
+                if (x >= 0 && x <= width) {
+                    if (index === 0) {
+                        ctx.moveTo(x, height - 10);
+                    } else {
+                        // 绘制从上一个值到当前时间的水平线
+                        ctx.lineTo(x, lastValue === '1' ? 10 : height - 10);
+                        // 绘制垂直跳变线
+                        ctx.lineTo(x, value === '1' ? 10 : height - 10);
+                    }
+                    
+                    lastX = x;
+                    lastValue = value;
+                }
+            });
+            
+            // 延伸到画布末尾
+            ctx.lineTo(width, lastValue === '1' ? 10 : height - 10);
+            ctx.stroke();
+            
+            // 绘制值标签
+            ctx.fillStyle = '#2c3e50';
+            signal.values.forEach(([time, value]) => {
+                const x = ((time - currentTimeStart) / (currentTimeEnd - currentTimeStart)) * width;
+                if (x >= 0 && x <= width) {
+                    ctx.fillText(value, x + 5, value === '1' ? 25 : height - 15);
+                }
+            });
+        }
+        
+        function updateTimeline() {
+            const timeline = document.getElementById('timeline');
+            const timeRange = currentTimeEnd - currentTimeStart;
+            const step = Math.pow(10, Math.floor(Math.log10(timeRange / 10)));
+            
+            let timelineText = '';
+            for (let t = currentTimeStart; t <= currentTimeEnd; t += step) {
+                timelineText += `${t}ps `;
+            }
+            
+            timeline.textContent = timelineText;
+        }
+        
+        function updateWaveforms() {
+            currentTimeStart = parseInt(document.getElementById('timeStart').value) || 0;
+            currentTimeEnd = parseInt(document.getElementById('timeEnd').value) || 1000;
+            currentZoom = parseInt(document.getElementById('zoomLevel').value) || 1;
+            
+            renderWaveforms();
+        }
+        
+        function exportData() {
+            const dataStr = JSON.stringify(signalData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'simple_mac_test_waveform_data.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        function toggleSignals() {
+            const allVisible = visibleSignals.size === signalData.length;
+            
+            if (allVisible) {
+                visibleSignals.clear();
+            } else {
+                visibleSignals.clear();
+                signalData.forEach((signal, index) => {
+                    visibleSignals.add(index);
+                });
+            }
+            
+            renderWaveforms();
+        }
+    </script>
+</body>
+</html>

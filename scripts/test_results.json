@@ -1,0 +1,162 @@
+{
+  "basic_operations": {
+    "matmul_64x64": {
+      "cpu_time": 0.005298137664794922,
+      "ai_time": 0.003911018371582031,
+      "speedup": 1.3546695927822483,
+      "accuracy": false
+    },
+    "matmul_128x128": {
+      "cpu_time": 2.2649765014648438e-05,
+      "ai_time": 0.0008900165557861328,
+      "speedup": 0.025448700776855078,
+      "accuracy": false
+    },
+    "matmul_256x256": {
+      "cpu_time": 8.034706115722656e-05,
+      "ai_time": 0.003246784210205078,
+      "speedup": 0.024746658833896314,
+      "accuracy": false
+    },
+    "matmul_512x512": {
+      "cpu_time": 0.000560760498046875,
+      "ai_time": 0.01417398452758789,
+      "speedup": 0.03956265769554247,
+      "accuracy": false
+    },
+    "matmul_1024x1024": {
+      "cpu_time": 0.004296064376831055,
+      "ai_time": 0.05398869514465332,
+      "speedup": 0.07957340634591181,
+      "accuracy": false
+    },
+    "conv2d_3x32x32_16": {
+      "cpu_time": 0.0059947967529296875,
+      "ai_time": 0.0010879039764404297,
+      "speedup": 5.510409818102126,
+      "accuracy": false
+    },
+    "conv2d_32x64x64_64": {
+      "cpu_time": 0.0014660358428955078,
+      "ai_time": 0.012130975723266602,
+      "speedup": 0.12085061221281028,
+      "accuracy": false
+    },
+    "conv2d_64x128x128_128": {
+      "cpu_time": 0.016466856002807617,
+      "ai_time": 0.08028912544250488,
+      "speedup": 0.205094474650861,
+      "accuracy": false
+    },
+    "relu_1000": {
+      "cpu_time": 0.0026302337646484375,
+      "ai_time": 0.0005638599395751953,
+      "speedup": 4.664693446088795,
+      "accuracy": true
+    },
+    "relu_10000": {
+      "cpu_time": 1.0013580322265625e-05,
+      "ai_time": 0.001046895980834961,
+      "speedup": 0.009565019357777272,
+      "accuracy": true
+    },
+    "relu_100000": {
+      "cpu_time": 9.894371032714844e-05,
+      "ai_time": 0.002608060836791992,
+      "speedup": 0.037937654264558,
+      "accuracy": true
+    }
+  },
+  "neural_networks": {
+    "simple_net": {
+      "cpu_time": 0.07885313034057617,
+      "ai_time": 0.2163839340209961,
+      "speedup": 0.3644130544965733,
+      "accuracy": true,
+      "benchmark_stats": {
+        "mean_time": 0.002201859951019287,
+        "std_time": 0.00027222653263916393,
+        "min_time": 0.001592874526977539,
+        "max_time": 0.0035970211029052734,
+        "throughput": 454.1614917593097,
+        "total_iterations": 1000,
+        "input_shape": [
+          1,
+          3,
+          32,
+          32
+        ]
+      }
+    }
+  },
+  "quantization": {
+    "quantization_int8": {
+      "fp32_time": 0.03468608856201172,
+      "quantized_time": 0.029359102249145508,
+      "speedup": 1.1814424115444897,
+      "accuracy_loss": 0.0
+    },
+    "quantization_int16": {
+      "fp32_time": 0.03084111213684082,
+      "quantized_time": 0.027973651885986328,
+      "speedup": 1.1025057530043467,
+      "accuracy_loss": 0.0
+    }
+  },
+  "memory_performance": {
+    "memory_1mb": {
+      "alloc_time": 1.3113021850585938e-05,
+      "h2d_time": 0.0014269351959228516,
+      "d2h_time": 0.004373073577880859,
+      "h2d_bandwidth_mbps": 700.8026733500418,
+      "d2h_bandwidth_mbps": 228.67211863482717
+    },
+    "memory_10mb": {
+      "alloc_time": 1.5020370483398438e-05,
+      "h2d_time": 0.0014340877532958984,
+      "d2h_time": 0.04512596130371094,
+      "h2d_bandwidth_mbps": 6973.073981712386,
+      "d2h_bandwidth_mbps": 221.6019273849275
+    },
+    "memory_100mb": {
+      "alloc_time": 1.3113021850585938e-05,
+      "h2d_time": 0.023016929626464844,
+      "d2h_time": 0.42548203468322754,
+      "h2d_bandwidth_mbps": 4344.6281334162,
+      "d2h_bandwidth_mbps": 235.02754957550735
+    },
+    "memory_1000mb": {
+      "alloc_time": 5.3882598876953125e-05,
+      "h2d_time": 0.5746827125549316,
+      "d2h_time": 5.854061841964722,
+      "h2d_bandwidth_mbps": 1740.0906241884106,
+      "d2h_bandwidth_mbps": 170.8215640688181
+    }
+  },
+  "concurrent_execution": {
+    "concurrent_tpu": {
+      "serial_time": 0.07337093353271484,
+      "concurrent_time": 0.05809783935546875,
+      "speedup": 1.2628857518056467,
+      "tpu_count": 2
+    }
+  },
+  "device_info": {
+    "vendor": "RISC-V AI Accelerator Corp",
+    "device_name": "RISC-V AI Chip Simulator",
+    "version": "1.0.0",
+    "tpu_count": 2,
+    "vpu_count": 2,
+    "memory_size": 8589934592,
+    "peak_performance": {
+      "int8_tops": 256,
+      "fp16_tflops": 64,
+      "fp32_tflops": 16
+    },
+    "backend_available": true,
+    "simulation_mode": true,
+    "platform": "macOS",
+    "note": "运行在仿真模式下，性能数据仅供参考"
+  },
+  "backend_available": true
+}

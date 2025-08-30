@@ -1,0 +1,157 @@
+# Makefile for NoC (Network-on-Chip) Tests
+# Builds and runs verification tests for the mesh network implementation
+
+# Verilator configuration
+VERILATOR = verilator
+VERILATOR_FLAGS = --cc --exe --build --trace --timing --top-module
+VERILATOR_WARNINGS = -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME -Wno-WIDTHEXPAND -Wno-WIDTHTRUNC
+
+# Directories
+RTL_DIR = ../../rtl
+NOC_RTL_DIR = $(RTL_DIR)/noc
+TEST_DIR = .
+OBJ_DIR = obj_dir
+
+# Source files
+NOC_SOURCES = $(NOC_RTL_DIR)/noc_packet.sv \
+              $(NOC_RTL_DIR)/priority_encoder.sv \
+              $(NOC_RTL_DIR)/round_robin_arbiter.sv \
+              $(NOC_RTL_DIR)/qos_arbiter.sv \
+              $(NOC_RTL_DIR)/switch_allocator.sv \
+              $(NOC_RTL_DIR)/noc_router.sv \
+              $(NOC_RTL_DIR)/noc_interface.sv \
+              $(NOC_RTL_DIR)/noc_mesh.sv \
+              $(NOC_RTL_DIR)/congestion_controller.sv \
+              $(NOC_RTL_DIR)/noc_performance_monitor.sv
+
+# Test files
+ROUTER_TEST = $(TEST_DIR)/test_noc_router.sv
+MESH_TEST = $(TEST_DIR)/test_noc_mesh.sv
+QOS_TEST = $(TEST_DIR)/test_noc_qos_arbitration.sv
+CONGESTION_TEST = $(TEST_DIR)/test_noc_congestion_control.sv
+PERFORMANCE_TEST = $(TEST_DIR)/test_noc_performance_monitor.sv
+
+# Test executables
+ROUTER_EXE = $(OBJ_DIR)/Vtest_noc_router
+MESH_EXE = $(OBJ_DIR)/Vtest_noc_mesh
+QOS_EXE = $(OBJ_DIR)/Vtest_noc_qos_arbitration
+CONGESTION_EXE = $(OBJ_DIR)/Vtest_noc_congestion_control
+PERFORMANCE_EXE = $(OBJ_DIR)/Vtest_noc_performance_monitor
+
+# Default target
+all: test_router test_mesh test_qos test_congestion test_performance
+
+# Router test
+test_router: $(ROUTER_EXE)
+	@echo "Running NoC Router Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_router
+
+$(ROUTER_EXE): $(ROUTER_TEST) $(NOC_SOURCES)
+	@echo "Building NoC Router Test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) test_noc_router $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(NOC_RTL_DIR) \
+		$(ROUTER_TEST) $(NOC_SOURCES)
+
+# Mesh test
+test_mesh: $(MESH_EXE)
+	@echo "Running NoC Mesh Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_mesh
+
+$(MESH_EXE): $(MESH_TEST) $(NOC_SOURCES)
+	@echo "Building NoC Mesh Test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) test_noc_mesh $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(NOC_RTL_DIR) \
+		$(MESH_TEST) $(NOC_SOURCES)
+
+# QoS Arbitration test
+test_qos: $(QOS_EXE)
+	@echo "Running NoC QoS Arbitration Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_qos_arbitration
+
+$(QOS_EXE): $(QOS_TEST) $(NOC_RTL_DIR)/qos_arbiter.sv $(NOC_RTL_DIR)/noc_packet.sv $(NOC_RTL_DIR)/priority_encoder.sv
+	@echo "Building NoC QoS Arbitration Test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) test_noc_qos_arbitration $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(NOC_RTL_DIR) \
+		$(QOS_TEST) $(NOC_RTL_DIR)/qos_arbiter.sv $(NOC_RTL_DIR)/noc_packet.sv $(NOC_RTL_DIR)/priority_encoder.sv
+
+# Congestion Control test
+test_congestion: $(CONGESTION_EXE)
+	@echo "Running NoC Congestion Control Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_congestion_control
+
+$(CONGESTION_EXE): $(CONGESTION_TEST) $(NOC_RTL_DIR)/congestion_controller.sv $(NOC_RTL_DIR)/noc_packet.sv
+	@echo "Building NoC Congestion Control Test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) test_noc_congestion_control $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(NOC_RTL_DIR) \
+		$(CONGESTION_TEST) $(NOC_RTL_DIR)/congestion_controller.sv $(NOC_RTL_DIR)/noc_packet.sv
+
+# Performance Monitor test
+test_performance: $(PERFORMANCE_EXE)
+	@echo "Running NoC Performance Monitor Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_performance_monitor
+
+$(PERFORMANCE_EXE): $(PERFORMANCE_TEST) $(NOC_RTL_DIR)/noc_performance_monitor.sv $(NOC_RTL_DIR)/noc_packet.sv
+	@echo "Building NoC Performance Monitor Test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) test_noc_performance_monitor $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(NOC_RTL_DIR) \
+		$(PERFORMANCE_TEST) $(NOC_RTL_DIR)/noc_performance_monitor.sv $(NOC_RTL_DIR)/noc_packet.sv
+
+# Syntax check
+syntax_check:
+	@echo "Checking NoC RTL syntax..."
+	@for file in $(NOC_SOURCES); do \
+		echo "Checking $$file..."; \
+		$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(NOC_RTL_DIR) $$file; \
+	done
+	@echo "Syntax check completed."
+
+# Performance test
+perf_test: $(MESH_EXE)
+	@echo "Running NoC Performance Test..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_mesh +trace
+
+# Generate waveforms
+waves: $(ROUTER_EXE)
+	@echo "Generating waveforms..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_router +trace
+	@echo "Waveform saved as trace.vcd"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning NoC test artifacts..."
+	@rm -rf $(OBJ_DIR)
+	@rm -f *.vcd *.log
+
+# Coverage analysis (if supported)
+coverage: $(MESH_EXE)
+	@echo "Running coverage analysis..."
+	@cd $(OBJ_DIR) && ./Vtest_noc_mesh --coverage
+
+# Lint all NoC files
+lint:
+	@echo "Linting NoC RTL files..."
+	@$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(NOC_RTL_DIR) $(NOC_SOURCES)
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all              - Run all NoC tests"
+	@echo "  test_router      - Run router unit test"
+	@echo "  test_mesh        - Run mesh network test"
+	@echo "  test_qos         - Run QoS arbitration test"
+	@echo "  test_congestion  - Run congestion control test"
+	@echo "  test_performance - Run performance monitor test"
+	@echo "  syntax_check     - Check RTL syntax"
+	@echo "  perf_test        - Run performance test"
+	@echo "  waves            - Generate waveforms"
+	@echo "  coverage         - Run coverage analysis"
+	@echo "  lint             - Lint RTL files"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  help             - Show this help"
+
+.PHONY: all test_router test_mesh test_qos test_congestion test_performance syntax_check perf_test waves clean coverage lint help

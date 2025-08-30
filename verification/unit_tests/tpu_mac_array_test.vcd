@@ -1,0 +1,639 @@
+$date
+	Sun Aug 31 00:29:44 2025
+$end
+$version
+	Icarus Verilog
+$end
+$timescale
+	1ps
+$end
+$scope module test_tpu_mac_array_fixed $end
+$var parameter 32 ! ARRAY_SIZE $end
+$var parameter 32 " CLK_PERIOD $end
+$var parameter 32 # DATA_WIDTH $end
+$var reg 1 $ clk $end
+$var reg 1 % computation_done $end
+$var reg 32 & cycles_count [31:0] $end
+$var reg 1 ' load_weights $end
+$var reg 32 ( ops_count [31:0] $end
+$var reg 1 ) rst_n $end
+$var reg 1 * start_compute $end
+$var reg 32 + start_cycles [31:0] $end
+$var reg 32 , start_ops [31:0] $end
+$var integer 32 - i [31:0] $end
+$var integer 32 . pass_count [31:0] $end
+$var integer 32 / test_count [31:0] $end
+$scope begin mac_units[0] $end
+$var parameter 2 0 g $end
+$scope module mac_inst $end
+$var wire 32 1 a_in [31:0] $end
+$var wire 1 2 accumulate $end
+$var wire 32 3 b_in [31:0] $end
+$var wire 32 4 c_in [31:0] $end
+$var wire 1 $ clk $end
+$var wire 2 5 data_type [1:0] $end
+$var wire 1 * enable $end
+$var wire 1 ' load_weight $end
+$var wire 1 ) rst_n $end
+$var parameter 32 6 DATA_WIDTH $end
+$var reg 16 7 a_fp16 [15:0] $end
+$var reg 32 8 a_fp32 [31:0] $end
+$var reg 8 9 a_int8 [7:0] $end
+$var reg 32 : a_out [31:0] $end
+$var reg 32 ; acc_result [31:0] $end
+$var reg 16 < b_fp16 [15:0] $end
+$var reg 32 = b_fp32 [31:0] $end
+$var reg 8 > b_int8 [7:0] $end
+$var reg 32 ? b_out [31:0] $end
+$var reg 32 @ c_out [31:0] $end
+$var reg 16 A mult_fp16 [15:0] $end
+$var reg 32 B mult_fp32 [31:0] $end
+$var reg 16 C mult_int8 [15:0] $end
+$var reg 32 D mult_result [31:0] $end
+$var reg 1 E overflow $end
+$var reg 1 F underflow $end
+$var reg 32 G weight_reg [31:0] $end
+$scope function fp16_add $end
+$upscope $end
+$scope function fp16_is_overflow $end
+$upscope $end
+$scope function fp16_is_underflow $end
+$upscope $end
+$scope function fp16_multiply $end
+$upscope $end
+$scope function fp32_add $end
+$upscope $end
+$scope function fp32_is_overflow $end
+$upscope $end
+$scope function fp32_is_underflow $end
+$upscope $end
+$scope function fp32_multiply $end
+$upscope $end
+$upscope $end
+$upscope $end
+$scope begin mac_units[1] $end
+$var parameter 2 H g $end
+$scope module mac_inst $end
+$var wire 32 I a_in [31:0] $end
+$var wire 1 J accumulate $end
+$var wire 32 K b_in [31:0] $end
+$var wire 32 L c_in [31:0] $end
+$var wire 1 $ clk $end
+$var wire 2 M data_type [1:0] $end
+$var wire 1 * enable $end
+$var wire 1 ' load_weight $end
+$var wire 1 ) rst_n $end
+$var parameter 32 N DATA_WIDTH $end
+$var reg 16 O a_fp16 [15:0] $end
+$var reg 32 P a_fp32 [31:0] $end
+$var reg 8 Q a_int8 [7:0] $end
+$var reg 32 R a_out [31:0] $end
+$var reg 32 S acc_result [31:0] $end
+$var reg 16 T b_fp16 [15:0] $end
+$var reg 32 U b_fp32 [31:0] $end
+$var reg 8 V b_int8 [7:0] $end
+$var reg 32 W b_out [31:0] $end
+$var reg 32 X c_out [31:0] $end
+$var reg 16 Y mult_fp16 [15:0] $end
+$var reg 32 Z mult_fp32 [31:0] $end
+$var reg 16 [ mult_int8 [15:0] $end
+$var reg 32 \ mult_result [31:0] $end
+$var reg 1 ] overflow $end
+$var reg 1 ^ underflow $end
+$var reg 32 _ weight_reg [31:0] $end
+$scope function fp16_add $end
+$upscope $end
+$scope function fp16_is_overflow $end
+$upscope $end
+$scope function fp16_is_underflow $end
+$upscope $end
+$scope function fp16_multiply $end
+$upscope $end
+$scope function fp32_add $end
+$upscope $end
+$scope function fp32_is_overflow $end
+$upscope $end
+$scope function fp32_is_underflow $end
+$upscope $end
+$scope function fp32_multiply $end
+$upscope $end
+$upscope $end
+$upscope $end
+$scope begin mac_units[2] $end
+$var parameter 3 ` g $end
+$scope module mac_inst $end
+$var wire 32 a a_in [31:0] $end
+$var wire 1 b accumulate $end
+$var wire 32 c b_in [31:0] $end
+$var wire 32 d c_in [31:0] $end
+$var wire 1 $ clk $end
+$var wire 2 e data_type [1:0] $end
+$var wire 1 * enable $end
+$var wire 1 ' load_weight $end
+$var wire 1 ) rst_n $end
+$var parameter 32 f DATA_WIDTH $end
+$var reg 16 g a_fp16 [15:0] $end
+$var reg 32 h a_fp32 [31:0] $end
+$var reg 8 i a_int8 [7:0] $end
+$var reg 32 j a_out [31:0] $end
+$var reg 32 k acc_result [31:0] $end
+$var reg 16 l b_fp16 [15:0] $end
+$var reg 32 m b_fp32 [31:0] $end
+$var reg 8 n b_int8 [7:0] $end
+$var reg 32 o b_out [31:0] $end
+$var reg 32 p c_out [31:0] $end
+$var reg 16 q mult_fp16 [15:0] $end
+$var reg 32 r mult_fp32 [31:0] $end
+$var reg 16 s mult_int8 [15:0] $end
+$var reg 32 t mult_result [31:0] $end
+$var reg 1 u overflow $end
+$var reg 1 v underflow $end
+$var reg 32 w weight_reg [31:0] $end
+$scope function fp16_add $end
+$upscope $end
+$scope function fp16_is_overflow $end
+$upscope $end
+$scope function fp16_is_underflow $end
+$upscope $end
+$scope function fp16_multiply $end
+$upscope $end
+$scope function fp32_add $end
+$upscope $end
+$scope function fp32_is_overflow $end
+$upscope $end
+$scope function fp32_is_underflow $end
+$upscope $end
+$scope function fp32_multiply $end
+$upscope $end
+$upscope $end
+$upscope $end
+$scope begin mac_units[3] $end
+$var parameter 3 x g $end
+$scope module mac_inst $end
+$var wire 32 y a_in [31:0] $end
+$var wire 1 z accumulate $end
+$var wire 32 { b_in [31:0] $end
+$var wire 32 | c_in [31:0] $end
+$var wire 1 $ clk $end
+$var wire 2 } data_type [1:0] $end
+$var wire 1 * enable $end
+$var wire 1 ' load_weight $end
+$var wire 1 ) rst_n $end
+$var parameter 32 ~ DATA_WIDTH $end
+$var reg 16 !" a_fp16 [15:0] $end
+$var reg 32 "" a_fp32 [31:0] $end
+$var reg 8 #" a_int8 [7:0] $end
+$var reg 32 $" a_out [31:0] $end
+$var reg 32 %" acc_result [31:0] $end
+$var reg 16 &" b_fp16 [15:0] $end
+$var reg 32 '" b_fp32 [31:0] $end
+$var reg 8 (" b_int8 [7:0] $end
+$var reg 32 )" b_out [31:0] $end
+$var reg 32 *" c_out [31:0] $end
+$var reg 16 +" mult_fp16 [15:0] $end
+$var reg 32 ," mult_fp32 [31:0] $end
+$var reg 16 -" mult_int8 [15:0] $end
+$var reg 32 ." mult_result [31:0] $end
+$var reg 1 /" overflow $end
+$var reg 1 0" underflow $end
+$var reg 32 1" weight_reg [31:0] $end
+$scope function fp16_add $end
+$upscope $end
+$scope function fp16_is_overflow $end
+$upscope $end
+$scope function fp16_is_underflow $end
+$upscope $end
+$scope function fp16_multiply $end
+$upscope $end
+$scope function fp32_add $end
+$upscope $end
+$scope function fp32_is_overflow $end
+$upscope $end
+$scope function fp32_is_underflow $end
+$upscope $end
+$scope function fp32_multiply $end
+$upscope $end
+$upscope $end
+$upscope $end
+$scope task test_basic_mac_array $end
+$upscope $end
+$scope task test_performance_counters $end
+$upscope $end
+$scope task test_weight_loading $end
+$upscope $end
+$upscope $end
+$enddefinitions $end
+$comment Show the parameter values. $end
+$dumpall
+b100000 ~
+b11 x
+b100000 f
+b10 `
+b100000 N
+b1 H
+b100000 6
+b0 0
+b100000 #
+b1010 "
+b100 !
+$end
+#0
+$dumpvars
+b0 1"
+00"
+0/"
+b0 ."
+b0 -"
+bx ,"
+bx +"
+b0 *"
+b0 )"
+b0 ("
+bx '"
+bx &"
+b0 %"
+b0 $"
+b0 #"
+bx ""
+bx !"
+b0 }
+b0 |
+b0 {
+0z
+b0 y
+b0 w
+0v
+0u
+b0 t
+b0 s
+bx r
+bx q
+b0 p
+b0 o
+b0 n
+bx m
+bx l
+b0 k
+b0 j
+b0 i
+bx h
+bx g
+b0 e
+b0 d
+b0 c
+0b
+b0 a
+b0 _
+0^
+0]
+b0 \
+b0 [
+bx Z
+bx Y
+b0 X
+b0 W
+b0 V
+bx U
+bx T
+b0 S
+b0 R
+b0 Q
+bx P
+bx O
+b0 M
+b0 L
+b0 K
+0J
+b0 I
+b0 G
+0F
+0E
+b0 D
+b0 C
+bx B
+bx A
+b0 @
+b0 ?
+b0 >
+bx =
+bx <
+b0 ;
+b0 :
+b0 9
+bx 8
+bx 7
+b0 5
+b0 4
+b0 3
+02
+b0 1
+b0 /
+b0 .
+b100 -
+bx ,
+bx +
+0*
+0)
+bx (
+0'
+bx &
+x%
+0$
+$end
+#5000
+0%
+b0 (
+b0 &
+1$
+#10000
+0$
+#15000
+1$
+#20000
+0$
+#25000
+1$
+#30000
+0$
+#35000
+1)
+1$
+#40000
+0$
+#45000
+b1 &
+1$
+#50000
+0$
+#55000
+b10 &
+1$
+#60000
+0$
+#65000
+b11 &
+1$
+#70000
+0$
+#75000
+b101 >
+b101 V
+b101 n
+b101 ("
+b101000001010000010100000101 G
+b101000001010000010100000101 _
+b101000001010000010100000101 w
+b101000001010000010100000101 1"
+b100 &
+b101000001010000010100000101 {
+b101000001010000010100000101 c
+b101000001010000010100000101 K
+b101000001010000010100000101 3
+b100 -
+1'
+b1 /
+1$
+#80000
+0$
+#85000
+b101 &
+1$
+#90000
+0$
+#95000
+b101000001010000010100000101 ?
+b11000000110000001100000011 :
+b101000001010000010100000101 W
+b11000000110000001100000011 R
+b101000001010000010100000101 o
+b11000000110000001100000011 j
+b101000001010000010100000101 )"
+b11000000110000001100000011 $"
+b110 &
+b1111 %"
+b1111 k
+b1111 S
+b1111 ;
+b1111 ."
+b1111 -"
+b1111 t
+b1111 s
+b1111 \
+b1111 [
+b1111 D
+b1111 C
+b11 #"
+b11 i
+b11 Q
+b11 9
+1*
+b11000000110000001100000011 y
+b11000000110000001100000011 a
+b11000000110000001100000011 I
+b11000000110000001100000011 1
+b100 -
+0'
+1$
+#100000
+0$
+#105000
+b1111 *"
+b1111 p
+b1111 X
+b1111 @
+1%
+b100 (
+b111 &
+1$
+#110000
+0$
+#115000
+b1000 (
+b1000 &
+1$
+#120000
+0$
+#125000
+0%
+b1001 &
+0*
+1$
+#130000
+0$
+#135000
+b1010 &
+1$
+#140000
+0$
+#145000
+b10101 %"
+b10101 k
+b10101 S
+b10101 ;
+b10101 ."
+b10101 -"
+b10101 t
+b10101 s
+b10101 \
+b10101 [
+b10101 D
+b10101 C
+b111 ("
+b111 n
+b111 V
+b111 >
+b111000001110000011100000111 1"
+b111000001110000011100000111 w
+b111000001110000011100000111 _
+b111000001110000011100000111 G
+b1011 &
+b111000001110000011100000111 {
+b111000001110000011100000111 c
+b111000001110000011100000111 K
+b111000001110000011100000111 3
+1'
+b10 /
+b1 .
+b100 -
+1$
+#150000
+0$
+#155000
+b1100 &
+1$
+#160000
+0$
+#165000
+b10101 *"
+b111000001110000011100000111 )"
+b10000000100000001000000010 $"
+b10101 p
+b111000001110000011100000111 o
+b10000000100000001000000010 j
+b10101 X
+b111000001110000011100000111 W
+b10000000100000001000000010 R
+b10101 @
+b111000001110000011100000111 ?
+b10000000100000001000000010 :
+b1101 &
+b1110 %"
+b1110 k
+b1110 S
+b1110 ;
+b1110 ."
+b1110 -"
+b1110 t
+b1110 s
+b1110 \
+b1110 [
+b1110 D
+b1110 C
+b10 #"
+b10 i
+b10 Q
+b10 9
+1*
+b10000000100000001000000010 y
+b10000000100000001000000010 a
+b10000000100000001000000010 I
+b10000000100000001000000010 1
+b100 -
+0'
+1$
+#170000
+0$
+#175000
+b1110 @
+b1110 X
+b1110 p
+b1110 *"
+b1100 (
+b1110 &
+1%
+1$
+#180000
+0$
+#185000
+b10000 (
+b1111 &
+1$
+#190000
+0$
+#195000
+b10000 &
+0%
+0*
+1$
+#200000
+0$
+#205000
+b10001 &
+1$
+#210000
+0$
+#215000
+b1000000010000000100000001 :
+b1000000010000000100000001 R
+b1000000010000000100000001 j
+b1000000010000000100000001 $"
+b10010 &
+b111 %"
+b111 k
+b111 S
+b111 ;
+b111 ."
+b111 -"
+b111 t
+b111 s
+b111 \
+b111 [
+b111 D
+b111 C
+b1 #"
+b1 i
+b1 Q
+b1 9
+1*
+b1000000010000000100000001 y
+b1000000010000000100000001 a
+b1000000010000000100000001 I
+b1000000010000000100000001 1
+b10000 ,
+b10001 +
+b11 /
+b10 .
+b100 -
+1$
+#220000
+0$
+#225000
+b10011 &
+0*
+1$
+#230000
+0$
+#235000
+b10100 &
+1$
+#240000
+0$
+#245000
+b10101 &
+1$
+#250000
+0$
+#255000
+b10110 &
+1$
+#260000
+0$
+#265000
+b10111 &
+1$
+#270000
+0$
+#275000
+b11000 &
+b11 .
+1$

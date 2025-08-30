@@ -1,0 +1,243 @@
+# Makefile for Performance Optimization System Tests
+# Builds and runs comprehensive tests for performance monitoring and optimization
+
+# Tool configuration
+VERILATOR = verilator
+GCC = gcc
+PYTHON = python3
+
+# Directories
+RTL_DIR = ../../rtl
+SOFTWARE_DIR = ../../software
+VERIFICATION_DIR = ..
+TEST_DIR = .
+OBJ_DIR = obj_dir
+
+# Compiler flags
+VERILATOR_FLAGS = --cc --exe --build --trace --top-module test_performance_optimization
+VERILATOR_FLAGS += -Wall -Wno-UNUSED -Wno-UNDRIVEN -Wno-PINMISSING
+VERILATOR_FLAGS += --timing
+VERILATOR_FLAGS += -I$(RTL_DIR)/core -I$(RTL_DIR)/interfaces -I$(RTL_DIR)/config
+VERILATOR_FLAGS += -I$(RTL_DIR)/power -I$(RTL_DIR)/noc -I$(RTL_DIR)/memory
+
+GCC_FLAGS = -Wall -Wextra -std=c99 -pthread -lm
+GCC_DEBUG_FLAGS = -g -DDEBUG
+GCC_RELEASE_FLAGS = -O2 -DNDEBUG
+
+# Source files
+RTL_SOURCES = $(RTL_DIR)/core/performance_monitor.sv \
+              $(RTL_DIR)/core/resource_scheduler.sv \
+              $(RTL_DIR)/interfaces/system_interfaces.sv \
+              $(RTL_DIR)/config/chip_config.sv
+
+SOFTWARE_SOURCES = $(SOFTWARE_DIR)/lib/performance_optimizer.c \
+                   $(SOFTWARE_DIR)/debug/hardware_counters.c
+
+TEST_SOURCES = test_performance_optimization.sv \
+               test_advanced_performance_optimization.sv \
+               $(SOFTWARE_DIR)/tests/test_performance_optimizer.c \
+               $(SOFTWARE_DIR)/tests/test_advanced_performance_optimizer.c
+
+# Test executables
+RTL_TEST_EXE = $(OBJ_DIR)/Vtest_performance_optimization
+RTL_ADVANCED_TEST_EXE = $(OBJ_DIR)/Vtest_advanced_performance_optimization
+SOFTWARE_TEST_EXE = test_performance_optimizer
+SOFTWARE_ADVANCED_TEST_EXE = test_advanced_performance_optimizer
+
+# Default target
+all: rtl_test software_test advanced_tests
+
+# RTL simulation test
+rtl_test: $(RTL_TEST_EXE)
+	@echo "Running RTL performance optimization tests..."
+	@cd $(OBJ_DIR) && ./Vtest_performance_optimization
+
+$(RTL_TEST_EXE): $(TEST_SOURCES) $(RTL_SOURCES)
+	@echo "Building RTL performance optimization test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		$(RTL_SOURCES) \
+		test_performance_optimization.sv \
+		--Mdir $(OBJ_DIR)
+
+# Software library test
+software_test: $(SOFTWARE_TEST_EXE)
+	@echo "Running software performance optimizer tests..."
+	@./$(SOFTWARE_TEST_EXE)
+
+$(SOFTWARE_TEST_EXE): $(SOFTWARE_DIR)/tests/test_performance_optimizer.c $(SOFTWARE_SOURCES)
+	@echo "Building software performance optimizer test..."
+	$(GCC) $(GCC_FLAGS) $(GCC_DEBUG_FLAGS) \
+		-I$(SOFTWARE_DIR)/lib -I$(SOFTWARE_DIR)/debug \
+		$(SOFTWARE_DIR)/tests/test_performance_optimizer.c \
+		$(SOFTWARE_SOURCES) \
+		-o $(SOFTWARE_TEST_EXE)
+
+# Advanced tests
+advanced_tests: advanced_rtl_test advanced_software_test
+
+advanced_rtl_test: $(RTL_ADVANCED_TEST_EXE)
+	@echo "Running advanced RTL performance optimization tests..."
+	@cd $(OBJ_DIR) && ./Vtest_advanced_performance_optimization
+
+$(RTL_ADVANCED_TEST_EXE): test_advanced_performance_optimization.sv $(RTL_SOURCES)
+	@echo "Building advanced RTL performance optimization test..."
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) --cc --exe --build --trace --top-module test_advanced_performance_optimization \
+		-Wall -Wno-UNUSED -Wno-UNDRIVEN -Wno-PINMISSING --timing \
+		-I$(RTL_DIR)/core -I$(RTL_DIR)/interfaces -I$(RTL_DIR)/config \
+		-I$(RTL_DIR)/power -I$(RTL_DIR)/noc -I$(RTL_DIR)/memory \
+		$(RTL_SOURCES) \
+		test_advanced_performance_optimization.sv \
+		--Mdir $(OBJ_DIR)
+
+advanced_software_test: $(SOFTWARE_ADVANCED_TEST_EXE)
+	@echo "Running advanced software performance optimizer tests..."
+	@./$(SOFTWARE_ADVANCED_TEST_EXE)
+
+$(SOFTWARE_ADVANCED_TEST_EXE): $(SOFTWARE_DIR)/tests/test_advanced_performance_optimizer.c $(SOFTWARE_SOURCES)
+	@echo "Building advanced software performance optimizer test..."
+	$(GCC) $(GCC_FLAGS) $(GCC_DEBUG_FLAGS) \
+		-I$(SOFTWARE_DIR)/lib -I$(SOFTWARE_DIR)/debug \
+		$(SOFTWARE_DIR)/tests/test_advanced_performance_optimizer.c \
+		$(SOFTWARE_SOURCES) \
+		-o $(SOFTWARE_ADVANCED_TEST_EXE)
+
+# Verbose test runs
+rtl_test_verbose: $(RTL_TEST_EXE)
+	@echo "Running RTL tests with verbose output..."
+	@cd $(OBJ_DIR) && ./Vtest_performance_optimization +trace
+
+software_test_verbose: $(SOFTWARE_TEST_EXE)
+	@echo "Running software tests with verbose output..."
+	@./$(SOFTWARE_TEST_EXE) --verbose
+
+# Performance benchmarks
+benchmark: $(SOFTWARE_TEST_EXE)
+	@echo "Running performance optimization benchmarks..."
+	@./$(SOFTWARE_TEST_EXE) --benchmark
+
+# Integration test (RTL + Software)
+integration_test: rtl_test software_test
+	@echo "Running integration tests..."
+	@$(PYTHON) test_integration.py
+
+# Stress tests
+stress_test: $(SOFTWARE_TEST_EXE)
+	@echo "Running stress tests..."
+	@for i in {1..10}; do \
+		echo "Stress test iteration $$i"; \
+		./$(SOFTWARE_TEST_EXE) --stress || exit 1; \
+	done
+
+# Memory leak check (requires valgrind)
+memcheck: $(SOFTWARE_TEST_EXE)
+	@echo "Running memory leak check..."
+	@valgrind --leak-check=full --show-leak-kinds=all \
+		--track-origins=yes --verbose \
+		./$(SOFTWARE_TEST_EXE)
+
+# Coverage analysis
+coverage: $(SOFTWARE_SOURCES)
+	@echo "Building with coverage analysis..."
+	$(GCC) $(GCC_FLAGS) $(GCC_DEBUG_FLAGS) --coverage \
+		-I$(SOFTWARE_DIR)/lib -I$(SOFTWARE_DIR)/debug \
+		$(SOFTWARE_DIR)/tests/test_performance_optimizer.c \
+		$(SOFTWARE_SOURCES) \
+		-o $(SOFTWARE_TEST_EXE)_cov
+	@echo "Running tests with coverage..."
+	@./$(SOFTWARE_TEST_EXE)_cov
+	@echo "Generating coverage report..."
+	@gcov $(SOFTWARE_SOURCES)
+	@lcov --capture --directory . --output-file coverage.info
+	@genhtml coverage.info --output-directory coverage_html
+	@echo "Coverage report generated in coverage_html/"
+
+# Performance profiling
+profile: $(SOFTWARE_TEST_EXE)
+	@echo "Building with profiling..."
+	$(GCC) $(GCC_FLAGS) -pg \
+		-I$(SOFTWARE_DIR)/lib -I$(SOFTWARE_DIR)/debug \
+		$(SOFTWARE_DIR)/tests/test_performance_optimizer.c \
+		$(SOFTWARE_SOURCES) \
+		-o $(SOFTWARE_TEST_EXE)_prof
+	@echo "Running profiling test..."
+	@./$(SOFTWARE_TEST_EXE)_prof
+	@echo "Generating profile report..."
+	@gprof $(SOFTWARE_TEST_EXE)_prof gmon.out > profile_report.txt
+	@echo "Profile report generated in profile_report.txt"
+
+# Waveform generation for RTL tests
+waves: $(RTL_TEST_EXE)
+	@echo "Running RTL test with waveform generation..."
+	@cd $(OBJ_DIR) && ./Vtest_performance_optimization +trace
+	@echo "Waveform file generated: $(OBJ_DIR)/dump.vcd"
+	@echo "View with: gtkwave $(OBJ_DIR)/dump.vcd"
+
+# Synthesis check
+synthesis_check:
+	@echo "Checking RTL synthesizability..."
+	$(VERILATOR) --lint-only --top-module performance_monitor \
+		$(RTL_DIR)/core/performance_monitor.sv \
+		-I$(RTL_DIR)/core -I$(RTL_DIR)/interfaces
+	$(VERILATOR) --lint-only --top-module resource_scheduler \
+		$(RTL_DIR)/core/resource_scheduler.sv \
+		-I$(RTL_DIR)/core -I$(RTL_DIR)/interfaces
+	@echo "Synthesis check completed"
+
+# Documentation generation
+docs:
+	@echo "Generating documentation..."
+	@doxygen $(SOFTWARE_DIR)/compiler/Doxyfile
+	@echo "Documentation generated in docs/"
+
+# Clean targets
+clean:
+	@echo "Cleaning build artifacts..."
+	@rm -rf $(OBJ_DIR)
+	@rm -f $(SOFTWARE_TEST_EXE) $(SOFTWARE_TEST_EXE)_cov $(SOFTWARE_TEST_EXE)_prof
+	@rm -f $(SOFTWARE_ADVANCED_TEST_EXE) $(SOFTWARE_ADVANCED_TEST_EXE)_cov $(SOFTWARE_ADVANCED_TEST_EXE)_prof
+	@rm -f *.gcov *.gcda *.gcno coverage.info gmon.out profile_report.txt
+	@rm -rf coverage_html
+	@rm -f *.vcd *.fst
+
+clean_all: clean
+	@echo "Cleaning all generated files..."
+	@rm -rf docs/
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all              - Build and run all tests"
+	@echo "  rtl_test         - Run RTL simulation tests"
+	@echo "  software_test    - Run software library tests"
+	@echo "  rtl_test_verbose - Run RTL tests with verbose output"
+	@echo "  software_test_verbose - Run software tests with verbose output"
+	@echo "  benchmark        - Run performance benchmarks"
+	@echo "  integration_test - Run integration tests"
+	@echo "  stress_test      - Run stress tests"
+	@echo "  memcheck         - Run memory leak check (requires valgrind)"
+	@echo "  coverage         - Generate code coverage report"
+	@echo "  profile          - Generate performance profile"
+	@echo "  waves            - Generate waveforms for RTL tests"
+	@echo "  synthesis_check  - Check RTL synthesizability"
+	@echo "  docs             - Generate documentation"
+	@echo "  clean            - Clean build artifacts"
+	@echo "  clean_all        - Clean all generated files"
+	@echo "  help             - Show this help message"
+
+# Continuous integration target
+ci: synthesis_check rtl_test software_test integration_test
+	@echo "All CI tests passed!"
+
+# Development target (quick tests for development)
+dev: rtl_test software_test
+	@echo "Development tests completed"
+
+# Release target (comprehensive testing)
+release: synthesis_check coverage rtl_test software_test integration_test stress_test
+	@echo "Release testing completed"
+
+.PHONY: all rtl_test software_test rtl_test_verbose software_test_verbose
+.PHONY: benchmark integration_test stress_test memcheck coverage profile
+.PHONY: waves synthesis_check docs clean clean_all help ci dev release

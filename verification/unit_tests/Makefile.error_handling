@@ -1,0 +1,88 @@
+# Makefile for Error Handling Unit Tests
+# Tests ECC controller, error detector, and error injection mechanisms
+
+# Verilator configuration
+VERILATOR = verilator
+VERILATOR_FLAGS = --cc --exe --build --trace --Wall -Wno-UNUSED -Wno-UNDRIVEN --timing -Wno-EOFNEWLINE -Wno-DECLFILENAME -Wno-TIMESCALEMOD -Wno-WIDTHEXPAND -Wno-STMTDLY
+
+# Directories
+RTL_DIR = ../../rtl
+MEMORY_DIR = $(RTL_DIR)/memory
+TEST_DIR = .
+OBJ_DIR = ./obj_dir
+
+# Source files
+ECC_SOURCES = $(MEMORY_DIR)/ecc_controller.sv
+ERROR_DETECTOR_SOURCES = $(MEMORY_DIR)/error_detector.sv
+ERROR_INJECTOR_SOURCES = $(MEMORY_DIR)/error_injector.sv
+
+# Test files
+ECC_TEST = test_ecc_controller.sv
+ERROR_DETECTOR_TEST = test_error_detector.sv
+ERROR_INJECTOR_TEST = test_error_injector.sv
+
+# Executables
+ECC_EXE = $(OBJ_DIR)/Vtest_ecc_controller
+ERROR_DETECTOR_EXE = $(OBJ_DIR)/Vtest_error_detector
+ERROR_INJECTOR_EXE = $(OBJ_DIR)/Vtest_error_injector
+
+# Default target
+all: test_ecc test_error_detector test_error_injector
+
+# ECC Controller test
+test_ecc: $(ECC_EXE)
+	@echo "Running ECC Controller test..."
+	@cd $(OBJ_DIR) && ./Vtest_ecc_controller
+	@echo "ECC Controller test completed."
+
+$(ECC_EXE): $(ECC_SOURCES) $(ECC_TEST)
+	@echo "Building ECC Controller test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_ecc_controller \
+		$(ECC_SOURCES) $(ECC_TEST)
+
+# Error Detector test
+test_error_detector: $(ERROR_DETECTOR_EXE)
+	@echo "Running Error Detector test..."
+	@cd $(OBJ_DIR) && ./Vtest_error_detector
+	@echo "Error Detector test completed."
+
+$(ERROR_DETECTOR_EXE): $(ERROR_DETECTOR_SOURCES) $(ERROR_DETECTOR_TEST)
+	@echo "Building Error Detector test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_error_detector \
+		$(ERROR_DETECTOR_SOURCES) $(ERROR_DETECTOR_TEST)
+
+# Error Injector test
+test_error_injector: $(ERROR_INJECTOR_EXE)
+	@echo "Running Error Injector test..."
+	@cd $(OBJ_DIR) && ./Vtest_error_injector
+	@echo "Error Injector test completed."
+
+$(ERROR_INJECTOR_EXE): $(ERROR_INJECTOR_SOURCES) $(ERROR_INJECTOR_TEST)
+	@echo "Building Error Injector test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_error_injector \
+		$(ERROR_INJECTOR_SOURCES) $(ERROR_INJECTOR_TEST)
+
+# Run comprehensive error handling tests
+test_comprehensive: test_ecc test_error_detector test_error_injector
+	@echo "All error handling tests completed successfully!"
+
+# Clean build artifacts
+clean:
+	rm -rf $(OBJ_DIR)
+	rm -f *.vcd
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all                 - Build and run all tests"
+	@echo "  test_ecc           - Test ECC controller"
+	@echo "  test_error_detector - Test error detection system"
+	@echo "  test_error_injector - Test error injection mechanism"
+	@echo "  test_comprehensive  - Run all error handling tests"
+	@echo "  clean              - Clean build artifacts"
+	@echo "  help               - Show this help message"
+
+.PHONY: all test_ecc test_error_detector test_error_injector test_comprehensive clean help

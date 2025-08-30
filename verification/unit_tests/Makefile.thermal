@@ -1,0 +1,322 @@
+# Makefile for Thermal Management System Tests
+# 
+# This Makefile provides targets for building and running thermal management
+# related tests for the RISC-V AI accelerator chip.
+
+# Tool configuration
+VERILATOR = verilator
+PYTHON = python3
+IVERILOG = iverilog
+VVP = vvp
+
+# Directories
+RTL_DIR = ../../rtl
+POWER_DIR = $(RTL_DIR)/power
+INTERFACE_DIR = $(RTL_DIR)/interfaces
+TEST_DIR = .
+OBJ_DIR = ./obj_dir
+
+# Common Verilator flags
+VERILATOR_FLAGS = --cc --exe --build --trace
+VERILATOR_FLAGS += -Wall -Wno-UNUSED -Wno-UNDRIVEN -Wno-DECLFILENAME
+VERILATOR_FLAGS += -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR)
+
+# Test targets
+THERMAL_TESTS = test_thermal_controller test_power_monitor test_thermal_system_integration test_thermal_management
+ALL_TESTS = $(THERMAL_TESTS)
+
+# Default target
+.PHONY: all
+all: help
+
+# Help target
+.PHONY: help
+help:
+	@echo "Thermal Management Test Makefile"
+	@echo "================================="
+	@echo ""
+	@echo "Available targets:"
+	@echo "  test_all_thermal     - Run all thermal management tests"
+	@echo "  test_thermal         - Run thermal controller test"
+	@echo "  test_power_monitor   - Run power monitor test"
+	@echo "  test_thermal_mgmt    - Run thermal management test"
+	@echo "  test_integration     - Run thermal system integration test"
+	@echo "  syntax_check         - Check syntax of all thermal modules"
+	@echo "  clean               - Clean generated files"
+	@echo "  help                - Show this help message"
+	@echo ""
+	@echo "Individual test files:"
+	@echo "  $(THERMAL_TESTS)"
+
+# Run all thermal management tests
+.PHONY: test_all_thermal
+test_all_thermal: $(THERMAL_TESTS)
+	@echo "All thermal management tests completed"
+
+# Thermal controller test
+.PHONY: test_thermal_controller test_thermal
+test_thermal_controller test_thermal: $(OBJ_DIR)/Vtest_thermal_controller
+	@echo "Running thermal controller test..."
+	@cd $(OBJ_DIR) && ./Vtest_thermal_controller
+	@echo "Thermal controller test completed"
+
+$(OBJ_DIR)/Vtest_thermal_controller: test_thermal_controller.sv $(POWER_DIR)/thermal_controller.sv
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_thermal_controller \
+		test_thermal_controller.sv \
+		$(POWER_DIR)/thermal_controller.sv \
+		--exe /dev/null
+
+# Power monitor test
+.PHONY: test_power_monitor
+test_power_monitor: $(OBJ_DIR)/Vtest_power_monitor
+	@echo "Running power monitor test..."
+	@cd $(OBJ_DIR) && ./Vtest_power_monitor
+	@echo "Power monitor test completed"
+
+$(OBJ_DIR)/Vtest_power_monitor: test_power_monitor.sv $(POWER_DIR)/power_monitor.sv
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_power_monitor \
+		test_power_monitor.sv \
+		$(POWER_DIR)/power_monitor.sv \
+		--exe /dev/null
+
+# Thermal management test
+.PHONY: test_thermal_management test_thermal_mgmt
+test_thermal_management test_thermal_mgmt: $(OBJ_DIR)/Vtest_thermal_management
+	@echo "Running thermal management test..."
+	@cd $(OBJ_DIR) && ./Vtest_thermal_management
+	@echo "Thermal management test completed"
+
+$(OBJ_DIR)/Vtest_thermal_management: test_thermal_management.sv $(POWER_DIR)/thermal_controller.sv
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_thermal_management \
+		test_thermal_management.sv \
+		$(POWER_DIR)/thermal_controller.sv \
+		--exe /dev/null
+
+# Thermal system integration test
+.PHONY: test_thermal_system_integration test_integration
+test_thermal_system_integration test_integration: $(OBJ_DIR)/Vtest_thermal_system_integration
+	@echo "Running thermal system integration test..."
+	@cd $(OBJ_DIR) && ./Vtest_thermal_system_integration
+	@echo "Thermal system integration test completed"
+
+$(OBJ_DIR)/Vtest_thermal_system_integration: test_thermal_system_integration.sv \
+	$(POWER_DIR)/thermal_controller.sv $(POWER_DIR)/power_monitor.sv $(POWER_DIR)/temperature_sensor.sv
+	@mkdir -p $(OBJ_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) \
+		--top-module test_thermal_system_integration \
+		test_thermal_system_integration.sv \
+		$(POWER_DIR)/thermal_controller.sv \
+		$(POWER_DIR)/power_monitor.sv \
+		$(POWER_DIR)/temperature_sensor.sv \
+		--exe /dev/null
+
+# Syntax checking
+.PHONY: syntax_check
+syntax_check:
+	@echo "Checking syntax of thermal management modules..."
+	@echo "Checking thermal_controller.sv..."
+	@$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		$(POWER_DIR)/thermal_controller.sv
+	@echo "Checking power_monitor.sv..."
+	@$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		$(POWER_DIR)/power_monitor.sv
+	@echo "Checking temperature_sensor.sv..."
+	@$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		$(POWER_DIR)/temperature_sensor.sv
+	@echo "Checking test files..."
+	@if [ -f test_thermal_controller.sv ]; then \
+		$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+			test_thermal_controller.sv $(POWER_DIR)/thermal_controller.sv; \
+	fi
+	@if [ -f test_power_monitor.sv ]; then \
+		$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+			test_power_monitor.sv $(POWER_DIR)/power_monitor.sv; \
+	fi
+	@if [ -f test_thermal_management.sv ]; then \
+		$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+			test_thermal_management.sv $(POWER_DIR)/thermal_controller.sv; \
+	fi
+	@if [ -f test_thermal_system_integration.sv ]; then \
+		$(VERILATOR) --lint-only -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+			test_thermal_system_integration.sv \
+			$(POWER_DIR)/thermal_controller.sv \
+			$(POWER_DIR)/power_monitor.sv \
+			$(POWER_DIR)/temperature_sensor.sv; \
+	fi
+	@echo "All syntax checks passed!"
+
+# Alternative test runners using iverilog (if verilator not available)
+.PHONY: test_thermal_iverilog
+test_thermal_iverilog:
+	@echo "Running thermal controller test with iverilog..."
+	@$(IVERILOG) -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		-o test_thermal_controller.vvp \
+		test_thermal_controller.sv $(POWER_DIR)/thermal_controller.sv
+	@$(VVP) test_thermal_controller.vvp
+	@rm -f test_thermal_controller.vvp
+
+.PHONY: test_power_monitor_iverilog
+test_power_monitor_iverilog:
+	@echo "Running power monitor test with iverilog..."
+	@$(IVERILOG) -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		-o test_power_monitor.vvp \
+		test_power_monitor.sv $(POWER_DIR)/power_monitor.sv
+	@$(VVP) test_power_monitor.vvp
+	@rm -f test_power_monitor.vvp
+
+.PHONY: test_integration_iverilog
+test_integration_iverilog:
+	@echo "Running thermal system integration test with iverilog..."
+	@$(IVERILOG) -I$(RTL_DIR) -I$(POWER_DIR) -I$(INTERFACE_DIR) \
+		-o test_thermal_system_integration.vvp \
+		test_thermal_system_integration.sv \
+		$(POWER_DIR)/thermal_controller.sv \
+		$(POWER_DIR)/power_monitor.sv \
+		$(POWER_DIR)/temperature_sensor.sv
+	@$(VVP) test_thermal_system_integration.vvp
+	@rm -f test_thermal_system_integration.vvp
+
+# Python-based analysis tools
+.PHONY: analyze_thermal_data
+analyze_thermal_data:
+	@echo "Analyzing thermal test data..."
+	@if [ -f test_thermal_system_integration.vcd ]; then \
+		$(PYTHON) analyze_thermal_data.py test_thermal_system_integration.vcd; \
+	else \
+		echo "No VCD file found. Run integration test first."; \
+	fi
+
+# Create thermal analysis script
+analyze_thermal_data.py:
+	@echo "Creating thermal data analysis script..."
+	@echo '#!/usr/bin/env python3' > analyze_thermal_data.py
+	@echo 'import sys, os' >> analyze_thermal_data.py
+	@echo 'print("Thermal VCD analysis tool")' >> analyze_thermal_data.py
+	@chmod +x analyze_thermal_data.py
+
+# Performance benchmarking
+.PHONY: benchmark_thermal
+benchmark_thermal:
+	@echo "Running thermal management performance benchmark..."
+	@echo "This will run extended tests to measure thermal response times"
+	@$(MAKE) test_integration
+	@echo "Benchmark completed. Check VCD files for detailed timing analysis."
+
+# Coverage analysis (requires coverage-enabled build)
+.PHONY: coverage_thermal
+coverage_thermal:
+	@echo "Running thermal management tests with coverage analysis..."
+	@echo "Note: This requires Verilator built with coverage support"
+	@$(VERILATOR) $(VERILATOR_FLAGS) --coverage \
+		--top-module test_thermal_system_integration \
+		test_thermal_system_integration.sv \
+		$(POWER_DIR)/thermal_controller.sv \
+		$(POWER_DIR)/power_monitor.sv \
+		$(POWER_DIR)/temperature_sensor.sv \
+		--exe /dev/null
+	@cd $(OBJ_DIR) && ./Vtest_thermal_system_integration
+	@echo "Coverage analysis completed. Check coverage reports."
+
+# Documentation generation
+.PHONY: docs_thermal
+docs_thermal:
+	@echo "Generating thermal management documentation..."
+	@mkdir -p docs
+	@echo "# Thermal Management System Documentation" > docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "## Test Results" >> docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "Generated on: $$(date)" >> docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "### Available Tests" >> docs/thermal_management.md
+	@for test in $(THERMAL_TESTS); do \
+		echo "- $$test" >> docs/thermal_management.md; \
+	done
+	@echo "" >> docs/thermal_management.md
+	@echo "### Module Descriptions" >> docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "#### Thermal Controller" >> docs/thermal_management.md
+	@echo "Manages thermal protection and throttling based on temperature sensors." >> docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "#### Power Monitor" >> docs/thermal_management.md
+	@echo "Monitors power consumption across all system domains." >> docs/thermal_management.md
+	@echo "" >> docs/thermal_management.md
+	@echo "#### Temperature Sensor" >> docs/thermal_management.md
+	@echo "Models realistic temperature sensors with thermal dynamics." >> docs/thermal_management.md
+	@echo "Documentation generated in docs/thermal_management.md"
+
+# Clean generated files
+.PHONY: clean
+clean:
+	@echo "Cleaning thermal management test files..."
+	@rm -rf $(OBJ_DIR)
+	@rm -f *.vcd *.vvp *.log
+	@rm -f analyze_thermal_data.py
+	@rm -rf docs
+	@echo "Clean completed"
+
+# Continuous integration target
+.PHONY: ci_thermal
+ci_thermal: syntax_check test_all_thermal
+	@echo "Thermal management CI tests completed successfully"
+
+# Debug targets
+.PHONY: debug_thermal
+debug_thermal:
+	@echo "Debug information for thermal management tests:"
+	@echo "RTL_DIR: $(RTL_DIR)"
+	@echo "POWER_DIR: $(POWER_DIR)"
+	@echo "INTERFACE_DIR: $(INTERFACE_DIR)"
+	@echo "TEST_DIR: $(TEST_DIR)"
+	@echo "OBJ_DIR: $(OBJ_DIR)"
+	@echo "Available thermal tests: $(THERMAL_TESTS)"
+	@echo "Verilator version:"
+	@$(VERILATOR) --version || echo "Verilator not found"
+	@echo "Iverilog version:"
+	@$(IVERILOG) -V || echo "Iverilog not found"
+
+# Quick test (subset of tests for rapid feedback)
+.PHONY: quick_test_thermal
+quick_test_thermal: test_thermal test_power_monitor
+	@echo "Quick thermal management tests completed"
+
+# Regression test (all tests with extra validation)
+.PHONY: regression_thermal
+regression_thermal: clean syntax_check test_all_thermal analyze_thermal_data
+	@echo "Thermal management regression tests completed"
+
+# Help for specific test
+.PHONY: help_thermal
+help_thermal:
+	@echo "Thermal Management Test Help"
+	@echo "============================"
+	@echo ""
+	@echo "Test Descriptions:"
+	@echo ""
+	@echo "test_thermal_controller:"
+	@echo "  Tests the thermal controller module including temperature monitoring,"
+	@echo "  thermal zone detection, throttling control, and configuration interface."
+	@echo ""
+	@echo "test_power_monitor:"
+	@echo "  Tests the power monitoring module including power calculation for"
+	@echo "  different domains, statistics collection, and DVFS scaling effects."
+	@echo ""
+	@echo "test_thermal_management:"
+	@echo "  Comprehensive test of the thermal controller with focus on thermal"
+	@echo "  protection, power budget management, and sensor fault handling."
+	@echo ""
+	@echo "test_thermal_system_integration:"
+	@echo "  Full system integration test combining temperature sensors, power"
+	@echo "  monitor, and thermal controller in realistic scenarios."
+	@echo ""
+	@echo "Usage Examples:"
+	@echo "  make -f Makefile.thermal test_thermal"
+	@echo "  make -f Makefile.thermal test_all_thermal"
+	@echo "  make -f Makefile.thermal syntax_check"
+	@echo "  make -f Makefile.thermal clean"
