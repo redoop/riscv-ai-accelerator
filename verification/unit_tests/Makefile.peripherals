@@ -1,0 +1,204 @@
+# Makefile for Peripheral Interface Controller Tests
+# Tests PCIe, Ethernet, and Network Packet Processor modules
+
+# Tool configuration
+VERILATOR = verilator
+VERILATOR_FLAGS = --cc --exe --build --trace --top-module
+VERILATOR_WARNINGS = -Wno-UNUSED -Wno-UNDRIVEN -Wno-WIDTH
+
+# Directories
+RTL_DIR = ../../rtl
+PERIPHERAL_DIR = $(RTL_DIR)/peripherals
+INTERFACE_DIR = $(RTL_DIR)/interfaces
+TEST_DIR = .
+OBJ_DIR = obj_dir
+
+# Source files
+PCIE_SOURCES = $(PERIPHERAL_DIR)/pcie_controller.sv
+ETHERNET_SOURCES = $(PERIPHERAL_DIR)/ethernet_controller.sv
+NETWORK_SOURCES = $(PERIPHERAL_DIR)/network_packet_processor.sv
+USB_SOURCES = $(PERIPHERAL_DIR)/usb_controller.sv
+SATA_SOURCES = $(PERIPHERAL_DIR)/sata_controller.sv
+NVME_SOURCES = $(PERIPHERAL_DIR)/nvme_controller.sv
+GPIO_SOURCES = $(PERIPHERAL_DIR)/gpio_controller.sv
+SPI_SOURCES = $(PERIPHERAL_DIR)/spi_controller.sv
+INTERFACE_SOURCES = $(INTERFACE_DIR)/system_interfaces.sv
+
+# Test files
+PCIE_TEST = test_pcie_controller.sv
+ETHERNET_TEST = test_ethernet_controller.sv
+NETWORK_TEST = test_network_packet_processor.sv
+USB_TEST = test_usb_controller.sv
+STORAGE_TEST = test_storage_controllers.sv
+GPIO_SPI_TEST = test_gpio_spi_controllers.sv
+
+# Executables
+PCIE_EXE = $(OBJ_DIR)/Vtest_pcie_controller
+ETHERNET_EXE = $(OBJ_DIR)/Vtest_ethernet_controller
+NETWORK_EXE = $(OBJ_DIR)/Vtest_network_packet_processor
+USB_EXE = $(OBJ_DIR)/Vtest_usb_controller
+STORAGE_EXE = $(OBJ_DIR)/Vtest_storage_controllers
+GPIO_SPI_EXE = $(OBJ_DIR)/Vtest_gpio_spi_controllers
+
+# Default target
+all: test_pcie test_ethernet test_network test_usb test_storage test_gpio_spi
+
+# Individual test targets
+test_pcie: $(PCIE_EXE)
+	@echo "Running PCIe Controller Test..."
+	@cd $(OBJ_DIR) && ./Vtest_pcie_controller
+	@echo "PCIe Controller Test completed."
+
+test_ethernet: $(ETHERNET_EXE)
+	@echo "Running Ethernet Controller Test..."
+	@cd $(OBJ_DIR) && ./Vtest_ethernet_controller
+	@echo "Ethernet Controller Test completed."
+
+test_network: $(NETWORK_EXE)
+	@echo "Running Network Packet Processor Test..."
+	@cd $(OBJ_DIR) && ./Vtest_network_packet_processor
+	@echo "Network Packet Processor Test completed."
+
+test_usb: $(USB_EXE)
+	@echo "Running USB Controller Test..."
+	@cd $(OBJ_DIR) && ./Vtest_usb_controller
+	@echo "USB Controller Test completed."
+
+test_storage: $(STORAGE_EXE)
+	@echo "Running Storage Controllers Test..."
+	@cd $(OBJ_DIR) && ./Vtest_storage_controllers
+	@echo "Storage Controllers Test completed."
+
+test_gpio_spi: $(GPIO_SPI_EXE)
+	@echo "Running GPIO and SPI Controllers Test..."
+	@cd $(OBJ_DIR) && ./Vtest_gpio_spi_controllers
+	@echo "GPIO and SPI Controllers Test completed."
+
+# Build PCIe test
+$(PCIE_EXE): $(PCIE_SOURCES) $(PCIE_TEST) $(INTERFACE_SOURCES)
+	@echo "Building PCIe Controller Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_pcie_controller $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(PCIE_SOURCES) $(INTERFACE_SOURCES) $(PCIE_TEST)
+
+# Build Ethernet test
+$(ETHERNET_EXE): $(ETHERNET_SOURCES) $(ETHERNET_TEST) $(INTERFACE_SOURCES)
+	@echo "Building Ethernet Controller Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_ethernet_controller $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(ETHERNET_SOURCES) $(INTERFACE_SOURCES) $(ETHERNET_TEST)
+
+# Build Network Packet Processor test
+$(NETWORK_EXE): $(NETWORK_SOURCES) $(NETWORK_TEST) $(INTERFACE_SOURCES)
+	@echo "Building Network Packet Processor Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_network_packet_processor $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(NETWORK_SOURCES) $(INTERFACE_SOURCES) $(NETWORK_TEST)
+
+# Build USB test
+$(USB_EXE): $(USB_SOURCES) $(USB_TEST) $(INTERFACE_SOURCES)
+	@echo "Building USB Controller Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_usb_controller $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(USB_SOURCES) $(INTERFACE_SOURCES) $(USB_TEST)
+
+# Build Storage Controllers test
+$(STORAGE_EXE): $(SATA_SOURCES) $(NVME_SOURCES) $(STORAGE_TEST) $(INTERFACE_SOURCES)
+	@echo "Building Storage Controllers Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_storage_controllers $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(SATA_SOURCES) $(NVME_SOURCES) $(INTERFACE_SOURCES) $(STORAGE_TEST)
+
+# Build GPIO and SPI test
+$(GPIO_SPI_EXE): $(GPIO_SOURCES) $(SPI_SOURCES) $(GPIO_SPI_TEST) $(INTERFACE_SOURCES)
+	@echo "Building GPIO and SPI Controllers Test..."
+	$(VERILATOR) $(VERILATOR_FLAGS) test_gpio_spi_controllers $(VERILATOR_WARNINGS) \
+		--Mdir $(OBJ_DIR) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(GPIO_SOURCES) $(SPI_SOURCES) $(INTERFACE_SOURCES) $(GPIO_SPI_TEST)
+
+# Syntax check only
+syntax_check:
+	@echo "Checking syntax for peripheral modules..."
+	$(VERILATOR) --lint-only $(VERILATOR_WARNINGS) \
+		-I$(RTL_DIR) -I$(PERIPHERAL_DIR) -I$(INTERFACE_DIR) \
+		$(PCIE_SOURCES) $(ETHERNET_SOURCES) $(NETWORK_SOURCES) \
+		$(USB_SOURCES) $(SATA_SOURCES) $(NVME_SOURCES) \
+		$(GPIO_SOURCES) $(SPI_SOURCES)
+	@echo "Syntax check completed."
+
+# Performance test with longer simulation
+perf_test: $(PCIE_EXE) $(ETHERNET_EXE) $(NETWORK_EXE) $(USB_EXE) $(STORAGE_EXE) $(GPIO_SPI_EXE)
+	@echo "Running performance tests..."
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_pcie_controller || true
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_ethernet_controller || true
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_network_packet_processor || true
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_usb_controller || true
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_storage_controllers || true
+	@cd $(OBJ_DIR) && timeout 30s ./Vtest_gpio_spi_controllers || true
+	@echo "Performance tests completed."
+
+# Coverage analysis (if supported)
+coverage: $(PCIE_EXE) $(ETHERNET_EXE) $(NETWORK_EXE) $(USB_EXE) $(STORAGE_EXE) $(GPIO_SPI_EXE)
+	@echo "Running coverage analysis..."
+	@cd $(OBJ_DIR) && ./Vtest_pcie_controller --coverage
+	@cd $(OBJ_DIR) && ./Vtest_ethernet_controller --coverage
+	@cd $(OBJ_DIR) && ./Vtest_network_packet_processor --coverage
+	@cd $(OBJ_DIR) && ./Vtest_usb_controller --coverage
+	@cd $(OBJ_DIR) && ./Vtest_storage_controllers --coverage
+	@cd $(OBJ_DIR) && ./Vtest_gpio_spi_controllers --coverage
+	@echo "Coverage analysis completed."
+
+# Waveform generation
+waves: $(PCIE_EXE) $(ETHERNET_EXE) $(NETWORK_EXE) $(USB_EXE) $(STORAGE_EXE) $(GPIO_SPI_EXE)
+	@echo "Generating waveforms..."
+	@cd $(OBJ_DIR) && ./Vtest_pcie_controller
+	@cd $(OBJ_DIR) && ./Vtest_ethernet_controller
+	@cd $(OBJ_DIR) && ./Vtest_network_packet_processor
+	@cd $(OBJ_DIR) && ./Vtest_usb_controller
+	@cd $(OBJ_DIR) && ./Vtest_storage_controllers
+	@cd $(OBJ_DIR) && ./Vtest_gpio_spi_controllers
+	@echo "Waveforms generated: *.vcd files"
+
+# Clean build artifacts
+clean:
+	@echo "Cleaning build artifacts..."
+	rm -rf $(OBJ_DIR)
+	rm -f *.vcd *.fst *.log
+	@echo "Clean completed."
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all           - Build and run all peripheral tests"
+	@echo "  test_pcie     - Build and run PCIe controller test"
+	@echo "  test_ethernet - Build and run Ethernet controller test"
+	@echo "  test_network  - Build and run Network packet processor test"
+	@echo "  test_usb      - Build and run USB controller test"
+	@echo "  test_storage  - Build and run Storage controllers test"
+	@echo "  test_gpio_spi - Build and run GPIO and SPI controllers test"
+	@echo "  syntax_check  - Check syntax of all peripheral modules"
+	@echo "  perf_test     - Run performance tests with timeout"
+	@echo "  coverage      - Run coverage analysis"
+	@echo "  waves         - Generate waveform files"
+	@echo "  clean         - Clean build artifacts"
+	@echo "  help          - Show this help message"
+
+# Regression test
+regression: clean syntax_check all
+	@echo "Regression test completed successfully!"
+
+# Quick test (syntax check only)
+quick: syntax_check
+	@echo "Quick test (syntax check) completed."
+
+# Continuous integration target
+ci: clean syntax_check all perf_test
+	@echo "CI pipeline completed successfully!"
+
+.PHONY: all test_pcie test_ethernet test_network syntax_check perf_test coverage waves clean help regression quick ci

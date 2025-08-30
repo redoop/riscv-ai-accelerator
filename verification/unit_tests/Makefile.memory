@@ -1,0 +1,226 @@
+# Makefile for Memory Subsystem Tests
+# Comprehensive testing of HBM controller and memory subsystem
+
+# Simulator settings
+SIM ?= verilator
+TOPLEVEL_LANG ?= verilog
+
+# Test modules
+MEMORY_TESTS = test_memory_stress test_hbm_controller_advanced test_memory_subsystem
+
+# RTL source files
+RTL_DIR = ../../rtl
+MEMORY_RTL = \
+	$(RTL_DIR)/memory/hbm_controller.sv \
+	$(RTL_DIR)/memory/memory_subsystem.sv \
+	$(RTL_DIR)/memory/memory_monitor.sv \
+	$(RTL_DIR)/memory/l1_icache.sv \
+	$(RTL_DIR)/memory/l1_dcache.sv \
+	$(RTL_DIR)/memory/l2_cache.sv \
+	$(RTL_DIR)/memory/l3_cache.sv \
+	$(RTL_DIR)/memory/cache_controller.sv \
+	$(RTL_DIR)/interfaces/system_interfaces.sv
+
+# Test source files
+TEST_DIR = .
+MEMORY_TEST_FILES = \
+	$(TEST_DIR)/test_memory_stress.sv \
+	$(TEST_DIR)/test_hbm_controller_advanced.sv \
+	$(TEST_DIR)/test_memory_subsystem.sv
+
+# Include directories
+INCLUDE_DIRS = \
+	-I$(RTL_DIR) \
+	-I$(RTL_DIR)/memory \
+	-I$(RTL_DIR)/interfaces \
+	-I$(TEST_DIR)
+
+# Verilator flags
+VERILATOR_FLAGS = \
+	--cc \
+	--exe \
+	--build \
+	--trace \
+	--trace-depth 3 \
+	--trace-max-array 1024 \
+	--trace-max-width 1024 \
+	--top-module \
+	-Wall \
+	-Wno-UNUSED \
+	-Wno-UNDRIVEN \
+	-Wno-WIDTH \
+	--timing \
+	$(INCLUDE_DIRS)
+
+# VCS flags (alternative simulator)
+VCS_FLAGS = \
+	-sverilog \
+	-debug_access+all \
+	-kdb \
+	-lca \
+	-timescale=1ns/1ps \
+	$(INCLUDE_DIRS)
+
+# Default target
+all: memory_tests
+
+# Memory subsystem tests
+memory_tests: test_memory_stress test_hbm_advanced test_memory_subsystem
+
+# Individual test targets
+test_memory_stress: $(MEMORY_RTL) $(TEST_DIR)/test_memory_stress.sv
+	@echo "Running Memory Stress Test..."
+	$(SIM) $(VERILATOR_FLAGS) test_memory_stress \
+		$(MEMORY_RTL) $(TEST_DIR)/test_memory_stress.sv \
+		--exe-name $@
+	./obj_dir/$@
+	@echo "Memory Stress Test completed"
+
+test_hbm_advanced: $(MEMORY_RTL) $(TEST_DIR)/test_hbm_controller_advanced.sv
+	@echo "Running Advanced HBM Controller Test..."
+	$(SIM) $(VERILATOR_FLAGS) test_hbm_controller_advanced \
+		$(MEMORY_RTL) $(TEST_DIR)/test_hbm_controller_advanced.sv \
+		--exe-name $@
+	./obj_dir/$@
+	@echo "Advanced HBM Controller Test completed"
+
+test_memory_subsystem: $(MEMORY_RTL) $(TEST_DIR)/test_memory_subsystem.sv
+	@echo "Running Memory Subsystem Integration Test..."
+	$(SIM) $(VERILATOR_FLAGS) test_memory_subsystem \
+		$(MEMORY_RTL) $(TEST_DIR)/test_memory_subsystem.sv \
+		--exe-name $@
+	./obj_dir/$@
+	@echo "Memory Subsystem Integration Test completed"
+
+# Performance benchmarking
+benchmark: test_memory_stress
+	@echo "Running Memory Performance Benchmark..."
+	./obj_dir/test_memory_stress > benchmark_results.txt
+	@echo "Benchmark results saved to benchmark_results.txt"
+
+# Bandwidth stress test
+bandwidth_test: test_hbm_advanced
+	@echo "Running Bandwidth Stress Test..."
+	./obj_dir/test_hbm_controller_advanced > bandwidth_results.txt
+	@echo "Bandwidth test results saved to bandwidth_results.txt"
+
+# Latency analysis
+latency_test: test_memory_stress
+	@echo "Running Latency Analysis..."
+	./obj_dir/test_memory_stress | grep -E "(latency|Latency)" > latency_analysis.txt
+	@echo "Latency analysis saved to latency_analysis.txt"
+
+# Power analysis
+power_test: test_hbm_advanced
+	@echo "Running Power Analysis..."
+	./obj_dir/test_hbm_controller_advanced | grep -E "(power|Power)" > power_analysis.txt
+	@echo "Power analysis saved to power_analysis.txt"
+
+# Comprehensive test suite
+comprehensive: memory_tests benchmark bandwidth_test latency_test power_test
+	@echo "Comprehensive memory testing completed"
+	@echo "Results available in:"
+	@echo "  - benchmark_results.txt"
+	@echo "  - bandwidth_results.txt"
+	@echo "  - latency_analysis.txt"
+	@echo "  - power_analysis.txt"
+
+# VCS simulation (alternative)
+vcs_test_%: $(MEMORY_RTL) $(TEST_DIR)/test_%.sv
+	@echo "Running $* test with VCS..."
+	vcs $(VCS_FLAGS) -o $@ $(MEMORY_RTL) $(TEST_DIR)/test_$*.sv
+	./$@
+
+# Synthesis check
+synth_check:
+	@echo "Checking memory RTL for synthesis..."
+	verilator --lint-only $(VERILATOR_FLAGS) $(MEMORY_RTL)
+	@echo "Synthesis check completed"
+
+# Coverage analysis
+coverage: test_memory_stress
+	@echo "Running coverage analysis..."
+	$(SIM) $(VERILATOR_FLAGS) --coverage test_memory_stress \
+		$(MEMORY_RTL) $(TEST_DIR)/test_memory_stress.sv
+	verilator_coverage --annotate coverage_html logs/coverage.dat
+	@echo "Coverage report generated in coverage_html/"
+
+# Performance profiling
+profile: test_hbm_advanced
+	@echo "Running performance profiling..."
+	$(SIM) $(VERILATOR_FLAGS) --prof-cfuncs test_hbm_controller_advanced \
+		$(MEMORY_RTL) $(TEST_DIR)/test_hbm_controller_advanced.sv
+	./obj_dir/test_hbm_controller_advanced
+	@echo "Performance profile completed"
+
+# Memory leak check
+memcheck: test_memory_stress
+	@echo "Running memory leak check..."
+	valgrind --leak-check=full --show-leak-kinds=all \
+		./obj_dir/test_memory_stress > memcheck_results.txt 2>&1
+	@echo "Memory leak check results saved to memcheck_results.txt"
+
+# Regression test suite
+regression: clean memory_tests
+	@echo "Running regression test suite..."
+	@for test in $(MEMORY_TESTS); do \
+		echo "Running $$test..."; \
+		make $$test || exit 1; \
+	done
+	@echo "All regression tests passed"
+
+# Generate test report
+report: comprehensive
+	@echo "Generating comprehensive test report..."
+	@echo "# Memory Subsystem Test Report" > test_report.md
+	@echo "Generated on: $$(date)" >> test_report.md
+	@echo "" >> test_report.md
+	@echo "## Test Results Summary" >> test_report.md
+	@echo "" >> test_report.md
+	@echo "### Bandwidth Test Results" >> test_report.md
+	@grep -E "(Bandwidth|bandwidth)" bandwidth_results.txt >> test_report.md || true
+	@echo "" >> test_report.md
+	@echo "### Latency Test Results" >> test_report.md
+	@grep -E "(Latency|latency)" latency_analysis.txt >> test_report.md || true
+	@echo "" >> test_report.md
+	@echo "### Power Test Results" >> test_report.md
+	@grep -E "(Power|power)" power_analysis.txt >> test_report.md || true
+	@echo "Test report generated: test_report.md"
+
+# Clean build artifacts
+clean:
+	rm -rf obj_dir/
+	rm -f *.txt *.md *.vcd *.fst
+	rm -rf coverage_html/
+	rm -rf logs/
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all                 - Run all memory tests"
+	@echo "  memory_tests        - Run basic memory test suite"
+	@echo "  test_memory_stress  - Run memory stress test"
+	@echo "  test_hbm_advanced   - Run advanced HBM controller test"
+	@echo "  test_memory_subsystem - Run memory subsystem integration test"
+	@echo "  benchmark           - Run performance benchmark"
+	@echo "  bandwidth_test      - Run bandwidth stress test"
+	@echo "  latency_test        - Run latency analysis"
+	@echo "  power_test          - Run power analysis"
+	@echo "  comprehensive       - Run comprehensive test suite"
+	@echo "  synth_check         - Check RTL for synthesis"
+	@echo "  coverage            - Run coverage analysis"
+	@echo "  profile             - Run performance profiling"
+	@echo "  memcheck            - Run memory leak check"
+	@echo "  regression          - Run regression test suite"
+	@echo "  report              - Generate comprehensive test report"
+	@echo "  clean               - Clean build artifacts"
+	@echo "  help                - Show this help message"
+
+.PHONY: all memory_tests benchmark bandwidth_test latency_test power_test \
+        comprehensive synth_check coverage profile memcheck regression \
+        report clean help
+
+# Default simulator check
+ifeq ($(SIM),)
+    $(error SIM variable not set. Use 'make SIM=verilator' or 'make SIM=vcs')
+endif

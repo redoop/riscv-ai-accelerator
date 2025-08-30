@@ -1,0 +1,375 @@
+diff --git a/gcc/config/riscv/riscv.h b/gcc/config/riscv/riscv.h
+index 1234567..abcdefg 100644
+--- a/gcc/config/riscv/riscv.h
++++ b/gcc/config/riscv/riscv.h
+@@ -100,6 +100,9 @@ along with GCC; see the file COPYING3.  If not see
+ /* True if the ABI is LP64.  */
+ #define TARGET_64BIT		(riscv_abi >= ABI_LP64)
+ 
++/* True if AI extension is enabled.  */
++#define TARGET_AI		(riscv_user_wants_ai)
++
+ /* ISA tests.  */
+ #define TARGET_HARD_FLOAT	(riscv_float_abi != FLOAT_ABI_SOFT)
+ #define TARGET_DOUBLE_FLOAT	(TARGET_HARD_FLOAT && TARGET_64BIT)
+@@ -150,6 +153,7 @@ enum riscv_isa_spec_class {
+ extern enum riscv_isa_spec_class riscv_isa_spec;
+ extern unsigned riscv_vector_chunks;
+ extern bool riscv_user_wants_vector;
++extern bool riscv_user_wants_ai;
+ 
+ /* The mapping from register number to register class.  */
+ extern enum reg_class riscv_regno_to_class[FIRST_PSEUDO_REGISTER];
+diff --git a/gcc/config/riscv/riscv.opt b/gcc/config/riscv/riscv.opt
+index 2345678..bcdefgh 100644
+--- a/gcc/config/riscv/riscv.opt
++++ b/gcc/config/riscv/riscv.opt
+@@ -120,6 +120,10 @@ Enum(isa_spec_class) String(20191213) Value(ISA_SPEC_CLASS_20191213)
+ Enum(isa_spec_class) String(20201007) Value(ISA_SPEC_CLASS_20201007)
+ 
++mai
++Target Bool Var(riscv_user_wants_ai) Init(0)
++Enable RISC-V AI extension support.
++
+ Enum
+ Name(riscv_vector_bits) Type(enum riscv_vector_bits)
+ The possible RVV vector lengths:
+diff --git a/gcc/config/riscv/riscv-builtins.cc b/gcc/config/riscv/riscv-builtins.cc
+index 3456789..cdefghi 100644
+--- a/gcc/config/riscv/riscv-builtins.cc
++++ b/gcc/config/riscv/riscv-builtins.cc
+@@ -50,6 +50,7 @@ along with GCC; see the file COPYING3.  If not see
+ #include "riscv-vector-builtins.h"
+ #include "riscv-vector-builtins-shapes.h"
+ #include "riscv-vector-builtins-bases.h"
++#include "riscv-ai-builtins.h"
+ 
+ using namespace riscv_vector;
+ 
+@@ -200,6 +201,9 @@ riscv_init_builtins (void)
+   if (TARGET_VECTOR)
+     riscv_vector::init_builtins ();
+ 
++  if (TARGET_AI)
++    riscv_ai::init_builtins ();
++
+   /* Reinitialize the target-specific function pointers.  */
+   this_target_builtins->x_indirect_return
+     = riscv_builtin_decls[RISCV_BUILTIN_eh_return_data_regno];
+diff --git a/gcc/config/riscv/riscv-ai-builtins.h b/gcc/config/riscv/riscv-ai-builtins.h
+new file mode 100644
+index 0000000..1234567
+--- /dev/null
++++ b/gcc/config/riscv/riscv-ai-builtins.h
+@@ -0,0 +1,45 @@
++/* RISC-V AI extension builtin function definitions.
++   Copyright (C) 2023 Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#ifndef GCC_RISCV_AI_BUILTINS_H
++#define GCC_RISCV_AI_BUILTINS_H
++
++namespace riscv_ai {
++
++/* AI builtin function types.  */
++enum ai_builtin_type_index
++{
++  AI_TYPE_VOID,
++  AI_TYPE_FLOAT,
++  AI_TYPE_DOUBLE,
++  AI_TYPE_UINT32,
++  AI_TYPE_UINT64,
++  AI_TYPE_PTR_FLOAT,
++  AI_TYPE_PTR_CONST_FLOAT,
++  AI_TYPE_MAX
++};
++
++/* Initialize AI builtin functions.  */
++extern void init_builtins (void);
++
++/* Expand AI builtin function calls.  */
++extern rtx expand_builtin (unsigned int, tree, rtx);
++
++} /* end namespace riscv_ai */
++
++#endif /* GCC_RISCV_AI_BUILTINS_H */
+diff --git a/gcc/config/riscv/riscv-ai-builtins.cc b/gcc/config/riscv/riscv-ai-builtins.cc
+new file mode 100644
+index 0000000..2345678
+--- /dev/null
++++ b/gcc/config/riscv/riscv-ai-builtins.cc
+@@ -0,0 +1,250 @@
++/* RISC-V AI extension builtin function implementations.
++   Copyright (C) 2023 Free Software Foundation, Inc.
++
++This file is part of GCC.
++
++GCC is free software; you can redistribute it and/or modify
++it under the terms of the GNU General Public License as published by
++the Free Software Foundation; either version 3, or (at your option)
++any later version.
++
++GCC is distributed in the hope that it will be useful,
++but WITHOUT ANY WARRANTY; without even the implied warranty of
++MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++GNU General Public License for more details.
++
++You should have received a copy of the GNU General Public License
++along with GCC; see the file COPYING3.  If not see
++<http://www.gnu.org/licenses/>.  */
++
++#define IN_TARGET_CODE 1
++
++#include "config.h"
++#include "system.h"
++#include "coretypes.h"
++#include "tm.h"
++#include "tree.h"
++#include "rtl.h"
++#include "tm_p.h"
++#include "memmodel.h"
++#include "insn-codes.h"
++#include "optabs.h"
++#include "recog.h"
++#include "diagnostic-core.h"
++#include "stor-layout.h"
++#include "expr.h"
++#include "langhooks.h"
++#include "riscv-ai-builtins.h"
++
++using namespace riscv_ai;
++
++/* AI builtin function codes.  */
++enum riscv_ai_builtin_code
++{
++  RISCV_AI_BUILTIN_MATMUL_F32,
++  RISCV_AI_BUILTIN_CONV2D_F32,
++  RISCV_AI_BUILTIN_RELU_F32,
++  RISCV_AI_BUILTIN_SIGMOID_F32,
++  RISCV_AI_BUILTIN_TANH_F32,
++  RISCV_AI_BUILTIN_MAXPOOL_F32,
++  RISCV_AI_BUILTIN_AVGPOOL_F32,
++  RISCV_AI_BUILTIN_BATCHNORM_F32,
++  RISCV_AI_BUILTIN_GET_STATUS,
++  RISCV_AI_BUILTIN_SET_CONFIG,
++  RISCV_AI_BUILTIN_FLUSH,
++  RISCV_AI_BUILTIN_SYNC,
++  RISCV_AI_BUILTIN_MAX
++};
++
++/* AI builtin function information.  */
++struct riscv_ai_builtin_info
++{
++  const char *name;
++  enum insn_code icode;
++  unsigned int function_type;
++};
++
++/* AI builtin function table.  */
++static const struct riscv_ai_builtin_info riscv_ai_builtins[] = {
++  { "__builtin_riscv_ai_matmul_f32", CODE_FOR_ai_matmul_f32, 0 },
++  { "__builtin_riscv_ai_conv2d_f32", CODE_FOR_ai_conv2d_f32, 0 },
++  { "__builtin_riscv_ai_relu_f32", CODE_FOR_ai_relu_f32, 0 },
++  { "__builtin_riscv_ai_sigmoid_f32", CODE_FOR_ai_sigmoid_f32, 0 },
++  { "__builtin_riscv_ai_tanh_f32", CODE_FOR_ai_tanh_f32, 0 },
++  { "__builtin_riscv_ai_maxpool_f32", CODE_FOR_ai_maxpool_f32, 0 },
++  { "__builtin_riscv_ai_avgpool_f32", CODE_FOR_ai_avgpool_f32, 0 },
++  { "__builtin_riscv_ai_batchnorm_f32", CODE_FOR_ai_batchnorm_f32, 0 },
++  { "__builtin_riscv_ai_get_status", CODE_FOR_ai_get_status, 0 },
++  { "__builtin_riscv_ai_set_config", CODE_FOR_ai_set_config, 0 },
++  { "__builtin_riscv_ai_flush", CODE_FOR_ai_flush, 0 },
++  { "__builtin_riscv_ai_sync", CODE_FOR_ai_sync, 0 }
++};
++
++/* AI builtin function types.  */
++static GTY(()) tree ai_builtin_types[AI_TYPE_MAX];
++
++/* AI builtin function declarations.  */
++static GTY(()) tree ai_builtin_decls[RISCV_AI_BUILTIN_MAX];
++
++/* Initialize AI builtin types.  */
++static void
++init_ai_builtin_types (void)
++{
++  ai_builtin_types[AI_TYPE_VOID] = void_type_node;
++  ai_builtin_types[AI_TYPE_FLOAT] = float_type_node;
++  ai_builtin_types[AI_TYPE_DOUBLE] = double_type_node;
++  ai_builtin_types[AI_TYPE_UINT32] = unsigned_type_node;
++  ai_builtin_types[AI_TYPE_UINT64] = long_long_unsigned_type_node;
++  ai_builtin_types[AI_TYPE_PTR_FLOAT] = build_pointer_type (float_type_node);
++  ai_builtin_types[AI_TYPE_PTR_CONST_FLOAT] = 
++    build_pointer_type (build_qualified_type (float_type_node, TYPE_QUAL_CONST));
++}
++
++/* Create AI builtin function type.  */
++static tree
++build_ai_function_type (tree return_type, ...)
++{
++  tree args = void_list_node;
++  va_list ap;
++  tree arg_type;
++
++  va_start (ap, return_type);
++  while ((arg_type = va_arg (ap, tree)) != NULL_TREE)
++    args = tree_cons (NULL_TREE, arg_type, args);
++  va_end (ap);
++
++  args = nreverse (args);
++  if (!VOID_TYPE_P (return_type))
++    args = tree_cons (NULL_TREE, return_type, args);
++
++  return build_function_type (return_type, args);
++}
++
++/* Initialize AI builtin functions.  */
++void
++riscv_ai::init_builtins (void)
++{
++  if (!TARGET_AI)
++    return;
++
++  init_ai_builtin_types ();
++
++  /* Matrix multiplication builtin.  */
++  tree matmul_type = build_ai_function_type (
++    ai_builtin_types[AI_TYPE_VOID],
++    ai_builtin_types[AI_TYPE_PTR_CONST_FLOAT],  /* matrix A */
++    ai_builtin_types[AI_TYPE_PTR_CONST_FLOAT],  /* matrix B */
++    ai_builtin_types[AI_TYPE_PTR_FLOAT],        /* matrix C */
++    ai_builtin_types[AI_TYPE_UINT32],           /* M */
++    ai_builtin_types[AI_TYPE_UINT32],           /* N */
++    ai_builtin_types[AI_TYPE_UINT32],           /* K */
++    NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_MATMUL_F32] =
++    add_builtin_function ("__builtin_riscv_ai_matmul_f32", matmul_type,
++                         RISCV_AI_BUILTIN_MATMUL_F32, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  /* Convolution builtin.  */
++  tree conv2d_type = build_ai_function_type (
++    ai_builtin_types[AI_TYPE_VOID],
++    ai_builtin_types[AI_TYPE_PTR_CONST_FLOAT],  /* input */
++    ai_builtin_types[AI_TYPE_PTR_CONST_FLOAT],  /* kernel */
++    ai_builtin_types[AI_TYPE_PTR_FLOAT],        /* output */
++    ai_builtin_types[AI_TYPE_UINT32],           /* input height */
++    ai_builtin_types[AI_TYPE_UINT32],           /* input width */
++    ai_builtin_types[AI_TYPE_UINT32],           /* input channels */
++    ai_builtin_types[AI_TYPE_UINT32],           /* output channels */
++    ai_builtin_types[AI_TYPE_UINT32],           /* kernel height */
++    ai_builtin_types[AI_TYPE_UINT32],           /* kernel width */
++    ai_builtin_types[AI_TYPE_UINT32],           /* stride height */
++    ai_builtin_types[AI_TYPE_UINT32],           /* stride width */
++    NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_CONV2D_F32] =
++    add_builtin_function ("__builtin_riscv_ai_conv2d_f32", conv2d_type,
++                         RISCV_AI_BUILTIN_CONV2D_F32, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  /* Activation function builtins.  */
++  tree activation_type = build_ai_function_type (
++    ai_builtin_types[AI_TYPE_FLOAT],
++    ai_builtin_types[AI_TYPE_FLOAT],
++    NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_RELU_F32] =
++    add_builtin_function ("__builtin_riscv_ai_relu_f32", activation_type,
++                         RISCV_AI_BUILTIN_RELU_F32, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_SIGMOID_F32] =
++    add_builtin_function ("__builtin_riscv_ai_sigmoid_f32", activation_type,
++                         RISCV_AI_BUILTIN_SIGMOID_F32, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_TANH_F32] =
++    add_builtin_function ("__builtin_riscv_ai_tanh_f32", activation_type,
++                         RISCV_AI_BUILTIN_TANH_F32, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  /* Control and status builtins.  */
++  tree get_status_type = build_ai_function_type (
++    ai_builtin_types[AI_TYPE_UINT32],
++    ai_builtin_types[AI_TYPE_UINT32],
++    NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_GET_STATUS] =
++    add_builtin_function ("__builtin_riscv_ai_get_status", get_status_type,
++                         RISCV_AI_BUILTIN_GET_STATUS, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++
++  tree set_config_type = build_ai_function_type (
++    ai_builtin_types[AI_TYPE_VOID],
++    ai_builtin_types[AI_TYPE_UINT32],
++    ai_builtin_types[AI_TYPE_UINT32],
++    NULL_TREE);
++
++  ai_builtin_decls[RISCV_AI_BUILTIN_SET_CONFIG] =
++    add_builtin_function ("__builtin_riscv_ai_set_config", set_config_type,
++                         RISCV_AI_BUILTIN_SET_CONFIG, BUILT_IN_MD,
++                         NULL, NULL_TREE);
++}
++
++/* Expand AI builtin function calls.  */
++rtx
++riscv_ai::expand_builtin (unsigned int code, tree exp, rtx target)
++{
++  switch (code)
++    {
++    case RISCV_AI_BUILTIN_MATMUL_F32:
++      {
++        tree arg0 = CALL_EXPR_ARG (exp, 0);  /* matrix A */
++        tree arg1 = CALL_EXPR_ARG (exp, 1);  /* matrix B */
++        tree arg2 = CALL_EXPR_ARG (exp, 2);  /* matrix C */
++        tree arg3 = CALL_EXPR_ARG (exp, 3);  /* M */
++        tree arg4 = CALL_EXPR_ARG (exp, 4);  /* N */
++        tree arg5 = CALL_EXPR_ARG (exp, 5);  /* K */
++
++        rtx op0 = expand_normal (arg0);
++        rtx op1 = expand_normal (arg1);
++        rtx op2 = expand_normal (arg2);
++        rtx op3 = expand_normal (arg3);
++        rtx op4 = expand_normal (arg4);
++        rtx op5 = expand_normal (arg5);
++
++        /* Combine dimensions into a single parameter.  */
++        rtx dims = gen_reg_rtx (DImode);
++        emit_insn (gen_iordi3 (dims, 
++                              gen_rtx_ASHIFT (DImode, op3, GEN_INT (32)),
++                              gen_rtx_IOR (DImode,
++                                          gen_rtx_ASHIFT (DImode, op4, GEN_INT (16)),
++                                          op5)));
++
++        emit_insn (gen_ai_matmul_f32 (op0, op1, op2, dims));
++        return const0_rtx;
++      }
++
++    case RISCV_AI_BUILTIN_RELU_F32:
++      {
++        tree arg0 = CALL_EXPR_ARG (exp, 0);
++        rtx op0 = expand_normal (arg0);
++        rtx result = gen_reg_rtx (SFmode);
++        emit_insn (gen_ai_relu_f32 (result, op0));
++        return result;
++      }
++
++    default:
++      gcc_unreachable ();
++    }
++}

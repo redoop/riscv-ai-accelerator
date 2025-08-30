@@ -1,0 +1,139 @@
+# Makefile for DVFS and Power Management Tests
+# Usage: make -f Makefile.dvfs <target>
+
+# Verilator configuration
+VERILATOR = verilator
+VERILATOR_FLAGS = --cc --exe --build --trace --timing --top-module
+VERILATOR_INCLUDES = -I../../rtl/power -I../../rtl/interfaces
+
+# Test targets
+.PHONY: all clean test_dvfs test_power_domain test_voltage_reg test_freq_ctrl test_dvfs_integration test_dvfs_efficiency
+
+all: test_dvfs test_power_domain test_dvfs_integration test_dvfs_efficiency
+
+# DVFS Controller Test
+test_dvfs: test_dvfs_controller
+	./obj_dir/Vtest_dvfs_controller
+
+test_dvfs_controller: test_dvfs_controller.sv ../../rtl/power/dvfs_controller.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_dvfs_controller $(VERILATOR_INCLUDES) \
+		test_dvfs_controller.sv ../../rtl/power/dvfs_controller.sv
+
+# Power Domain Controller Test  
+test_power_domain: test_power_domain_controller
+	./obj_dir/Vtest_power_domain_controller
+
+test_power_domain_controller: test_power_domain_controller.sv ../../rtl/power/power_domain_controller.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_power_domain_controller $(VERILATOR_INCLUDES) \
+		test_power_domain_controller.sv ../../rtl/power/power_domain_controller.sv
+
+# Voltage Regulator Test
+test_voltage_reg: test_voltage_regulator
+	./obj_dir/Vtest_voltage_regulator
+
+test_voltage_regulator: ../../rtl/power/voltage_regulator.sv
+	echo "module test_voltage_regulator; \
+		logic clk, rst_n; \
+		logic [2:0] voltage_level_req; \
+		logic voltage_enable; \
+		logic vreg_scl; \
+		logic vreg_sda; \
+		logic voltage_ready; \
+		logic [2:0] current_voltage_level; \
+		logic voltage_fault; \
+		initial begin clk = 0; forever #5 clk = ~clk; end \
+		voltage_regulator dut(.*); \
+		initial begin \
+			rst_n = 0; voltage_enable = 0; voltage_level_req = 3'd4; \
+			#20 rst_n = 1; voltage_enable = 1; \
+			#1000 voltage_level_req = 3'd6; \
+			#2000 voltage_level_req = 3'd2; \
+			#3000 \$$finish; \
+		end \
+		initial begin \$$dumpfile(\"voltage_reg.vcd\"); \$$dumpvars(0, test_voltage_regulator); end \
+	endmodule" > test_voltage_regulator_simple.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_voltage_regulator_simple $(VERILATOR_INCLUDES) \
+		test_voltage_regulator_simple.sv ../../rtl/power/voltage_regulator.sv
+
+# Frequency Controller Test
+test_freq_ctrl: test_frequency_controller
+	./obj_dir/Vtest_frequency_controller
+
+test_frequency_controller: ../../rtl/power/frequency_controller.sv
+	echo "module test_frequency_controller; \
+		logic ref_clk, rst_n; \
+		logic [2:0] frequency_level_req; \
+		logic frequency_enable; \
+		logic cpu_clk, ai_accel_clk, memory_clk, noc_clk; \
+		logic frequency_ready; \
+		logic [2:0] current_frequency_level; \
+		logic pll_locked; \
+		initial begin ref_clk = 0; forever #5 ref_clk = ~ref_clk; end \
+		frequency_controller dut(.*); \
+		initial begin \
+			rst_n = 0; frequency_enable = 0; frequency_level_req = 3'd4; \
+			#20 rst_n = 1; frequency_enable = 1; \
+			#2000 frequency_level_req = 3'd6; \
+			#4000 frequency_level_req = 3'd2; \
+			#6000 \$$finish; \
+		end \
+		initial begin \$$dumpfile(\"freq_ctrl.vcd\"); \$$dumpvars(0, test_frequency_controller); end \
+	endmodule" > test_frequency_controller_simple.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_frequency_controller_simple $(VERILATOR_INCLUDES) \
+		test_frequency_controller_simple.sv ../../rtl/power/frequency_controller.sv
+
+# DVFS Integration Test
+test_dvfs_integration: test_dvfs_integration_build
+	./obj_dir/Vtest_dvfs_integration
+
+test_dvfs_integration_build: test_dvfs_integration.sv ../../rtl/power/*.sv ../../rtl/interfaces/*.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_dvfs_integration $(VERILATOR_INCLUDES) \
+		test_dvfs_integration.sv ../../rtl/power/power_manager.sv \
+		../../rtl/power/dvfs_controller.sv ../../rtl/power/voltage_regulator.sv \
+		../../rtl/power/frequency_controller.sv ../../rtl/power/power_domain_controller.sv \
+		../../rtl/interfaces/power_mgmt_if.sv
+
+# DVFS Efficiency Test
+test_dvfs_efficiency: test_dvfs_efficiency_build
+	./obj_dir/Vtest_dvfs_efficiency
+
+test_dvfs_efficiency_build: test_dvfs_efficiency.sv ../../rtl/power/*.sv ../../rtl/interfaces/*.sv
+	$(VERILATOR) $(VERILATOR_FLAGS) test_dvfs_efficiency $(VERILATOR_INCLUDES) \
+		test_dvfs_efficiency.sv ../../rtl/power/power_manager.sv \
+		../../rtl/power/dvfs_controller.sv ../../rtl/power/voltage_regulator.sv \
+		../../rtl/power/frequency_controller.sv ../../rtl/power/power_domain_controller.sv \
+		../../rtl/interfaces/power_mgmt_if.sv
+
+# Run all DVFS tests
+test_all_dvfs: test_dvfs test_power_domain test_voltage_reg test_freq_ctrl test_dvfs_integration test_dvfs_efficiency
+	@echo "All DVFS tests completed"
+
+# Syntax check all DVFS modules
+syntax_check:
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDES) ../../rtl/power/dvfs_controller.sv
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDES) ../../rtl/power/power_domain_controller.sv
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDES) ../../rtl/power/voltage_regulator.sv
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDES) ../../rtl/power/frequency_controller.sv
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDES) ../../rtl/power/power_manager.sv
+	@echo "Syntax check passed for all DVFS modules"
+
+# Clean generated files
+clean:
+	rm -rf obj_dir/
+	rm -f *.vcd
+	rm -f test_*_simple.sv
+	rm -f *.log
+
+# Help
+help:
+	@echo "Available targets:"
+	@echo "  test_dvfs              - Test DVFS controller"
+	@echo "  test_power_domain      - Test power domain controller"
+	@echo "  test_voltage_reg       - Test voltage regulator"
+	@echo "  test_freq_ctrl         - Test frequency controller"
+	@echo "  test_dvfs_integration  - Test complete DVFS integration"
+	@echo "  test_dvfs_efficiency   - Test DVFS power efficiency"
+	@echo "  test_all_dvfs          - Run all DVFS tests"
+	@echo "  syntax_check           - Check syntax of all modules"
+	@echo "  clean                  - Clean generated files"
+	@echo "  help                   - Show this help"

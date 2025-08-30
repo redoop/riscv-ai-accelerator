@@ -1,0 +1,205 @@
+# Makefile for Power and Thermal Optimization Tests
+# 
+# Comprehensive test suite for power management and thermal optimization
+
+# Verilator configuration
+VERILATOR = verilator
+VERILATOR_FLAGS = --cc --exe --build --trace --Wall -Wno-UNUSED
+VERILATOR_INCLUDE = -I../../rtl/power -I../../rtl/core -I../../rtl/interfaces
+
+# Test files
+RTL_SOURCES = ../../rtl/power/intelligent_power_manager.sv \
+              ../../rtl/core/thermal_aware_scheduler.sv \
+              ../../rtl/interfaces/power_mgmt_if.sv
+
+TESTBENCH = verification/unit_tests/test_power_thermal_optimization_comprehensive.sv
+
+# Software test configuration
+CC = gcc
+CFLAGS = -Wall -Wextra -O2 -g -std=c99
+INCLUDES = -I../../software/lib
+LIBS = -lm -lpthread
+
+SOFTWARE_SOURCES = ../../software/lib/power_optimizer.c
+SOFTWARE_TEST = software/tests/test_power_thermal_comprehensive.c
+
+# Output directories
+BUILD_DIR = build_power_thermal
+SW_BUILD_DIR = build_software_power_thermal
+
+# Default target
+all: rtl_test software_test
+
+# RTL simulation test
+rtl_test: $(BUILD_DIR)/V$(basename $(TESTBENCH))
+	@echo "Running RTL power and thermal optimization test..."
+	cd $(BUILD_DIR) && ./V$(basename $(TESTBENCH))
+
+$(BUILD_DIR)/V$(basename $(TESTBENCH)): $(TESTBENCH) $(RTL_SOURCES)
+	@mkdir -p $(BUILD_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INCLUDE) \
+		--top-module $(basename $(TESTBENCH)) \
+		--Mdir $(BUILD_DIR) \
+		$(RTL_SOURCES) $(TESTBENCH)
+
+# Software test
+software_test: $(SW_BUILD_DIR)/test_power_thermal_comprehensive
+	@echo "Running software power optimization test..."
+	cd $(SW_BUILD_DIR) && ./test_power_thermal_comprehensive
+
+$(SW_BUILD_DIR)/test_power_thermal_comprehensive: $(SOFTWARE_TEST) $(SOFTWARE_SOURCES)
+	@mkdir -p $(SW_BUILD_DIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(SOFTWARE_TEST) $(SOFTWARE_SOURCES) $(LIBS)
+
+# Individual test targets
+test_intelligent_power_manager: $(BUILD_DIR)/Vintelligent_power_manager_test
+	@echo "Testing intelligent power manager..."
+	cd $(BUILD_DIR) && ./Vintelligent_power_manager_test
+
+$(BUILD_DIR)/Vintelligent_power_manager_test: test_intelligent_power_manager.sv
+	@mkdir -p $(BUILD_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INCLUDE) \
+		--top-module test_intelligent_power_manager \
+		--Mdir $(BUILD_DIR) \
+		../../rtl/power/intelligent_power_manager.sv \
+		test_intelligent_power_manager.sv
+
+test_thermal_scheduler: $(BUILD_DIR)/Vthermal_aware_scheduler_test
+	@echo "Testing thermal-aware scheduler..."
+	cd $(BUILD_DIR) && ./Vthermal_aware_scheduler_test
+
+$(BUILD_DIR)/Vthermal_aware_scheduler_test: test_thermal_aware_scheduler.sv
+	@mkdir -p $(BUILD_DIR)
+	$(VERILATOR) $(VERILATOR_FLAGS) $(VERILATOR_INCLUDE) \
+		--top-module test_thermal_aware_scheduler \
+		--Mdir $(BUILD_DIR) \
+		../../rtl/core/thermal_aware_scheduler.sv \
+		test_thermal_aware_scheduler.sv
+
+# Performance benchmarks
+benchmark: rtl_benchmark software_benchmark
+
+rtl_benchmark: $(BUILD_DIR)/V$(basename $(TESTBENCH))
+	@echo "Running RTL performance benchmark..."
+	cd $(BUILD_DIR) && time ./V$(basename $(TESTBENCH)) > benchmark_rtl.log 2>&1
+	@echo "RTL benchmark completed. Results in $(BUILD_DIR)/benchmark_rtl.log"
+
+software_benchmark: $(SW_BUILD_DIR)/test_power_thermal_comprehensive
+	@echo "Running software performance benchmark..."
+	cd $(SW_BUILD_DIR) && time ./test_power_thermal_comprehensive > benchmark_sw.log 2>&1
+	@echo "Software benchmark completed. Results in $(SW_BUILD_DIR)/benchmark_sw.log"
+
+# Coverage analysis
+coverage: $(BUILD_DIR)/V$(basename $(TESTBENCH))
+	@echo "Running coverage analysis..."
+	cd $(BUILD_DIR) && ./V$(basename $(TESTBENCH)) --coverage
+	@echo "Coverage analysis completed"
+
+# Waveform generation
+waves: $(BUILD_DIR)/V$(basename $(TESTBENCH))
+	@echo "Generating waveforms..."
+	cd $(BUILD_DIR) && ./V$(basename $(TESTBENCH)) --trace
+	@echo "Waveforms generated: $(BUILD_DIR)/trace.vcd"
+
+# Synthesis check
+synthesis_check:
+	@echo "Checking synthesis compatibility..."
+	$(VERILATOR) --lint-only $(VERILATOR_INCLUDE) $(RTL_SOURCES)
+	@echo "Synthesis check completed"
+
+# Power analysis
+power_analysis: $(BUILD_DIR)/V$(basename $(TESTBENCH))
+	@echo "Running power analysis..."
+	cd $(BUILD_DIR) && ./V$(basename $(TESTBENCH)) --power-analysis
+	@echo "Power analysis completed"
+
+# Stress testing
+stress_test: $(BUILD_DIR)/V$(basename $(TESTBENCH)) $(SW_BUILD_DIR)/test_power_thermal_comprehensive
+	@echo "Running stress tests..."
+	@for i in {1..10}; do \
+		echo "Stress test iteration $$i"; \
+		cd $(BUILD_DIR) && timeout 60s ./V$(basename $(TESTBENCH)) || true; \
+		cd ../$(SW_BUILD_DIR) && timeout 30s ./test_power_thermal_comprehensive || true; \
+	done
+	@echo "Stress testing completed"
+
+# Memory leak check (for software tests)
+memcheck: $(SW_BUILD_DIR)/test_power_thermal_comprehensive
+	@echo "Running memory leak check..."
+	cd $(SW_BUILD_DIR) && valgrind --leak-check=full --show-leak-kinds=all \
+		./test_power_thermal_comprehensive
+	@echo "Memory leak check completed"
+
+# Static analysis
+static_analysis:
+	@echo "Running static analysis..."
+	cppcheck --enable=all --std=c99 $(SOFTWARE_TEST) $(SOFTWARE_SOURCES)
+	@echo "Static analysis completed"
+
+# Documentation generation
+docs:
+	@echo "Generating documentation..."
+	@mkdir -p docs
+	doxygen Doxyfile.power_thermal || echo "Doxygen not available"
+	@echo "Documentation generated in docs/"
+
+# Test report generation
+report: rtl_test software_test
+	@echo "Generating test report..."
+	@mkdir -p reports
+	@echo "# Power and Thermal Optimization Test Report" > reports/test_report.md
+	@echo "" >> reports/test_report.md
+	@echo "## Test Summary" >> reports/test_report.md
+	@echo "- RTL Tests: $(shell grep -c "PASSED\|FAILED" $(BUILD_DIR)/*.log 2>/dev/null || echo "0")" >> reports/test_report.md
+	@echo "- Software Tests: $(shell grep -c "PASSED\|FAILED" $(SW_BUILD_DIR)/*.log 2>/dev/null || echo "0")" >> reports/test_report.md
+	@echo "" >> reports/test_report.md
+	@echo "## Test Results" >> reports/test_report.md
+	@echo "\`\`\`" >> reports/test_report.md
+	@cat $(BUILD_DIR)/*.log $(SW_BUILD_DIR)/*.log 2>/dev/null | tail -20 >> reports/test_report.md || echo "No logs found" >> reports/test_report.md
+	@echo "\`\`\`" >> reports/test_report.md
+	@echo "Test report generated: reports/test_report.md"
+
+# Continuous integration target
+ci: clean synthesis_check rtl_test software_test static_analysis
+	@echo "Continuous integration tests completed"
+
+# Clean build artifacts
+clean:
+	rm -rf $(BUILD_DIR) $(SW_BUILD_DIR) reports docs
+	rm -f *.vcd *.log *.out
+
+# Clean everything including generated files
+distclean: clean
+	rm -f *~ *.bak
+
+# Help target
+help:
+	@echo "Available targets:"
+	@echo "  all                 - Build and run all tests"
+	@echo "  rtl_test           - Run RTL simulation tests"
+	@echo "  software_test      - Run software tests"
+	@echo "  test_intelligent_power_manager - Test power manager only"
+	@echo "  test_thermal_scheduler - Test thermal scheduler only"
+	@echo "  benchmark          - Run performance benchmarks"
+	@echo "  coverage           - Run coverage analysis"
+	@echo "  waves              - Generate waveforms"
+	@echo "  synthesis_check    - Check synthesis compatibility"
+	@echo "  power_analysis     - Run power analysis"
+	@echo "  stress_test        - Run stress tests"
+	@echo "  memcheck           - Check for memory leaks"
+	@echo "  static_analysis    - Run static code analysis"
+	@echo "  docs               - Generate documentation"
+	@echo "  report             - Generate test report"
+	@echo "  ci                 - Run continuous integration tests"
+	@echo "  clean              - Clean build artifacts"
+	@echo "  distclean          - Clean everything"
+	@echo "  help               - Show this help"
+
+# Phony targets
+.PHONY: all rtl_test software_test test_intelligent_power_manager test_thermal_scheduler \
+        benchmark rtl_benchmark software_benchmark coverage waves synthesis_check \
+        power_analysis stress_test memcheck static_analysis docs report ci \
+        clean distclean help
+
+# Default goal
+.DEFAULT_GOAL := all
