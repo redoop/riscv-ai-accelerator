@@ -1,0 +1,11 @@
+# JVM内存配置
+-J-Xmx4G
+-J-Xms1G
+-J-XX:+UseG1GC
+-Djava.net.useSystemProxies=true
+-Dfile.encoding=UTF-8
+
+# 禁用一些不必要的功能以提升性能
+-Dsbt.task.timings=true
+-Dsbt.task.timings.on.shutdown=true
+-Dsbt.supershell=false

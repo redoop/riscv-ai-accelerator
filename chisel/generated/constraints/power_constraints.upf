@@ -1,0 +1,37 @@
+
+# UPF电源约束文件 - 物理优化设计
+# 用于低功耗设计和电源域管理
+
+# 创建电源域
+create_power_domain PD_TOP
+create_power_domain PD_CORE -elements {matrixMult}
+create_power_domain PD_MEMORY -elements {matrixMult/matrixA matrixMult/matrixB matrixMult/matrixResult}
+
+# 创建电源网络
+create_supply_net VDD -domain PD_TOP
+create_supply_net VDD_CORE -domain PD_CORE  
+create_supply_net VDD_MEM -domain PD_MEMORY
+create_supply_net VSS -domain PD_TOP
+
+# 连接电源端口
+create_supply_port VDD -domain PD_TOP -direction in
+create_supply_port VDD_CORE -domain PD_CORE -direction in
+create_supply_port VDD_MEM -domain PD_MEMORY -direction in
+create_supply_port VSS -domain PD_TOP -direction in
+
+# 设置电源策略
+set_domain_supply_net PD_TOP -primary_power_net VDD -primary_ground_net VSS
+set_domain_supply_net PD_CORE -primary_power_net VDD_CORE -primary_ground_net VSS
+set_domain_supply_net PD_MEMORY -primary_power_net VDD_MEM -primary_ground_net VSS
+
+# 电源开关策略
+create_power_switch SW_CORE -domain PD_CORE -output_supply_port {vout VDD_CORE} -input_supply_port {vin VDD} -control_port {ctrl power_ctrl.mode[0]} -on_state {on vin {ctrl}}
+
+# 隔离策略
+set_isolation ISO_CORE -domain PD_CORE -isolation_power_net VDD -isolation_ground_net VSS -clamp_value 0
+
+# 保持策略  
+set_retention RET_CORE -domain PD_CORE -retention_power_net VDD -retention_ground_net VSS
+
+# 电平转换策略
+set_level_shifter LS_CORE -domain PD_CORE -applies_to outputs -location parent

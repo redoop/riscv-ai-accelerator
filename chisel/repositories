@@ -1,0 +1,30 @@
+[repositories]
+  # 本地仓库（优先级最高）
+  local
+  
+  # 阿里云镜像源（优先使用）
+  aliyun-central: https://maven.aliyun.com/repository/central
+  aliyun-public: https://maven.aliyun.com/repository/public
+  aliyun-spring: https://maven.aliyun.com/repository/spring
+  aliyun-spring-plugin: https://maven.aliyun.com/repository/spring-plugin
+  
+  # 清华大学镜像源
+  tsinghua-maven: https://mirrors.tuna.tsinghua.edu.cn/maven2/
+  
+  # 华为云镜像源
+  huawei-cloud: https://mirrors.huaweicloud.com/repository/maven/
+  
+  # 腾讯云镜像源
+  tencent-cloud: https://mirrors.cloud.tencent.com/nexus/repository/maven-public/
+  
+  # 网易镜像源
+  netease-maven: https://mirrors.163.com/maven/repository/maven-public/
+  
+  # SBT插件仓库（使用阿里云镜像）
+  aliyun-sbt-plugin: https://maven.aliyun.com/repository/central, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+  
+  # 备用官方源
+  maven-central: https://repo1.maven.org/maven2/
+  scala-jfrog: https://scala.jfrog.io/ui/native/sbt-plugin-releases/
+  sbt-plugin-repo: https://repo.scala-sbt.org/scalasbt/sbt-plugin-releases, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
+  typesafe-ivy-repo: https://repo.typesafe.com/typesafe/ivy-releases, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext], bootOnly

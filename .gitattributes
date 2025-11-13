@@ -1,0 +1,148 @@
+# RISC-V AI Accelerator Project .gitattributes
+# 定义文件类型和处理方式
+
+# ============================================================================
+# 自动检测文本文件并规范化行尾
+# ============================================================================
+* text=auto
+
+# ============================================================================
+# 源代码文件
+# ============================================================================
+# Scala 源代码
+*.scala text eol=lf
+*.sbt text eol=lf
+
+# Verilog/SystemVerilog
+*.v text eol=lf
+*.sv text eol=lf
+*.vh text eol=lf
+*.svh text eol=lf
+
+# FIRRTL
+*.fir text eol=lf
+
+# ============================================================================
+# 配置文件
+# ============================================================================
+*.conf text eol=lf
+*.config text eol=lf
+*.properties text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+
+# ============================================================================
+# 文档文件
+# ============================================================================
+*.md text eol=lf
+*.txt text eol=lf
+*.rst text eol=lf
+*.adoc text eol=lf
+
+# ============================================================================
+# Shell 脚本
+# ============================================================================
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.fish text eol=lf
+
+# ============================================================================
+# 构建脚本
+# ============================================================================
+Makefile text eol=lf
+*.mk text eol=lf
+*.cmake text eol=lf
+CMakeLists.txt text eol=lf
+
+# ============================================================================
+# Git 配置
+# ============================================================================
+.gitignore text eol=lf
+.gitattributes text eol=lf
+.gitmodules text eol=lf
+
+# ============================================================================
+# 二进制文件（不进行文本转换）
+# ============================================================================
+# 图片
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.bmp binary
+
+# 文档
+*.pdf binary
+*.doc binary
+*.docx binary
+*.ppt binary
+*.pptx binary
+*.xls binary
+*.xlsx binary
+
+# 压缩文件
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.7z binary
+*.rar binary
+
+# 编译产物
+*.jar binary
+*.class binary
+*.so binary
+*.dll binary
+*.dylib binary
+*.exe binary
+
+# 波形文件
+*.vcd binary
+*.vpd binary
+*.fsdb binary
+*.wlf binary
+
+# ============================================================================
+# 大文件处理（如果使用 Git LFS）
+# ============================================================================
+# 取消注释以下行以使用 Git LFS
+# *.vcd filter=lfs diff=lfs merge=lfs -text
+# *.vpd filter=lfs diff=lfs merge=lfs -text
+# *.fsdb filter=lfs diff=lfs merge=lfs -text
+
+# ============================================================================
+# 语言统计（linguist）
+# ============================================================================
+# 标记生成的文件，不计入语言统计
+generated/**/*.sv linguist-generated=true
+generated/**/*.v linguist-generated=true
+target/** linguist-generated=true
+project/target/** linguist-generated=true
+
+# 标记文档目录
+docs/** linguist-documentation=true
+*.md linguist-documentation=true
+
+# 标记供应商代码（如果有第三方代码）
+# vendor/** linguist-vendored=true
+
+# ============================================================================
+# Diff 设置
+# ============================================================================
+# Scala 文件使用更好的 diff
+*.scala diff=scala
+
+# Markdown 文件
+*.md diff=markdown
+
+# ============================================================================
+# 合并策略
+# ============================================================================
+# 对于某些文件使用特定的合并策略
+# *.md merge=union

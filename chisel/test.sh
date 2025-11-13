@@ -1,0 +1,1 @@
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-11.0.16.jdk/Contents/Home && sbt test

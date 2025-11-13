@@ -1,0 +1,323 @@
+# RISC-V AI Accelerator Project .gitignore
+# 只保留源代码和文档，过滤编译和测试中间文件
+
+# ============================================================================
+# Scala / SBT 编译产物
+# ============================================================================
+# 所有 target 目录（包括 chisel/target/, chisel/project/target/ 等）
+target/
+**/target/
+
+# SBT 项目编译产物
+project/target/
+project/project/
+**/project/target/
+*.bin
+*.class
+*.log
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# SBT specific
+.bsp/
+.metals/
+.bloop/
+metals.sbt
+.scala-dependencies
+
+# ============================================================================
+# Chisel / FIRRTL 生成文件
+# ============================================================================
+# 保留 generated/ 目录下的 .sv 文件（这是我们要的 Verilog）
+# 但过滤其他临时文件
+
+# ChiselTest 测试运行目录（包括 chisel/test_run_dir/ 等）
+test_run_dir/
+**/test_run_dir/
+*.fir
+*.anno.json
+*.v
+*.vcd
+*.vpd
+*.fsdb
+
+# ChiselTest 临时文件
+simWorkspace/
+test-outputs/
+
+# ============================================================================
+# IDE 配置文件
+# ============================================================================
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Metals (Scala Language Server)
+.metals/
+.bloop/
+project/.bloop/
+
+# ============================================================================
+# 操作系统文件
+# ============================================================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================================================
+# 临时文件和日志
+# ============================================================================
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+*.log
+*.out
+*.pid
+*.seed
+*.pid.lock
+
+# 测试日志
+/tmp/
+*.test.log
+
+# ============================================================================
+# 编译和构建产物
+# ============================================================================
+# 保留源代码生成的 Verilog
+# generated/**/*.sv  # 保留
+# generated/**/*.v   # 保留
+
+# 但过滤其他构建产物
+build/
+dist/
+lib/
+*.o
+*.so
+*.dylib
+*.dll
+*.exe
+
+# ============================================================================
+# 仿真和综合工具产物
+# ============================================================================
+# Vivado
+*.jou
+*.str
+*.xpr
+.Xil/
+vivado*.log
+vivado*.jou
+
+# Quartus
+*.qpf
+*.qsf
+*.sof
+*.pof
+db/
+incremental_db/
+output_files/
+
+# ModelSim / QuestaSim
+work/
+transcript
+vsim.wlf
+*.wlf
+*.vstf
+
+# VCS
+simv*
+csrc/
+ucli.key
+*.daidir/
+
+# Verilator
+obj_dir/
+*.mk
+*.d
+
+# ============================================================================
+# 文档生成产物（保留源文档）
+# ============================================================================
+# 保留 .md 文件
+# *.md  # 保留
+
+# 但过滤生成的文档
+*.pdf
+*.html
+*.epub
+_site/
+.jekyll-cache/
+
+# ============================================================================
+# 依赖和包管理
+# ============================================================================
+# Coursier cache
+.coursier/
+
+# Ivy cache
+.ivy2/
+
+# Node modules (如果有前端)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================================================
+# 环境和配置
+# ============================================================================
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 个人配置
+*.local
+
+# ============================================================================
+# 备份文件
+# ============================================================================
+*.bak
+*.backup
+*.old
+*~
+
+# ============================================================================
+# 压缩文件
+# ============================================================================
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# ============================================================================
+# 特定于项目的排除
+# ============================================================================
+# 测试数据（如果很大）
+# test_data/large_files/
+
+# 实验性代码（如果不想提交）
+# experiments/
+# scratch/
+
+# ============================================================================
+# 保留的重要文件（明确说明）
+# ============================================================================
+# 以下文件/目录会被保留：
+# - chisel/src/**/*.scala          (Scala 源代码)
+# - chisel/docs/**/*.md            (文档)
+# - chisel/generated/**/*.sv       (生成的 Verilog)
+# - *.md                           (所有 Markdown 文档)
+# - build.sbt                      (构建配置)
+# - README.md                      (项目说明)
+# - LICENSE                        (许可证)
+
+# ============================================================================
+# Git 自身
+# ============================================================================
+# Git 配置
+# .gitignore  # 保留
+# .gitattributes  # 保留
+chisel/target/scala-2.13/chisel-matrix-multiplier_2.13-0.1.0.jar
+chisel/target/scala-2.13/classes/ChiselMatrixDemo.class
+chisel/target/scala-2.13/classes/ChiselMatrixDemo$$anon$4.class
+chisel/target/scala-2.13/classes/ChiselMatrixDemo$$anon$4$$anon$5.class
+chisel/target/scala-2.13/classes/MatrixFSM.class
+chisel/target/scala-2.13/classes/MatrixFSM$$anon$3.class
+chisel/target/scala-2.13/classes/MatrixInterface.class
+chisel/target/scala-2.13/classes/ParameterizedMatrix.class
+chisel/target/scala-2.13/classes/ParameterizedMatrix$$anon$2.class
+chisel/target/scala-2.13/classes/SafeMacUnit.class
+chisel/target/scala-2.13/classes/SafeMacUnit$$anon$1.class
+chisel/target/scala-2.13/classes/riscv/ai/Main$.class
+chisel/target/scala-2.13/classes/riscv/ai/MatrixMultiplier.class
+chisel/target/scala-2.13/classes/riscv/ai/RiscvAiChip.class
+chisel/target/scala-2.13/classes/riscv/ai/RiscvAiChip$.class
+chisel/target/scala-2.13/classes/riscv/ai/RiscvAiChip$$anon$6.class
+chisel/target/scala-2.13/classes/riscv/ai/RiscvAiChip$$anon$6$$anon$7.class
+chisel/target/scala-2.13/classes/riscv/ai/VerilogGenerator.class
+chisel/target/scala-2.13/classes/riscv/ai/VerilogGenerator$.class
+chisel/target/scala-2.13/test-classes/ChiselMatrixDemo.class
+chisel/target/scala-2.13/test-classes/ChiselMatrixDemo$$anon$4.class
+chisel/target/scala-2.13/test-classes/ChiselMatrixDemo$$anon$4$$anon$5.class
+chisel/target/scala-2.13/test-classes/MatrixFSM.class
+chisel/target/scala-2.13/test-classes/MatrixFSM$$anon$3.class
+chisel/target/scala-2.13/test-classes/MatrixInterface.class
+chisel/target/scala-2.13/test-classes/ParameterizedMatrix.class
+chisel/target/scala-2.13/test-classes/ParameterizedMatrix$$anon$2.class
+chisel/target/scala-2.13/test-classes/SafeMacUnit.class
+chisel/target/scala-2.13/test-classes/SafeMacUnit$$anon$1.class
+chisel/target/scala-2.13/test-zinc/inc_compile_2.13.zip
+chisel/target/scala-2.13/zinc/inc_compile_2.13.zip
+chisel/target/streams/compile/_global/_global/compileOutputs/previous
+chisel/target/streams/compile/_global/_global/discoveredMainClasses/data
+chisel/target/streams/compile/compile/_global/streams/out
+chisel/target/streams/compile/compileIncremental/_global/streams/out
+chisel/target/streams/compile/copyResources/_global/streams/out
+chisel/target/streams/compile/incOptions/_global/streams/out
+chisel/target/streams/compile/packageBin/_global/streams/inputs
+chisel/target/streams/compile/packageBin/_global/streams/out
+chisel/target/streams/compile/runMain/_global/streams/out
+chisel/target/streams/test/_global/_global/compileOutputs/previous
+chisel/target/streams/test/_global/_global/definedTestNames/data
+chisel/target/streams/test/compile/_global/streams/out
+chisel/target/streams/test/compileIncremental/_global/streams/out
+chisel/target/streams/test/copyResources/_global/streams/out
+chisel/target/streams/test/definedTests/_global/streams/out
+chisel/target/streams/test/incOptions/_global/streams/out
+chisel/target/streams/test/loadedTestFrameworks/_global/streams/out
+chisel/target/streams/test/test/_global/streams/out
+chisel/target/streams/test/test/_global/streams/succeeded_tests
+chisel/project/target/config-classes/$5cfbce9246de94352d38.cache
+chisel/project/target/config-classes/$5cfbce9246de94352d38.class
+chisel/project/target/config-classes/$5cfbce9246de94352d38$.class
+chisel/project/target/config-classes/$708407f2b2f34843a926.cache
+chisel/project/target/config-classes/$708407f2b2f34843a926.class
+chisel/project/target/config-classes/$708407f2b2f34843a926$.class
+chisel/project/target/config-classes/$c1e1f8847c5f7cd5e0dc.cache
+chisel/project/target/config-classes/$c1e1f8847c5f7cd5e0dc.class
+chisel/project/target/config-classes/$c1e1f8847c5f7cd5e0dc$.class
+chisel/project/target/config-classes/$ffbd73275c47264bfdab.cache
+chisel/project/target/config-classes/$ffbd73275c47264bfdab.class
+chisel/project/target/config-classes/$ffbd73275c47264bfdab$.class
+chisel/project/target/streams/compile/compileIncremental/_global/streams/out
+chisel/project/target/streams/compile/copyResources/_global/streams/out
+chisel/project/target/streams/compile/incOptions/_global/streams/out
+physical_design/
