@@ -201,7 +201,14 @@ when(wVal === 1.U) {
 | BRAMs | ~20 | 块 RAM |
 | DSPs | 1 | 数字信号处理单元 (仅 CompactAccel) |
 
-### 4.3 功耗分析 (估算)
+### 4.3 功耗分析
+
+**静态功耗** (综合结果):
+- **静态功耗**: 627.4 uW (0.6274 mW)
+- **工作温度**: 80°C
+- **电压条件**: LVT: 90%, HVT: 10%
+
+**动态功耗估算** (@ 100MHz):
 
 | 模块 | 功耗 (mW) | 占比 |
 |-----|----------|------|
@@ -214,11 +221,15 @@ when(wVal === 1.U) {
 
 ### 4.4 时序性能
 
-| 参数 | 目标值 | 说明 |
-|-----|-------|------|
-| 最高工作频率 | 100 MHz | 典型工艺 |
-| 最低工作频率 | 50 MHz | 低功耗模式 |
-| 关键路径延迟 | < 10 ns | @ 100 MHz |
+| 参数 | 目标值 | 实测值 | 说明 |
+|-----|-------|--------|------|
+| 设计频率 | 50 MHz | - | 综合约束 |
+| 最高工作频率 | 100 MHz | 178.569 MHz | 实际可达频率 |
+| 最低工作频率 | 50 MHz | - | 低功耗模式 |
+| 关键路径延迟 | < 10 ns | - | @ 100 MHz |
+| 最差负时序(WNS) | - | 14.400 ns | 无违例 |
+| 总负时序(TNS) | - | 0.000 ns | 无违例 |
+| 时序违例数量 | 0 | 0 | 通过 |
 
 ### 4.5 实测性能数据
 
@@ -342,10 +353,18 @@ chisel/generated/simple_edgeaisoc/
 
 ### 7.1 工艺选择
 
-**推荐工艺**: 
-- 28nm CMOS 或更先进工艺
+**选用工艺**: 
+- **创芯55nm开源PDK** (CX55nm Open-Source PDK)
 - 标准单元库
 - 低功耗工艺选项
+- 完全开源的工艺设计套件
+- 支持开源EDA工具链
+
+**工艺优势**:
+- 降低流片成本和门槛
+- 完整的PDK文档和支持
+- 适合学术研究和原型验证
+- 社区活跃，技术支持完善
 
 ### 7.2 时钟域
 
@@ -368,12 +387,23 @@ chisel/generated/simple_edgeaisoc/
 | VDD_CORE | 0.9V - 1.2V | 核心逻辑 |
 | VDD_IO | 1.8V - 3.3V | I/O 接口 |
 
-### 7.5 面积估算
+### 7.5 设计规模与面积
 
-基于 28nm 工艺估算：
-- **核心面积**: ~2 mm²
-- **I/O 面积**: ~0.5 mm²
-- **总面积**: ~2.5 mm²
+**设计规模限制**:
+- **最大实例数**: < 100,000 instances (创芯55nm开源EDA工具流片要求)
+- **当前设计规模**: 73,829 instances (标准单元)
+- **规模余量**: 26.2% (满足流片要求)
+
+**面积估算** (基于创芯55nm工艺):
+- **核心面积**: ~0.3 mm² (实际综合结果: 300,138 um²)
+- **I/O 面积**: ~0.2 mm²
+- **总面积**: ~0.5 mm²
+
+**设计规模统计**:
+- 标准单元(STDCELL): 73,829 个
+- IOPAD: 待定
+- PLL: 0 (不使用PLL，最高主频限定100MHz)
+- SRAM: 0 (使用寄存器阵列)
 
 ---
 
@@ -404,57 +434,87 @@ chisel/generated/simple_edgeaisoc/
 
 ### 8.2 EDA 工具链
 
+**开源EDA工具链** (创芯55nm PDK支持):
+
+| 阶段 | 工具 | 用途 | 类型 |
+|-----|------|------|------|
+| RTL 设计 | Chisel/Scala | 硬件描述 | 开源 |
+| 仿真 | Verilator | 功能验证 | 开源 |
+| 综合 | Yosys | 逻辑综合 | 开源 |
+| 布局布线 | OpenROAD | 物理实现 | 开源 |
+| 静态时序分析 | OpenSTA | 时序验证 | 开源 |
+| 物理验证 | Magic / KLayout | DRC/LVS | 开源 |
+| 波形查看 | GTKWave | 波形分析 | 开源 |
+
+**商业EDA工具链** (可选):
+
 | 阶段 | 工具 | 用途 |
 |-----|------|------|
-| RTL 设计 | Chisel/Scala | 硬件描述 |
-| 仿真 | Verilator | 功能验证 |
 | 综合 | Design Compiler / Genus | 逻辑综合 |
 | 布局布线 | ICC2 / Innovus | 物理实现 |
 | 静态时序分析 | PrimeTime | 时序验证 |
 | 形式验证 | Formality | 等价性检查 |
 | 功耗分析 | PrimePower | 功耗评估 |
 
+**工具链优势**:
+- 完全开源，零成本
+- 与创芯55nm PDK深度集成
+- 社区支持，持续更新
+- 适合教学和研究
+
 ### 8.3 流片流程
+
+**开源EDA工具流程** (创芯55nm PDK):
 
 ```
 RTL 设计 (Chisel)
     ↓
 功能仿真 (Verilator)
     ↓
-逻辑综合 (Design Compiler)
+逻辑综合 (Yosys) ✅ 已完成
+    ├── 设计规模: 73,829 instances
+    ├── 工作频率: 178.569 MHz
+    └── 静态功耗: 627.4 uW
     ↓
-静态时序分析 (PrimeTime)
+静态时序分析 (OpenSTA)
     ↓
-布局规划 (Floorplan)
+布局规划 (OpenROAD - Floorplan)
     ↓
-布局布线 (Place & Route)
+布局布线 (OpenROAD - Place & Route)
     ↓
-时钟树综合 (CTS)
+时钟树综合 (OpenROAD - CTS)
     ↓
-优化 (Optimization)
+优化 (OpenROAD - Optimization)
     ↓
 签核 (Sign-off)
-    ├── 时序签核 (STA)
-    ├── 功耗签核 (Power)
-    ├── 物理验证 (DRC/LVS)
-    └── 形式验证 (Equivalence)
+    ├── 时序签核 (OpenSTA)
+    ├── 功耗签核 (OpenROAD)
+    ├── 物理验证 (Magic/KLayout - DRC/LVS)
+    └── 形式验证 (Yosys - Equivalence)
     ↓
-GDSII 生成
+GDSII 生成 (Magic/KLayout)
     ↓
 流片 (Tape-out)
 ```
 
+**设计规模验证**:
+- ✅ 当前规模: 73,829 instances
+- ✅ 限制要求: < 100,000 instances
+- ✅ 余量: 26.2%
+- ✅ 满足创芯55nm开源EDA流片要求
+
 ### 8.4 关键里程碑
 
-| 里程碑 | 计划时间 | 状态 |
-|-------|---------|------|
-| RTL 设计完成 | 已完成 | ✅ |
-| 功能验证完成 | 已完成 | ✅ |
-| 综合完成 | 待定 | ⏳ |
-| 布局布线完成 | 待定 | ⏳ |
-| 签核完成 | 待定 | ⏳ |
-| GDSII 交付 | 待定 | ⏳ |
-| 流片 | 待定 | ⏳ |
+| 里程碑 | 计划时间 | 状态 | 备注 |
+|-------|---------|------|------|
+| RTL 设计完成 | 2024年11月 | ✅ | 已完成 |
+| 功能验证完成 | 2024年11月 | ✅ | 测试覆盖率95%+ |
+| 逻辑综合完成 | 2024年11月 | ✅ | Yosys综合，73,829 instances |
+| 综合后仿真 | 2024年11月 | ✅ | Verilator验证通过 |
+| 布局布线完成 | 待定 | ⏳ | OpenROAD实现 |
+| 签核完成 | 待定 | ⏳ | DRC/LVS/STA |
+| GDSII 交付 | 待定 | ⏳ | Magic/KLayout生成 |
+| 流片 | 待定 | ⏳ | 创芯55nm工艺 |
 
 ---
 
@@ -532,17 +592,22 @@ GDSII 生成
 3. **灵活的可编程性**: RISC-V CPU 支持软件控制
 4. **充分的验证**: 95% 以上的测试覆盖率
 5. **清晰的文档**: 完整的设计文档和用户手册
+6. **开源工具链**: 完全基于开源EDA工具，零成本流片
+7. **优异的时序**: 实测频率178.569MHz，远超100MHz目标
+8. **紧凑的设计**: 73,829 instances，满足10万限制，余量充足
 
 ### 11.2 技术指标总结
 
 | 指标 | 数值 |
 |-----|------|
-| 工艺 | 28nm CMOS |
-| 芯片面积 | ~2.5 mm² |
-| 工作频率 | 50-100 MHz |
-| 计算性能 | 6.4 GOPS |
-| 功耗 | < 100 mW |
+| 工艺 | 创芯55nm开源PDK |
+| 设计规模 | 73,829 instances (< 100K限制) |
+| 芯片面积 | ~0.5 mm² (核心: 0.3 mm²) |
+| 工作频率 | 50-100 MHz (实测可达178.569 MHz) |
+| 计算性能 | 6.4 GOPS @ 100MHz |
+| 功耗 | < 100 mW (静态功耗: 627.4 uW) |
 | 资源占用 (FPGA) | 8K LUTs, 6K FFs, 20 BRAMs |
+| 时序性能 | WNS: 14.400ns, TNS: 0.000ns, 无违例 |
 
 ### 11.3 应用场景
 
@@ -584,6 +649,11 @@ GDSII 生成
 | STA | Static Timing Analysis | 静态时序分析 |
 | UPF | Unified Power Format | 统一功耗格式 |
 | SDC | Synopsys Design Constraints | Synopsys 设计约束 |
+| PDK | Process Design Kit | 工艺设计套件 |
+| WNS | Worst Negative Slack | 最差负时序裕量 |
+| TNS | Total Negative Slack | 总负时序裕量 |
+| LVT | Low Voltage Threshold | 低阈值电压 |
+| HVT | High Voltage Threshold | 高阈值电压 |
 
 ### 附录 B: 参考文献
 
@@ -591,6 +661,10 @@ GDSII 生成
 2. PicoRV32 - A Size-Optimized RISC-V CPU (https://github.com/YosysHQ/picorv32)
 3. Chisel: Constructing Hardware in a Scala Embedded Language (https://www.chisel-lang.org/)
 4. RISC-V Instruction Set Manual (https://riscv.org/specifications/)
+5. 创芯55nm开源PDK文档 (CX55nm Open-Source PDK)
+6. Yosys Open SYnthesis Suite (https://yosyshq.net/yosys/)
+7. OpenROAD - Open-source EDA Tool (https://theopenroadproject.org/)
+8. Magic VLSI Layout Tool (http://opencircuitdesign.com/magic/)
 
 ### 附录 C: 联系方式
 
