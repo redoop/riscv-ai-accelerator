@@ -7,6 +7,13 @@ export PATH=$JAVA_HOME/bin:$PATH
 MODE=${1:-"full"}
 CHIP=${2:-"RiscvAiChip"}
 
+# 颜色定义
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
 # 获取芯片名称的函数
 get_chip_name() {
     case $1 in
@@ -36,6 +43,14 @@ get_test_class() {
 CHIP_NAME=$(get_chip_name "$CHIP")
 
 case $MODE in
+    "generate")
+        echo -e "${BLUE}=== 生成 SystemVerilog 文件 ===${NC}"
+        echo ""
+        ;;
+    "integration")
+        echo -e "${BLUE}=== RISC-V AI 加速器集成测试 ===${NC}"
+        echo ""
+        ;;
     "matrix")
         if [[ -n "$CHIP_NAME" ]]; then
             echo "=== RISC-V AI芯片 矩阵计算演示 - $CHIP_NAME ==="
@@ -59,9 +74,11 @@ case $MODE in
         fi
         ;;
     *)
-        echo "用法: $0 [full|matrix] [芯片类型]"
-        echo "  full   - 完整测试流程 (默认)"
-        echo "  matrix - 矩阵计算演示"
+        echo "用法: $0 [full|matrix|integration|generate] [芯片类型]"
+        echo "  full        - 完整测试流程 (默认)"
+        echo "  matrix      - 矩阵计算演示"
+        echo "  integration - RISC-V集成测试"
+        echo "  generate    - 生成 SystemVerilog 文件 (新)"
         echo ""
         echo "支持的芯片类型："
         echo "  RiscvAiChip - 原始设计"
@@ -72,6 +89,8 @@ case $MODE in
         echo "  CompactScaleAiChip - 紧凑规模设计"
         echo ""
         echo "示例："
+        echo "  $0 generate                             # 生成所有 SystemVerilog 文件"
+        echo "  $0 integration                          # RISC-V集成测试"
         echo "  $0 matrix PhysicalOptimizedRiscvAiChip  # 物理优化设计的矩阵演示"
         echo "  $0 full FixedMediumScaleAiChip          # 修复版本的完整测试"
         exit 1
@@ -99,7 +118,215 @@ if [ $? -ne 0 ]; then
 fi
 
 echo ""
-if [ "$MODE" = "matrix" ]; then
+if [ "$MODE" = "generate" ]; then
+    echo -e "${YELLOW}🔧 2. 生成 SystemVerilog 文件...${NC}"
+    echo ""
+    
+    # 创建输出目录
+    mkdir -p generated
+    
+    # 生成计数器
+    TOTAL_GENERATED=0
+    SUCCESS_GENERATED=0
+    FAILED_GENERATED=0
+    
+    # 生成单个模块的函数
+    generate_module() {
+        local main_class=$1
+        local module_name=$2
+        local description=$3
+        echo -e "${BLUE}▶ 生成: $description${NC}"
+        TOTAL_GENERATED=$((TOTAL_GENERATED + 1))
+        
+        if sbt "runMain riscv.ai.$main_class" 2>&1 | grep -q "Verilog generation complete"; then
+            echo -e "${GREEN}✓ 成功生成: generated/$module_name.sv${NC}"
+            SUCCESS_GENERATED=$((SUCCESS_GENERATED + 1))
+            
+            # 显示文件大小
+            if [ -f "generated/$module_name.sv" ]; then
+                local file_size=$(wc -l < "generated/$module_name.sv")
+                echo -e "${GREEN}  文件大小: $file_size 行${NC}"
+            fi
+        else
+            echo -e "${RED}✗ 生成失败: $module_name${NC}"
+            FAILED_GENERATED=$((FAILED_GENERATED + 1))
+        fi
+        echo ""
+    }
+    
+    # Phase 1: 生成核心模块
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}Phase 1: 生成核心 RISC-V AI 模块${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo ""
+    
+    generate_module "RiscvAiChipMain" "RiscvAiChip" "RISC-V AI 芯片 (顶层)"
+    generate_module "RiscvAiSystemMain" "RiscvAiSystem" "RISC-V AI 系统 (完整集成)"
+    generate_module "CompactScaleAiChipMain" "CompactScaleAiChip" "紧凑规模 AI 加速器"
+    
+    # Phase 2: 生成其他设计版本
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}Phase 2: 生成其他设计版本${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo ""
+    
+    echo -e "${BLUE}▶ 运行 VerilogGenerator (生成所有优化版本)${NC}"
+    if sbt "runMain riscv.ai.VerilogGenerator" 2>&1 | grep -q "物理优化代码生成完成"; then
+        echo -e "${GREEN}✓ 成功生成所有优化版本${NC}"
+        SUCCESS_GENERATED=$((SUCCESS_GENERATED + 5))
+        TOTAL_GENERATED=$((TOTAL_GENERATED + 5))
+    else
+        echo -e "${RED}✗ 优化版本生成失败${NC}"
+        FAILED_GENERATED=$((FAILED_GENERATED + 5))
+        TOTAL_GENERATED=$((TOTAL_GENERATED + 5))
+    fi
+    echo ""
+    
+    # 生成总结
+    echo ""
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}生成总结${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "总模块数:  $TOTAL_GENERATED"
+    echo -e "${GREEN}成功:      $SUCCESS_GENERATED${NC}"
+    echo -e "${RED}失败:      $FAILED_GENERATED${NC}"
+    echo ""
+    
+    if [ $FAILED_GENERATED -eq 0 ]; then
+        echo -e "${GREEN}✅ 所有 SystemVerilog 文件生成成功！${NC}"
+        echo ""
+        echo -e "${BLUE}📁 生成的文件:${NC}"
+        echo ""
+        echo -e "${YELLOW}核心模块 (generated/):${NC}"
+        [ -f "generated/RiscvAiChip.sv" ] && echo "  ✓ RiscvAiChip.sv - RISC-V AI 芯片顶层"
+        [ -f "generated/RiscvAiSystem.sv" ] && echo "  ✓ RiscvAiSystem.sv - 完整系统集成"
+        [ -f "generated/CompactScaleAiChip.sv" ] && echo "  ✓ CompactScaleAiChip.sv - AI 加速器"
+        echo ""
+        echo -e "${YELLOW}优化版本 (generated/optimized/):${NC}"
+        [ -f "generated/optimized/PhysicalOptimizedRiscvAiChip.sv" ] && echo "  ✓ PhysicalOptimizedRiscvAiChip.sv - 物理优化设计"
+        echo ""
+        echo -e "${YELLOW}扩容版本 (generated/scalable/):${NC}"
+        [ -f "generated/scalable/SimpleScalableAiChip.sv" ] && echo "  ✓ SimpleScalableAiChip.sv - 简化扩容设计"
+        echo ""
+        echo -e "${YELLOW}中等规模 (generated/medium/):${NC}"
+        [ -f "generated/medium/MediumScaleAiChip.sv" ] && echo "  ✓ MediumScaleAiChip.sv - 中等规模设计"
+        echo ""
+        echo -e "${YELLOW}修复版本 (generated/fixed/):${NC}"
+        [ -f "generated/fixed/FixedMediumScaleAiChip.sv" ] && echo "  ✓ FixedMediumScaleAiChip.sv - 修复版本设计"
+        echo ""
+        echo -e "${YELLOW}约束文件 (generated/constraints/):${NC}"
+        [ -f "generated/constraints/design_constraints.sdc" ] && echo "  ✓ design_constraints.sdc - 时序约束"
+        [ -f "generated/constraints/power_constraints.upf" ] && echo "  ✓ power_constraints.upf - 电源约束"
+        [ -f "generated/constraints/implementation.tcl" ] && echo "  ✓ implementation.tcl - 实现脚本"
+        echo ""
+        echo -e "${BLUE}📊 模块层次关系:${NC}"
+        echo "  RiscvAiChip (顶层芯片)"
+        echo "    └── RiscvAiSystem (系统集成)"
+        echo "         ├── PicoRV32BlackBox (RISC-V CPU)"
+        echo "         └── CompactScaleAiChip (AI 加速器)"
+        echo "              ├── MatrixMultiplier (矩阵乘法器)"
+        echo "              └── MacUnit (MAC 单元)"
+        echo ""
+        echo -e "${BLUE}🚀 下一步:${NC}"
+        echo "  1. 查看生成的 .sv 文件"
+        echo "  2. 使用 Verilator/Yosys 进行综合"
+        echo "  3. 应用约束文件进行物理实现"
+        echo "  4. 运行集成测试: ./run.sh integration"
+        exit 0
+    else
+        echo -e "${RED}❌ 部分文件生成失败${NC}"
+        echo ""
+        echo -e "${YELLOW}💡 调试建议:${NC}"
+        echo "  1. 检查编译错误: sbt compile"
+        echo "  2. 查看详细日志: sbt \"runMain riscv.ai.RiscvAiChipMain\" --verbose"
+        echo "  3. 清理重编译: sbt clean compile"
+        exit 1
+    fi
+elif [ "$MODE" = "integration" ]; then
+    echo -e "${YELLOW}🔧 2. 运行 RISC-V AI 集成测试...${NC}"
+    echo ""
+    
+    # 测试计数器
+    TOTAL_TESTS=0
+    PASSED_TESTS=0
+    FAILED_TESTS=0
+    
+    # 运行单个测试的函数
+    run_integration_test() {
+        local test_name=$1
+        local test_desc=$2
+        echo -e "${BLUE}▶ 测试: $test_desc${NC}"
+        TOTAL_TESTS=$((TOTAL_TESTS + 1))
+        
+        if sbt "testOnly $test_name" 2>&1 | grep -q "All tests passed"; then
+            echo -e "${GREEN}✓ PASSED: $test_desc${NC}"
+            PASSED_TESTS=$((PASSED_TESTS + 1))
+        else
+            echo -e "${RED}✗ FAILED: $test_desc${NC}"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
+        fi
+        echo ""
+    }
+    
+    # Phase 1: 基础模块测试
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}Phase 1: 基础模块测试${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo ""
+    
+    run_integration_test "riscv.ai.MacUnitTest" "MAC 单元测试"
+    run_integration_test "riscv.ai.MatrixMultiplierTest" "矩阵乘法器测试"
+    
+    # Phase 2: AI 加速器测试
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}Phase 2: AI 加速器测试${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo ""
+    
+    run_integration_test "riscv.ai.CompactScaleAiChipTest" "AI 加速器测试"
+    
+    # Phase 3: 集成测试
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}Phase 3: 系统集成测试${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo ""
+    
+    run_integration_test "riscv.ai.RiscvAiIntegrationTest" "RISC-V 集成测试"
+    run_integration_test "riscv.ai.RiscvAiSystemTest" "系统集成测试"
+    
+    # 测试总结
+    echo ""
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "${YELLOW}测试总结${NC}"
+    echo -e "${YELLOW}=========================================${NC}"
+    echo -e "总测试数:  $TOTAL_TESTS"
+    echo -e "${GREEN}通过:      $PASSED_TESTS${NC}"
+    echo -e "${RED}失败:      $FAILED_TESTS${NC}"
+    echo ""
+    
+    if [ $FAILED_TESTS -eq 0 ]; then
+        echo -e "${GREEN}✅ 所有集成测试通过！${NC}"
+        echo ""
+        echo -e "${BLUE}📚 查看文档:${NC}"
+        echo "  - docs/INTEGRATION.md - 集成架构"
+        echo "  - docs/TESTING.md - 测试指南"
+        echo "  - docs/TEST_SUMMARY.md - 测试总结"
+        echo ""
+        echo -e "${BLUE}🚀 下一步:${NC}"
+        echo "  1. 生成 Verilog: sbt \"runMain riscv.ai.RiscvAiChipMain\""
+        echo "  2. 查看示例: examples/matrix_multiply.c"
+        echo "  3. 阅读文档: docs/INTEGRATION_README.md"
+        exit 0
+    else
+        echo -e "${RED}❌ 部分测试失败${NC}"
+        echo ""
+        echo -e "${YELLOW}💡 调试建议:${NC}"
+        echo "  1. 查看详细日志: sbt \"testOnly <测试名>\" --verbose"
+        echo "  2. 检查依赖: sbt update"
+        echo "  3. 清理重编译: sbt clean compile"
+        exit 1
+    fi
+elif [ "$MODE" = "matrix" ]; then
     echo "🧮 2. 运行矩阵计算演示..."
     echo "   芯片类型: $CHIP_NAME"
     echo "   展示完整的矩阵乘法计算过程"

@@ -50,56 +50,120 @@
   `endif // not def ENABLE_INITIAL_MEM_
 `endif // not def SYNTHESIS
 
-module MatrixMultiplier(	// src/main/scala/MatrixMultiplier.scala:33:7
-  input  clock,	// <stdin>:1150:11, :1271:11, :1392:11, :1513:11
-         reset,	// <stdin>:1151:11, :1272:11, :1393:11, :1514:11
-  output io_done,	// src/main/scala/MatrixMultiplier.scala:39:14
-         io_busy	// src/main/scala/MatrixMultiplier.scala:39:14
+module MacUnit(	// src/main/scala/MacUnit.scala:9:7
+  input  clock,	// <stdin>:350:11, :373:11, :396:11, :419:11, :442:11, :465:11, :488:11, :511:11, :534:11, :557:11, :580:11, :603:11, :626:11, :649:11, :672:11, :695:11, :718:11, :741:11, :764:11, :787:11, :810:11, :833:11, :856:11, :879:11, :902:11, :925:11, :948:11, :971:11, :994:11, :1017:11, :1040:11, :1063:11, :1086:11, :1109:11, :1132:11, :1155:11, :1178:11, :1201:11, :1224:11, :1247:11, :1270:11, :1293:11, :1316:11, :1339:11, :1362:11, :1385:11, :1408:11, :1431:11, :1454:11, :1477:11, :1500:11, :1523:11, :1546:11, :1569:11, :1592:11, :1615:11, :1638:11, :1661:11, :1684:11, :1707:11, :1730:11, :1753:11, :1776:11, :1799:11
+         reset,	// <stdin>:351:11, :374:11, :397:11, :420:11, :443:11, :466:11, :489:11, :512:11, :535:11, :558:11, :581:11, :604:11, :627:11, :650:11, :673:11, :696:11, :719:11, :742:11, :765:11, :788:11, :811:11, :834:11, :857:11, :880:11, :903:11, :926:11, :949:11, :972:11, :995:11, :1018:11, :1041:11, :1064:11, :1087:11, :1110:11, :1133:11, :1156:11, :1179:11, :1202:11, :1225:11, :1248:11, :1271:11, :1294:11, :1317:11, :1340:11, :1363:11, :1386:11, :1409:11, :1432:11, :1455:11, :1478:11, :1501:11, :1524:11, :1547:11, :1570:11, :1593:11, :1616:11, :1639:11, :1662:11, :1685:11, :1708:11, :1731:11, :1754:11, :1777:11, :1800:11
+  output io_valid	// src/main/scala/MacUnit.scala:10:14
 );
 
-  reg [1:0]  state;	// src/main/scala/MatrixMultiplier.scala:84:22
-  reg [12:0] cycleCounter;	// src/main/scala/MatrixMultiplier.scala:88:29
-  always @(posedge clock) begin	// <stdin>:1150:11, :1271:11, :1392:11, :1513:11
-    if (reset) begin	// <stdin>:1150:11, :1271:11, :1392:11, :1513:11
-      state <= 2'h0;	// src/main/scala/MatrixMultiplier.scala:84:22
-      cycleCounter <= 13'h0;	// src/main/scala/MatrixMultiplier.scala:88:29
+  reg valid_pipe_0;	// src/main/scala/MacUnit.scala:33:27
+  reg valid_pipe_1;	// src/main/scala/MacUnit.scala:33:27
+  always @(posedge clock) begin	// <stdin>:350:11, :373:11, :396:11, :419:11, :442:11, :465:11, :488:11, :511:11, :534:11, :557:11, :580:11, :603:11, :626:11, :649:11, :672:11, :695:11, :718:11, :741:11, :764:11, :787:11, :810:11, :833:11, :856:11, :879:11, :902:11, :925:11, :948:11, :971:11, :994:11, :1017:11, :1040:11, :1063:11, :1086:11, :1109:11, :1132:11, :1155:11, :1178:11, :1201:11, :1224:11, :1247:11, :1270:11, :1293:11, :1316:11, :1339:11, :1362:11, :1385:11, :1408:11, :1431:11, :1454:11, :1477:11, :1500:11, :1523:11, :1546:11, :1569:11, :1592:11, :1615:11, :1638:11, :1661:11, :1684:11, :1707:11, :1730:11, :1753:11, :1776:11, :1799:11
+    if (reset) begin	// <stdin>:350:11, :373:11, :396:11, :419:11, :442:11, :465:11, :488:11, :511:11, :534:11, :557:11, :580:11, :603:11, :626:11, :649:11, :672:11, :695:11, :718:11, :741:11, :764:11, :787:11, :810:11, :833:11, :856:11, :879:11, :902:11, :925:11, :948:11, :971:11, :994:11, :1017:11, :1040:11, :1063:11, :1086:11, :1109:11, :1132:11, :1155:11, :1178:11, :1201:11, :1224:11, :1247:11, :1270:11, :1293:11, :1316:11, :1339:11, :1362:11, :1385:11, :1408:11, :1431:11, :1454:11, :1477:11, :1500:11, :1523:11, :1546:11, :1569:11, :1592:11, :1615:11, :1638:11, :1661:11, :1684:11, :1707:11, :1730:11, :1753:11, :1776:11, :1799:11
+      valid_pipe_0 <= 1'h0;	// src/main/scala/MacUnit.scala:21:26, :33:27
+      valid_pipe_1 <= 1'h0;	// src/main/scala/MacUnit.scala:21:26, :33:27
     end
-    else begin	// <stdin>:1150:11, :1271:11, :1392:11, :1513:11
-      automatic logic [3:0][1:0] _GEN;	// src/main/scala/MatrixMultiplier.scala:84:22, :128:17, :130:22, :140:50, :147:23, :148:15
-      _GEN = {{state}, {2'h0}, {cycleCounter == 13'hFFF ? 2'h2 : state}, {state}};	// src/main/scala/MatrixMultiplier.scala:84:22, :88:29, :128:17, :130:22, :140:{25,50}, :142:15, :147:23, :148:15
-      state <= _GEN[state];	// src/main/scala/MatrixMultiplier.scala:84:22, :128:17, :130:22, :140:50, :147:23, :148:15
-      if (state == 2'h0 | state != 2'h1) begin	// src/main/scala/MatrixMultiplier.scala:84:22, :128:17, :130:22, :131:15
-      end
-      else	// src/main/scala/MatrixMultiplier.scala:128:17, :130:22
-        cycleCounter <= cycleCounter + 13'h1;	// src/main/scala/MatrixMultiplier.scala:88:29, :139:36
+    else begin	// <stdin>:350:11, :373:11, :396:11, :419:11, :442:11, :465:11, :488:11, :511:11, :534:11, :557:11, :580:11, :603:11, :626:11, :649:11, :672:11, :695:11, :718:11, :741:11, :764:11, :787:11, :810:11, :833:11, :856:11, :879:11, :902:11, :925:11, :948:11, :971:11, :994:11, :1017:11, :1040:11, :1063:11, :1086:11, :1109:11, :1132:11, :1155:11, :1178:11, :1201:11, :1224:11, :1247:11, :1270:11, :1293:11, :1316:11, :1339:11, :1362:11, :1385:11, :1408:11, :1431:11, :1454:11, :1477:11, :1500:11, :1523:11, :1546:11, :1569:11, :1592:11, :1615:11, :1638:11, :1661:11, :1684:11, :1707:11, :1730:11, :1753:11, :1776:11, :1799:11
+      valid_pipe_0 <= 1'h1;	// src/main/scala/MacUnit.scala:33:27, :34:17
+      valid_pipe_1 <= valid_pipe_0;	// src/main/scala/MacUnit.scala:33:27
     end
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// src/main/scala/MatrixMultiplier.scala:33:7
-    `ifdef FIRRTL_BEFORE_INITIAL	// src/main/scala/MatrixMultiplier.scala:33:7
-      `FIRRTL_BEFORE_INITIAL	// src/main/scala/MatrixMultiplier.scala:33:7
+  `ifdef ENABLE_INITIAL_REG_	// src/main/scala/MacUnit.scala:9:7
+    `ifdef FIRRTL_BEFORE_INITIAL	// src/main/scala/MacUnit.scala:9:7
+      `FIRRTL_BEFORE_INITIAL	// src/main/scala/MacUnit.scala:9:7
     `endif // FIRRTL_BEFORE_INITIAL
-    initial begin	// src/main/scala/MatrixMultiplier.scala:33:7
-      automatic logic [31:0] _RANDOM[0:0];	// src/main/scala/MatrixMultiplier.scala:33:7
-      `ifdef INIT_RANDOM_PROLOG_	// src/main/scala/MatrixMultiplier.scala:33:7
-        `INIT_RANDOM_PROLOG_	// src/main/scala/MatrixMultiplier.scala:33:7
+    initial begin	// src/main/scala/MacUnit.scala:9:7
+      automatic logic [31:0] _RANDOM[0:2];	// src/main/scala/MacUnit.scala:9:7
+      `ifdef INIT_RANDOM_PROLOG_	// src/main/scala/MacUnit.scala:9:7
+        `INIT_RANDOM_PROLOG_	// src/main/scala/MacUnit.scala:9:7
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// src/main/scala/MatrixMultiplier.scala:33:7
-        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// src/main/scala/MatrixMultiplier.scala:33:7
-        state = _RANDOM[/*Zero width*/ 1'b0][1:0];	// src/main/scala/MatrixMultiplier.scala:33:7, :84:22
-        cycleCounter = _RANDOM[/*Zero width*/ 1'b0][14:2];	// src/main/scala/MatrixMultiplier.scala:33:7, :84:22, :88:29
+      `ifdef RANDOMIZE_REG_INIT	// src/main/scala/MacUnit.scala:9:7
+        for (logic [1:0] i = 2'h0; i < 2'h3; i += 2'h1) begin
+          _RANDOM[i] = `RANDOM;	// src/main/scala/MacUnit.scala:9:7
+        end	// src/main/scala/MacUnit.scala:9:7
+        valid_pipe_0 = _RANDOM[2'h2][1];	// src/main/scala/MacUnit.scala:9:7, :33:27
+        valid_pipe_1 = _RANDOM[2'h2][2];	// src/main/scala/MacUnit.scala:9:7, :33:27
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// src/main/scala/MatrixMultiplier.scala:33:7
-      `FIRRTL_AFTER_INITIAL	// src/main/scala/MatrixMultiplier.scala:33:7
+    `ifdef FIRRTL_AFTER_INITIAL	// src/main/scala/MacUnit.scala:9:7
+      `FIRRTL_AFTER_INITIAL	// src/main/scala/MacUnit.scala:9:7
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  assign io_done = state == 2'h2;	// src/main/scala/MatrixMultiplier.scala:33:7, :84:22, :142:15, :188:20
-  assign io_busy = |state;	// src/main/scala/MatrixMultiplier.scala:33:7, :84:22, :187:20
+  assign io_valid = valid_pipe_1;	// src/main/scala/MacUnit.scala:9:7, :33:27
+endmodule
+
+module MatrixMultiplier(	// src/main/scala/MatrixMultiplier.scala:21:7
+  input  clock,	// <stdin>:1822:11, :1940:11, :2058:11, :2176:11
+         reset,	// <stdin>:1823:11, :1941:11, :2059:11, :2177:11
+  output io_busy,	// src/main/scala/MatrixMultiplier.scala:24:14
+         io_done	// src/main/scala/MatrixMultiplier.scala:24:14
+);
+
+  reg [1:0] state;	// src/main/scala/MatrixMultiplier.scala:41:22
+  reg [3:0] row;	// src/main/scala/MatrixMultiplier.scala:44:20
+  reg [3:0] col;	// src/main/scala/MatrixMultiplier.scala:45:20
+  reg [3:0] k;	// src/main/scala/MatrixMultiplier.scala:46:18
+  always @(posedge clock) begin	// <stdin>:1822:11, :1940:11, :2058:11, :2176:11
+    if (reset) begin	// <stdin>:1822:11, :1940:11, :2058:11, :2176:11
+      state <= 2'h0;	// src/main/scala/MatrixMultiplier.scala:41:22
+      row <= 4'h0;	// src/main/scala/MatrixMultiplier.scala:44:20
+      col <= 4'h0;	// src/main/scala/MatrixMultiplier.scala:44:20, :45:20
+      k <= 4'h0;	// src/main/scala/MatrixMultiplier.scala:44:20, :46:18
+    end
+    else begin	// <stdin>:1822:11, :1940:11, :2058:11, :2176:11
+      automatic logic            _GEN;	// src/main/scala/MatrixMultiplier.scala:78:17
+      automatic logic            _GEN_0;	// src/main/scala/MatrixMultiplier.scala:78:17
+      automatic logic [3:0][1:0] _GEN_1;	// src/main/scala/MatrixMultiplier.scala:41:22, :78:17, :80:22, :101:32, :125:23, :126:15
+      _GEN = state == 2'h0;	// src/main/scala/MatrixMultiplier.scala:41:22, :78:17
+      _GEN_0 = state == 2'h1;	// src/main/scala/MatrixMultiplier.scala:41:22, :78:17, :81:15
+      _GEN_1 = {{state}, {2'h0}, {(&k) & (&col) & (&row) ? 2'h2 : state}, {state}};	// src/main/scala/MatrixMultiplier.scala:41:22, :44:20, :45:20, :46:18, :57:20, :78:17, :80:22, :101:{14,32}, :109:{18,36}, :111:{20,38}, :112:19, :125:23, :126:15
+      state <= _GEN_1[state];	// src/main/scala/MatrixMultiplier.scala:41:22, :78:17, :80:22, :101:32, :125:23, :126:15
+      if (_GEN | ~(_GEN_0 & (&k) & (&col)) | (&row)) begin	// src/main/scala/MatrixMultiplier.scala:44:20, :45:20, :46:18, :78:17, :80:22, :101:{14,32}, :109:{18,36}, :111:{20,38}
+      end
+      else	// src/main/scala/MatrixMultiplier.scala:78:17, :80:22
+        row <= row + 4'h1;	// src/main/scala/MatrixMultiplier.scala:44:20, :114:24
+      if (_GEN | ~(_GEN_0 & (&k))) begin	// src/main/scala/MatrixMultiplier.scala:45:20, :46:18, :78:17, :80:22, :101:{14,32}, :109:36
+      end
+      else if (&col)	// src/main/scala/MatrixMultiplier.scala:45:20, :109:18
+        col <= 4'h0;	// src/main/scala/MatrixMultiplier.scala:44:20, :45:20
+      else	// src/main/scala/MatrixMultiplier.scala:109:18
+        col <= col + 4'h1;	// src/main/scala/MatrixMultiplier.scala:45:20, :114:24, :117:22
+      if (_GEN | ~_GEN_0) begin	// src/main/scala/MatrixMultiplier.scala:78:17, :80:22
+      end
+      else if (&k)	// src/main/scala/MatrixMultiplier.scala:46:18, :101:14
+        k <= 4'h0;	// src/main/scala/MatrixMultiplier.scala:44:20, :46:18
+      else	// src/main/scala/MatrixMultiplier.scala:101:14
+        k <= k + 4'h1;	// src/main/scala/MatrixMultiplier.scala:46:18, :114:24, :120:16
+    end
+  end // always @(posedge)
+  `ifdef ENABLE_INITIAL_REG_	// src/main/scala/MatrixMultiplier.scala:21:7
+    `ifdef FIRRTL_BEFORE_INITIAL	// src/main/scala/MatrixMultiplier.scala:21:7
+      `FIRRTL_BEFORE_INITIAL	// src/main/scala/MatrixMultiplier.scala:21:7
+    `endif // FIRRTL_BEFORE_INITIAL
+    initial begin	// src/main/scala/MatrixMultiplier.scala:21:7
+      automatic logic [31:0] _RANDOM[0:0];	// src/main/scala/MatrixMultiplier.scala:21:7
+      `ifdef INIT_RANDOM_PROLOG_	// src/main/scala/MatrixMultiplier.scala:21:7
+        `INIT_RANDOM_PROLOG_	// src/main/scala/MatrixMultiplier.scala:21:7
+      `endif // INIT_RANDOM_PROLOG_
+      `ifdef RANDOMIZE_REG_INIT	// src/main/scala/MatrixMultiplier.scala:21:7
+        _RANDOM[/*Zero width*/ 1'b0] = `RANDOM;	// src/main/scala/MatrixMultiplier.scala:21:7
+        state = _RANDOM[/*Zero width*/ 1'b0][1:0];	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22
+        row = _RANDOM[/*Zero width*/ 1'b0][5:2];	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22, :44:20
+        col = _RANDOM[/*Zero width*/ 1'b0][9:6];	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22, :45:20
+        k = _RANDOM[/*Zero width*/ 1'b0][13:10];	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22, :46:18
+      `endif // RANDOMIZE_REG_INIT
+    end // initial
+    `ifdef FIRRTL_AFTER_INITIAL	// src/main/scala/MatrixMultiplier.scala:21:7
+      `FIRRTL_AFTER_INITIAL	// src/main/scala/MatrixMultiplier.scala:21:7
+    `endif // FIRRTL_AFTER_INITIAL
+  `endif // ENABLE_INITIAL_REG_
+  assign io_busy = |state;	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22, :56:20
+  assign io_done = state == 2'h2;	// src/main/scala/MatrixMultiplier.scala:21:7, :41:22, :57:20
 endmodule
 
 module MediumScaleAiChip(	// src/main/scala/SimpleScalableDesign.scala:189:7
-  input         clock,	// <stdin>:1622:11
-                reset,	// <stdin>:1623:11
+  input         clock,	// <stdin>:2294:11
+                reset,	// <stdin>:2295:11
   input  [11:0] io_axi_awaddr,	// src/main/scala/SimpleScalableDesign.scala:198:14
   input         io_axi_awvalid,	// src/main/scala/SimpleScalableDesign.scala:198:14
   output        io_axi_awready,	// src/main/scala/SimpleScalableDesign.scala:198:14
@@ -140,14 +204,78 @@ module MediumScaleAiChip(	// src/main/scala/SimpleScalableDesign.scala:189:7
   output [3:0]  io_interrupts	// src/main/scala/SimpleScalableDesign.scala:198:14
 );
 
-  wire        _matrixUnits_3_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
   wire        _matrixUnits_3_io_busy;	// src/main/scala/SimpleScalableDesign.scala:239:52
-  wire        _matrixUnits_2_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
+  wire        _matrixUnits_3_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
   wire        _matrixUnits_2_io_busy;	// src/main/scala/SimpleScalableDesign.scala:239:52
-  wire        _matrixUnits_1_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
+  wire        _matrixUnits_2_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
   wire        _matrixUnits_1_io_busy;	// src/main/scala/SimpleScalableDesign.scala:239:52
-  wire        _matrixUnits_0_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
+  wire        _matrixUnits_1_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
   wire        _matrixUnits_0_io_busy;	// src/main/scala/SimpleScalableDesign.scala:239:52
+  wire        _matrixUnits_0_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52
+  wire        _macUnits_63_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_62_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_61_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_60_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_59_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_58_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_57_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_56_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_55_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_54_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_53_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_52_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_51_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_50_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_49_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_48_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_47_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_46_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_45_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_44_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_43_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_42_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_41_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_40_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_39_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_38_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_37_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_36_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_35_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_34_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_33_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_32_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_31_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_30_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_29_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_28_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_27_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_26_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_25_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_24_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_23_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_22_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_21_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_20_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_19_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_18_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_17_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_16_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_15_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_14_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_13_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_12_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_11_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_10_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_9_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_8_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_7_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_6_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_5_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_4_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_3_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_2_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_1_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
+  wire        _macUnits_0_io_valid;	// src/main/scala/SimpleScalableDesign.scala:236:46
   reg  [31:0] perfCounters_0;	// src/main/scala/SimpleScalableDesign.scala:245:42
   reg  [31:0] perfCounters_1;	// src/main/scala/SimpleScalableDesign.scala:245:42
   reg  [31:0] perfCounters_2;	// src/main/scala/SimpleScalableDesign.scala:245:42
@@ -160,19 +288,121 @@ module MediumScaleAiChip(	// src/main/scala/SimpleScalableDesign.scala:189:7
   wire        anyDone =
     _matrixUnits_0_io_done | _matrixUnits_1_io_done | _matrixUnits_2_io_done
     | _matrixUnits_3_io_done;	// src/main/scala/SimpleScalableDesign.scala:239:52, :293:53
-  always @(posedge clock) begin	// <stdin>:1622:11
-    if (reset) begin	// <stdin>:1622:11
+  always @(posedge clock) begin	// <stdin>:2294:11
+    if (reset) begin	// <stdin>:2294:11
       perfCounters_0 <= 32'h0;	// src/main/scala/SimpleScalableDesign.scala:189:7, :245:42
       perfCounters_1 <= 32'h0;	// src/main/scala/SimpleScalableDesign.scala:189:7, :245:42
       perfCounters_2 <= 32'h0;	// src/main/scala/SimpleScalableDesign.scala:189:7, :245:42
       perfCounters_3 <= 32'h0;	// src/main/scala/SimpleScalableDesign.scala:189:7, :245:42
     end
-    else begin	// <stdin>:1622:11
+    else begin	// <stdin>:2294:11
       if (anyBusy)	// src/main/scala/SimpleScalableDesign.scala:292:53
         perfCounters_0 <= perfCounters_0 + 32'h1;	// src/main/scala/SimpleScalableDesign.scala:245:42, :308:40
       if (anyDone)	// src/main/scala/SimpleScalableDesign.scala:293:53
         perfCounters_1 <= perfCounters_1 + 32'h1;	// src/main/scala/SimpleScalableDesign.scala:245:42, :308:40, :311:40
-      perfCounters_2 <= perfCounters_2 + 32'h40;	// src/main/scala/SimpleScalableDesign.scala:245:42, :315:38
+      perfCounters_2 <=
+        perfCounters_2
+        + {25'h0,
+           {1'h0,
+            {1'h0,
+             {1'h0,
+              {1'h0,
+               {1'h0, {1'h0, _macUnits_0_io_valid} + {1'h0, _macUnits_1_io_valid}}
+                 + {1'h0, {1'h0, _macUnits_2_io_valid} + {1'h0, _macUnits_3_io_valid}}}
+                + {1'h0,
+                   {1'h0, {1'h0, _macUnits_4_io_valid} + {1'h0, _macUnits_5_io_valid}}
+                     + {1'h0,
+                        {1'h0, _macUnits_6_io_valid} + {1'h0, _macUnits_7_io_valid}}}}
+               + {1'h0,
+                  {1'h0,
+                   {1'h0, {1'h0, _macUnits_8_io_valid} + {1'h0, _macUnits_9_io_valid}}
+                     + {1'h0,
+                        {1'h0, _macUnits_10_io_valid} + {1'h0, _macUnits_11_io_valid}}}
+                    + {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_12_io_valid} + {1'h0, _macUnits_13_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_14_io_valid}
+                              + {1'h0, _macUnits_15_io_valid}}}}}
+              + {1'h0,
+                 {1'h0,
+                  {1'h0,
+                   {1'h0, {1'h0, _macUnits_16_io_valid} + {1'h0, _macUnits_17_io_valid}}
+                     + {1'h0,
+                        {1'h0, _macUnits_18_io_valid} + {1'h0, _macUnits_19_io_valid}}}
+                    + {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_20_io_valid} + {1'h0, _macUnits_21_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_22_io_valid}
+                              + {1'h0, _macUnits_23_io_valid}}}}
+                   + {1'h0,
+                      {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_24_io_valid} + {1'h0, _macUnits_25_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_26_io_valid}
+                              + {1'h0, _macUnits_27_io_valid}}}
+                        + {1'h0,
+                           {1'h0,
+                            {1'h0, _macUnits_28_io_valid} + {1'h0, _macUnits_29_io_valid}}
+                             + {1'h0,
+                                {1'h0, _macUnits_30_io_valid}
+                                  + {1'h0, _macUnits_31_io_valid}}}}}}
+             + {1'h0,
+                {1'h0,
+                 {1'h0,
+                  {1'h0,
+                   {1'h0, {1'h0, _macUnits_32_io_valid} + {1'h0, _macUnits_33_io_valid}}
+                     + {1'h0,
+                        {1'h0, _macUnits_34_io_valid} + {1'h0, _macUnits_35_io_valid}}}
+                    + {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_36_io_valid} + {1'h0, _macUnits_37_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_38_io_valid}
+                              + {1'h0, _macUnits_39_io_valid}}}}
+                   + {1'h0,
+                      {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_40_io_valid} + {1'h0, _macUnits_41_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_42_io_valid}
+                              + {1'h0, _macUnits_43_io_valid}}}
+                        + {1'h0,
+                           {1'h0,
+                            {1'h0, _macUnits_44_io_valid} + {1'h0, _macUnits_45_io_valid}}
+                             + {1'h0,
+                                {1'h0, _macUnits_46_io_valid}
+                                  + {1'h0, _macUnits_47_io_valid}}}}}
+                  + {1'h0,
+                     {1'h0,
+                      {1'h0,
+                       {1'h0,
+                        {1'h0, _macUnits_48_io_valid} + {1'h0, _macUnits_49_io_valid}}
+                         + {1'h0,
+                            {1'h0, _macUnits_50_io_valid}
+                              + {1'h0, _macUnits_51_io_valid}}}
+                        + {1'h0,
+                           {1'h0,
+                            {1'h0, _macUnits_52_io_valid} + {1'h0, _macUnits_53_io_valid}}
+                             + {1'h0,
+                                {1'h0, _macUnits_54_io_valid}
+                                  + {1'h0, _macUnits_55_io_valid}}}}
+                       + {1'h0,
+                          {1'h0,
+                           {1'h0,
+                            {1'h0, _macUnits_56_io_valid} + {1'h0, _macUnits_57_io_valid}}
+                             + {1'h0,
+                                {1'h0, _macUnits_58_io_valid}
+                                  + {1'h0, _macUnits_59_io_valid}}}
+                            + {1'h0,
+                               {1'h0,
+                                {1'h0, _macUnits_60_io_valid}
+                                  + {1'h0, _macUnits_61_io_valid}}
+                                 + {1'h0,
+                                    {1'h0, _macUnits_62_io_valid}
+                                      + {1'h0, _macUnits_63_io_valid}}}}}}};	// src/main/scala/SimpleScalableDesign.scala:236:46, :245:42, :265:39, :314:32, :315:38
       perfCounters_3 <=
         perfCounters_3
         + {29'h0,
@@ -207,29 +437,349 @@ module MediumScaleAiChip(	// src/main/scala/SimpleScalableDesign.scala:189:7
       `FIRRTL_AFTER_INITIAL	// src/main/scala/SimpleScalableDesign.scala:189:7
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
+  MacUnit macUnits_0 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_0_io_valid)
+  );
+  MacUnit macUnits_1 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_1_io_valid)
+  );
+  MacUnit macUnits_2 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_2_io_valid)
+  );
+  MacUnit macUnits_3 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_3_io_valid)
+  );
+  MacUnit macUnits_4 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_4_io_valid)
+  );
+  MacUnit macUnits_5 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_5_io_valid)
+  );
+  MacUnit macUnits_6 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_6_io_valid)
+  );
+  MacUnit macUnits_7 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_7_io_valid)
+  );
+  MacUnit macUnits_8 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_8_io_valid)
+  );
+  MacUnit macUnits_9 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_9_io_valid)
+  );
+  MacUnit macUnits_10 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_10_io_valid)
+  );
+  MacUnit macUnits_11 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_11_io_valid)
+  );
+  MacUnit macUnits_12 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_12_io_valid)
+  );
+  MacUnit macUnits_13 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_13_io_valid)
+  );
+  MacUnit macUnits_14 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_14_io_valid)
+  );
+  MacUnit macUnits_15 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_15_io_valid)
+  );
+  MacUnit macUnits_16 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_16_io_valid)
+  );
+  MacUnit macUnits_17 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_17_io_valid)
+  );
+  MacUnit macUnits_18 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_18_io_valid)
+  );
+  MacUnit macUnits_19 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_19_io_valid)
+  );
+  MacUnit macUnits_20 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_20_io_valid)
+  );
+  MacUnit macUnits_21 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_21_io_valid)
+  );
+  MacUnit macUnits_22 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_22_io_valid)
+  );
+  MacUnit macUnits_23 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_23_io_valid)
+  );
+  MacUnit macUnits_24 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_24_io_valid)
+  );
+  MacUnit macUnits_25 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_25_io_valid)
+  );
+  MacUnit macUnits_26 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_26_io_valid)
+  );
+  MacUnit macUnits_27 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_27_io_valid)
+  );
+  MacUnit macUnits_28 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_28_io_valid)
+  );
+  MacUnit macUnits_29 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_29_io_valid)
+  );
+  MacUnit macUnits_30 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_30_io_valid)
+  );
+  MacUnit macUnits_31 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_31_io_valid)
+  );
+  MacUnit macUnits_32 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_32_io_valid)
+  );
+  MacUnit macUnits_33 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_33_io_valid)
+  );
+  MacUnit macUnits_34 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_34_io_valid)
+  );
+  MacUnit macUnits_35 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_35_io_valid)
+  );
+  MacUnit macUnits_36 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_36_io_valid)
+  );
+  MacUnit macUnits_37 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_37_io_valid)
+  );
+  MacUnit macUnits_38 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_38_io_valid)
+  );
+  MacUnit macUnits_39 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_39_io_valid)
+  );
+  MacUnit macUnits_40 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_40_io_valid)
+  );
+  MacUnit macUnits_41 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_41_io_valid)
+  );
+  MacUnit macUnits_42 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_42_io_valid)
+  );
+  MacUnit macUnits_43 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_43_io_valid)
+  );
+  MacUnit macUnits_44 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_44_io_valid)
+  );
+  MacUnit macUnits_45 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_45_io_valid)
+  );
+  MacUnit macUnits_46 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_46_io_valid)
+  );
+  MacUnit macUnits_47 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_47_io_valid)
+  );
+  MacUnit macUnits_48 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_48_io_valid)
+  );
+  MacUnit macUnits_49 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_49_io_valid)
+  );
+  MacUnit macUnits_50 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_50_io_valid)
+  );
+  MacUnit macUnits_51 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_51_io_valid)
+  );
+  MacUnit macUnits_52 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_52_io_valid)
+  );
+  MacUnit macUnits_53 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_53_io_valid)
+  );
+  MacUnit macUnits_54 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_54_io_valid)
+  );
+  MacUnit macUnits_55 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_55_io_valid)
+  );
+  MacUnit macUnits_56 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_56_io_valid)
+  );
+  MacUnit macUnits_57 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_57_io_valid)
+  );
+  MacUnit macUnits_58 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_58_io_valid)
+  );
+  MacUnit macUnits_59 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_59_io_valid)
+  );
+  MacUnit macUnits_60 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_60_io_valid)
+  );
+  MacUnit macUnits_61 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_61_io_valid)
+  );
+  MacUnit macUnits_62 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_62_io_valid)
+  );
+  MacUnit macUnits_63 (	// src/main/scala/SimpleScalableDesign.scala:236:46
+    .clock    (clock),
+    .reset    (reset),
+    .io_valid (_macUnits_63_io_valid)
+  );
   MatrixMultiplier matrixUnits_0 (	// src/main/scala/SimpleScalableDesign.scala:239:52
     .clock   (clock),
     .reset   (reset),
-    .io_done (_matrixUnits_0_io_done),
-    .io_busy (_matrixUnits_0_io_busy)
+    .io_busy (_matrixUnits_0_io_busy),
+    .io_done (_matrixUnits_0_io_done)
   );
   MatrixMultiplier matrixUnits_1 (	// src/main/scala/SimpleScalableDesign.scala:239:52
     .clock   (clock),
     .reset   (reset),
-    .io_done (_matrixUnits_1_io_done),
-    .io_busy (_matrixUnits_1_io_busy)
+    .io_busy (_matrixUnits_1_io_busy),
+    .io_done (_matrixUnits_1_io_done)
   );
   MatrixMultiplier matrixUnits_2 (	// src/main/scala/SimpleScalableDesign.scala:239:52
     .clock   (clock),
     .reset   (reset),
-    .io_done (_matrixUnits_2_io_done),
-    .io_busy (_matrixUnits_2_io_busy)
+    .io_busy (_matrixUnits_2_io_busy),
+    .io_done (_matrixUnits_2_io_done)
   );
   MatrixMultiplier matrixUnits_3 (	// src/main/scala/SimpleScalableDesign.scala:239:52
     .clock   (clock),
     .reset   (reset),
-    .io_done (_matrixUnits_3_io_done),
-    .io_busy (_matrixUnits_3_io_busy)
+    .io_busy (_matrixUnits_3_io_busy),
+    .io_done (_matrixUnits_3_io_done)
   );
   assign io_axi_awready = 1'h1;	// src/main/scala/SimpleScalableDesign.scala:189:7, :282:18
   assign io_axi_wready = 1'h1;	// src/main/scala/SimpleScalableDesign.scala:189:7, :282:18

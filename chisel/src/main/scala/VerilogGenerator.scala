@@ -28,7 +28,7 @@ object VerilogGenerator extends App {
   // 生成原始设计（用于对比）
   println("\n📦 生成原始设计...")
   ChiselStage.emitSystemVerilogFile(
-    new RiscvAiChip(dataWidth = 32, matrixSize = 4, addrWidth = 8),
+    new RiscvAiChip,
     Array("--target-dir", "generated/original")
   )
   
