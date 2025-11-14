@@ -7,7 +7,6 @@
 # 所有 target 目录（包括 chisel/target/, chisel/project/target/ 等）
 target/
 **/target/
-**/generated
 */.coursier
 */test_run_dir
 
@@ -37,7 +36,7 @@ metals.sbt
 # ============================================================================
 # Chisel / FIRRTL 生成文件
 # ============================================================================
-# 保留 generated/ 目录下的 .sv 文件（这是我们要的 Verilog）
+# 保留 generated/ 目录下的 .sv 和 .v 文件（这是我们要的 Verilog）
 # 但过滤其他临时文件
 
 # ChiselTest 测试运行目录（包括 chisel/test_run_dir/ 等）
@@ -47,7 +46,6 @@ test_run_dir/
 */test_results
 
 *.anno.json
-*.v
 *.vcd
 *.vpd
 *.fsdb
