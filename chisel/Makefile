@@ -47,6 +47,11 @@ test-compact:
 	@echo "🧪 运行 Compact 加速器调试测试..."
 	$(SBT) 'testOnly riscv.ai.SimpleCompactAccelDebugTest'
 
+# 运行 RISC-V 指令测试
+test-riscv:
+	@echo "🧪 运行 RISC-V 指令测试..."
+	$(SBT) 'testOnly riscv.ai.SimpleRiscvInstructionTests'
+
 # 运行测试并显示详细输出
 test-verbose:
 	@echo "🧪 运行测试（详细输出）..."
@@ -92,6 +97,7 @@ help:
 	@echo "  test-picorv32    - 运行 PicoRV32 核心测试"
 	@echo "  test-bitnet      - 运行 BitNet 加速器测试"
 	@echo "  test-compact     - 运行 Compact 加速器测试"
+	@echo "  test-riscv       - 运行 RISC-V 指令测试"
 	@echo "  test-verbose     - 运行测试（详细输出）"
 	@echo "  quick-test       - 快速测试（仅 SoC）"
 	@echo ""
