@@ -17,6 +17,7 @@ object VerilogGenerator extends App {
     "generated/scalable",
     "generated/medium",
     "generated/fixed",
+    "generated/edgeaisoc",
     "generated/constraints",
     "generated/reports"
   )
@@ -87,6 +88,21 @@ object VerilogGenerator extends App {
     Array("--target-dir", "generated/optimized")
   )
   
+  // 生成EdgeAiSoC (RISC-V + AI加速器完整SoC)
+  println("\n🚀 生成EdgeAiSoC (RISC-V + AI加速器SoC)...")
+  try {
+    ChiselStage.emitSystemVerilogFile(
+      new EdgeAiSoC(),
+      Array("--target-dir", "generated/edgeaisoc")
+    )
+    println("   ✅ EdgeAiSoC 生成成功")
+  } catch {
+    case _: Exception =>
+      println("   ⚠️  EdgeAiSoC 生成失败 (已知的 AXI 接口问题)")
+      println("   💡 请使用 'sbt runMain riscv.ai.EdgeAiSoCMain' 查看详细信息")
+      println("   📚 参考文档: chisel/docs/EdgeAiSoC_STATUS.md")
+  }
+  
   // 生成物理约束文件
   println("\n📋 生成约束文件...")
   val sdcContent = SDCGenerator.generateConstraints("PhysicalOptimizedRiscvAiChip")
@@ -150,6 +166,16 @@ object VerilogGenerator extends App {
   println("  - 完整AXI存储器映射")
   println("  - 动态工作负载生成")
   
+  println("\n🔹 EdgeAiSoC设计 (generated/edgeaisoc/):")
+  println("  - EdgeAiSoC.sv (完整RISC-V SoC)")
+  println("  - PicoRV32 RISC-V核心集成")
+  println("  - CompactScale AI加速器 (8x8)")
+  println("  - BitNetScale AI加速器 (16x16)")
+  println("  - DMA控制器")
+  println("  - 中断控制器")
+  println("  - UART/GPIO外设")
+  println("  - AXI4-Lite系统总线")
+  
   println("\n🔹 约束文件 (generated/constraints/):")
   println("  - design_constraints.sdc")
   println("  - power_constraints.upf") 
@@ -181,9 +207,10 @@ object VerilogGenerator extends App {
   println("  1. 基础应用: 使用 generated/optimized/ 中的物理优化设计")
   println("  2. 小规模扩容: 使用 generated/scalable/ 中的简化扩容设计")
   println("  3. 中等规模: 使用 generated/medium/ 中的中等规模设计")
-  println("  4. 应用 generated/constraints/ 中的约束文件")
-  println("  5. 参考 generated/reports/ 中的修复报告")
-  println("  6. 预期DRC违例从1038个减少到0个")
+  println("  4. 完整SoC: 使用 generated/edgeaisoc/ 中的EdgeAiSoC设计")
+  println("  5. 应用 generated/constraints/ 中的约束文件")
+  println("  6. 参考 generated/reports/ 中的修复报告")
+  println("  7. 预期DRC违例从1038个减少到0个")
   
   /**
    * 生成UPF电源约束

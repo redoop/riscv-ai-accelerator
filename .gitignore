@@ -8,6 +8,9 @@
 target/
 **/target/
 **/generated
+*/.coursier
+*/test_run_dir
+
 
 # SBT 项目编译产物
 project/target/
@@ -41,6 +44,8 @@ metals.sbt
 test_run_dir/
 **/test_run_dir/
 *.fir
+*/test_results
+
 *.anno.json
 *.v
 *.vcd

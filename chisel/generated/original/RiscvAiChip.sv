@@ -55,7 +55,7 @@
   `endif // not def ENABLE_INITIAL_MEM_
 `endif // not def SYNTHESIS
 
-// external module PicoRV32BlackBox
+// external module picorv32
 
 module MacUnit(	// src/main/scala/MacUnit.scala:9:7
   input  clock,	// <stdin>:146:11, :169:11, :192:11, :215:11, :238:11, :261:11, :284:11, :307:11, :330:11, :353:11, :376:11, :399:11, :422:11, :445:11, :468:11, :491:11
@@ -698,85 +698,85 @@ module CompactScaleAiChip(	// src/main/scala/CompactScaleDesign.scala:11:7
   assign io_perf_counters_3 = perfCounters_3;	// src/main/scala/CompactScaleDesign.scala:11:7, :60:41
 endmodule
 
-module RiscvAiSystem(	// src/main/scala/RiscvAiIntegration.scala:59:7
+module RiscvAiSystem(	// src/main/scala/RiscvAiIntegration.scala:64:7
   input         clock,	// <stdin>:1099:11
                 reset,	// <stdin>:1100:11
-  output        io_mem_valid,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  input         io_mem_ready,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  output [31:0] io_mem_addr,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_mem_wdata,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  output [3:0]  io_mem_wstrb,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  input  [31:0] io_mem_rdata,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_irq,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  output        io_trap,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_ai_busy,	// src/main/scala/RiscvAiIntegration.scala:66:14
-  output [31:0] io_perf_counters_0,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_perf_counters_1,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_perf_counters_2,	// src/main/scala/RiscvAiIntegration.scala:66:14
-                io_perf_counters_3	// src/main/scala/RiscvAiIntegration.scala:66:14
+  output        io_mem_valid,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  input         io_mem_ready,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  output [31:0] io_mem_addr,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_mem_wdata,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  output [3:0]  io_mem_wstrb,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  input  [31:0] io_mem_rdata,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_irq,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  output        io_trap,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_ai_busy,	// src/main/scala/RiscvAiIntegration.scala:71:14
+  output [31:0] io_perf_counters_0,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_perf_counters_1,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_perf_counters_2,	// src/main/scala/RiscvAiIntegration.scala:71:14
+                io_perf_counters_3	// src/main/scala/RiscvAiIntegration.scala:71:14
 );
 
-  wire        _aiAccel_io_axi_bvalid;	// src/main/scala/RiscvAiIntegration.scala:97:23
-  wire [31:0] _aiAccel_io_axi_rdata;	// src/main/scala/RiscvAiIntegration.scala:97:23
-  wire        _aiAccel_io_axi_rvalid;	// src/main/scala/RiscvAiIntegration.scala:97:23
-  wire        _cpu_pcpi_valid;	// src/main/scala/RiscvAiIntegration.scala:94:19
-  wire [31:0] _cpu_pcpi_insn;	// src/main/scala/RiscvAiIntegration.scala:94:19
-  wire [31:0] _cpu_pcpi_rs1;	// src/main/scala/RiscvAiIntegration.scala:94:19
-  wire [31:0] _cpu_pcpi_rs2;	// src/main/scala/RiscvAiIntegration.scala:94:19
-  reg  [1:0]  pcpi_state;	// src/main/scala/RiscvAiIntegration.scala:142:27
-  reg  [31:0] pcpi_result;	// src/main/scala/RiscvAiIntegration.scala:143:28
-  wire        _GEN = pcpi_state == 2'h0;	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27, :162:22
-  wire        _GEN_0 = _cpu_pcpi_valid & _cpu_pcpi_rs1[31] & _cpu_pcpi_rs1 < 32'h80010000;	// src/main/scala/RiscvAiIntegration.scala:94:19, :137:33, :138:{33,50}, :164:30
-  wire        is_store = _cpu_pcpi_insn[6:0] == 7'h23;	// src/main/scala/RiscvAiIntegration.scala:94:19, :168:{40,47}
-  wire        _GEN_1 = _GEN & _GEN_0 & is_store;	// src/main/scala/RiscvAiIntegration.scala:152:25, :162:22, :164:{30,47}, :168:47, :170:24, :172:33
-  wire        _GEN_2 = _GEN & _GEN_0;	// src/main/scala/RiscvAiIntegration.scala:153:26, :162:22, :164:{30,47}, :170:24
-  wire        _GEN_3 = _GEN_2 & is_store;	// src/main/scala/RiscvAiIntegration.scala:153:26, :162:22, :164:47, :168:47, :170:24
-  wire        _GEN_4 = pcpi_state == 2'h1;	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27, :162:22
-  wire        _GEN_5 = pcpi_state == 2'h2;	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27, :162:22
-  wire        _GEN_6 = ~(_GEN | _GEN_4 | _GEN_5) & (&pcpi_state);	// src/main/scala/RiscvAiIntegration.scala:142:27, :149:21, :162:22
+  wire        _aiAccel_io_axi_bvalid;	// src/main/scala/RiscvAiIntegration.scala:102:23
+  wire [31:0] _aiAccel_io_axi_rdata;	// src/main/scala/RiscvAiIntegration.scala:102:23
+  wire        _aiAccel_io_axi_rvalid;	// src/main/scala/RiscvAiIntegration.scala:102:23
+  wire        _cpu_pcpi_valid;	// src/main/scala/RiscvAiIntegration.scala:99:19
+  wire [31:0] _cpu_pcpi_insn;	// src/main/scala/RiscvAiIntegration.scala:99:19
+  wire [31:0] _cpu_pcpi_rs1;	// src/main/scala/RiscvAiIntegration.scala:99:19
+  wire [31:0] _cpu_pcpi_rs2;	// src/main/scala/RiscvAiIntegration.scala:99:19
+  reg  [1:0]  pcpi_state;	// src/main/scala/RiscvAiIntegration.scala:147:27
+  reg  [31:0] pcpi_result;	// src/main/scala/RiscvAiIntegration.scala:148:28
+  wire        _GEN = pcpi_state == 2'h0;	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27, :167:22
+  wire        _GEN_0 = _cpu_pcpi_valid & _cpu_pcpi_rs1[31] & _cpu_pcpi_rs1 < 32'h80010000;	// src/main/scala/RiscvAiIntegration.scala:99:19, :142:33, :143:{33,50}, :169:30
+  wire        is_store = _cpu_pcpi_insn[6:0] == 7'h23;	// src/main/scala/RiscvAiIntegration.scala:99:19, :173:{40,47}
+  wire        _GEN_1 = _GEN & _GEN_0 & is_store;	// src/main/scala/RiscvAiIntegration.scala:157:25, :167:22, :169:{30,47}, :173:47, :175:24, :177:33
+  wire        _GEN_2 = _GEN & _GEN_0;	// src/main/scala/RiscvAiIntegration.scala:158:26, :167:22, :169:{30,47}, :175:24
+  wire        _GEN_3 = _GEN_2 & is_store;	// src/main/scala/RiscvAiIntegration.scala:158:26, :167:22, :169:47, :173:47, :175:24
+  wire        _GEN_4 = pcpi_state == 2'h1;	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27, :167:22
+  wire        _GEN_5 = pcpi_state == 2'h2;	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27, :167:22
+  wire        _GEN_6 = ~(_GEN | _GEN_4 | _GEN_5) & (&pcpi_state);	// src/main/scala/RiscvAiIntegration.scala:147:27, :154:21, :167:22
   always @(posedge clock) begin	// <stdin>:1099:11
     if (reset) begin	// <stdin>:1099:11
-      pcpi_state <= 2'h0;	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27
-      pcpi_result <= 32'h0;	// src/main/scala/RiscvAiIntegration.scala:143:28
+      pcpi_state <= 2'h0;	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27
+      pcpi_result <= 32'h0;	// src/main/scala/RiscvAiIntegration.scala:148:28
     end
     else begin	// <stdin>:1099:11
-      automatic logic [3:0][1:0] _GEN_7;	// src/main/scala/RiscvAiIntegration.scala:142:27, :162:22, :164:47, :190:35, :200:35, :211:18
+      automatic logic [3:0][1:0] _GEN_7;	// src/main/scala/RiscvAiIntegration.scala:147:27, :167:22, :169:47, :195:35, :205:35, :216:18
       _GEN_7 =
         {{2'h0},
          {_aiAccel_io_axi_bvalid ? 2'h3 : pcpi_state},
          {_aiAccel_io_axi_rvalid ? 2'h3 : pcpi_state},
-         {_GEN_0 ? (is_store ? 2'h2 : 2'h1) : pcpi_state}};	// src/main/scala/RiscvAiIntegration.scala:59:7, :97:23, :142:27, :162:22, :164:{30,47}, :168:47, :170:24, :176:22, :182:22, :190:35, :192:20, :200:35, :201:20, :211:18
-      pcpi_state <= _GEN_7[pcpi_state];	// src/main/scala/RiscvAiIntegration.scala:142:27, :162:22, :164:47, :190:35, :200:35, :211:18
-      if (_GEN | ~(_GEN_4 & _aiAccel_io_axi_rvalid)) begin	// src/main/scala/RiscvAiIntegration.scala:97:23, :143:28, :162:22, :190:35, :191:21
+         {_GEN_0 ? (is_store ? 2'h2 : 2'h1) : pcpi_state}};	// src/main/scala/RiscvAiIntegration.scala:64:7, :102:23, :147:27, :167:22, :169:{30,47}, :173:47, :175:24, :181:22, :187:22, :195:35, :197:20, :205:35, :206:20, :216:18
+      pcpi_state <= _GEN_7[pcpi_state];	// src/main/scala/RiscvAiIntegration.scala:147:27, :167:22, :169:47, :195:35, :205:35, :216:18
+      if (_GEN | ~(_GEN_4 & _aiAccel_io_axi_rvalid)) begin	// src/main/scala/RiscvAiIntegration.scala:102:23, :148:28, :167:22, :195:35, :196:21
       end
-      else	// src/main/scala/RiscvAiIntegration.scala:143:28, :162:22
-        pcpi_result <= _aiAccel_io_axi_rdata;	// src/main/scala/RiscvAiIntegration.scala:97:23, :143:28
+      else	// src/main/scala/RiscvAiIntegration.scala:148:28, :167:22
+        pcpi_result <= _aiAccel_io_axi_rdata;	// src/main/scala/RiscvAiIntegration.scala:102:23, :148:28
     end
   end // always @(posedge)
-  `ifdef ENABLE_INITIAL_REG_	// src/main/scala/RiscvAiIntegration.scala:59:7
-    `ifdef FIRRTL_BEFORE_INITIAL	// src/main/scala/RiscvAiIntegration.scala:59:7
-      `FIRRTL_BEFORE_INITIAL	// src/main/scala/RiscvAiIntegration.scala:59:7
+  `ifdef ENABLE_INITIAL_REG_	// src/main/scala/RiscvAiIntegration.scala:64:7
+    `ifdef FIRRTL_BEFORE_INITIAL	// src/main/scala/RiscvAiIntegration.scala:64:7
+      `FIRRTL_BEFORE_INITIAL	// src/main/scala/RiscvAiIntegration.scala:64:7
     `endif // FIRRTL_BEFORE_INITIAL
-    initial begin	// src/main/scala/RiscvAiIntegration.scala:59:7
-      automatic logic [31:0] _RANDOM[0:1];	// src/main/scala/RiscvAiIntegration.scala:59:7
-      `ifdef INIT_RANDOM_PROLOG_	// src/main/scala/RiscvAiIntegration.scala:59:7
-        `INIT_RANDOM_PROLOG_	// src/main/scala/RiscvAiIntegration.scala:59:7
+    initial begin	// src/main/scala/RiscvAiIntegration.scala:64:7
+      automatic logic [31:0] _RANDOM[0:1];	// src/main/scala/RiscvAiIntegration.scala:64:7
+      `ifdef INIT_RANDOM_PROLOG_	// src/main/scala/RiscvAiIntegration.scala:64:7
+        `INIT_RANDOM_PROLOG_	// src/main/scala/RiscvAiIntegration.scala:64:7
       `endif // INIT_RANDOM_PROLOG_
-      `ifdef RANDOMIZE_REG_INIT	// src/main/scala/RiscvAiIntegration.scala:59:7
+      `ifdef RANDOMIZE_REG_INIT	// src/main/scala/RiscvAiIntegration.scala:64:7
         for (logic [1:0] i = 2'h0; i < 2'h2; i += 2'h1) begin
-          _RANDOM[i[0]] = `RANDOM;	// src/main/scala/RiscvAiIntegration.scala:59:7
-        end	// src/main/scala/RiscvAiIntegration.scala:59:7
-        pcpi_state = _RANDOM[1'h0][1:0];	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27
-        pcpi_result = {_RANDOM[1'h0][31:2], _RANDOM[1'h1][1:0]};	// src/main/scala/RiscvAiIntegration.scala:59:7, :142:27, :143:28
+          _RANDOM[i[0]] = `RANDOM;	// src/main/scala/RiscvAiIntegration.scala:64:7
+        end	// src/main/scala/RiscvAiIntegration.scala:64:7
+        pcpi_state = _RANDOM[1'h0][1:0];	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27
+        pcpi_result = {_RANDOM[1'h0][31:2], _RANDOM[1'h1][1:0]};	// src/main/scala/RiscvAiIntegration.scala:64:7, :147:27, :148:28
       `endif // RANDOMIZE_REG_INIT
     end // initial
-    `ifdef FIRRTL_AFTER_INITIAL	// src/main/scala/RiscvAiIntegration.scala:59:7
-      `FIRRTL_AFTER_INITIAL	// src/main/scala/RiscvAiIntegration.scala:59:7
+    `ifdef FIRRTL_AFTER_INITIAL	// src/main/scala/RiscvAiIntegration.scala:64:7
+      `FIRRTL_AFTER_INITIAL	// src/main/scala/RiscvAiIntegration.scala:64:7
     `endif // FIRRTL_AFTER_INITIAL
   `endif // ENABLE_INITIAL_REG_
-  PicoRV32BlackBox cpu (	// src/main/scala/RiscvAiIntegration.scala:94:19
+  picorv32 cpu (	// src/main/scala/RiscvAiIntegration.scala:99:19
     .clk          (clock),
-    .resetn       (~reset),	// src/main/scala/RiscvAiIntegration.scala:107:20
+    .resetn       (~reset),	// src/main/scala/RiscvAiIntegration.scala:112:20
     .trap         (io_trap),
     .mem_valid    (io_mem_valid),
     .mem_instr    (/* unused */),
@@ -794,28 +794,28 @@ module RiscvAiSystem(	// src/main/scala/RiscvAiIntegration.scala:59:7
     .pcpi_insn    (_cpu_pcpi_insn),
     .pcpi_rs1     (_cpu_pcpi_rs1),
     .pcpi_rs2     (_cpu_pcpi_rs2),
-    .pcpi_wr      (_GEN_6),	// src/main/scala/RiscvAiIntegration.scala:149:21, :162:22
-    .pcpi_rd      (pcpi_result),	// src/main/scala/RiscvAiIntegration.scala:143:28
+    .pcpi_wr      (_GEN_6),	// src/main/scala/RiscvAiIntegration.scala:154:21, :167:22
+    .pcpi_rd      (pcpi_result),	// src/main/scala/RiscvAiIntegration.scala:148:28
     .pcpi_wait
       (_GEN
          ? _GEN_0
-         : _GEN_4 ? ~_aiAccel_io_axi_rvalid : _GEN_5 & ~_aiAccel_io_axi_bvalid),	// src/main/scala/RiscvAiIntegration.scala:97:23, :107:20, :148:20, :162:22, :164:{30,47}, :173:34, :190:35, :194:26, :200:35, :203:26
-    .pcpi_ready   (_GEN_6),	// src/main/scala/RiscvAiIntegration.scala:149:21, :162:22
+         : _GEN_4 ? ~_aiAccel_io_axi_rvalid : _GEN_5 & ~_aiAccel_io_axi_bvalid),	// src/main/scala/RiscvAiIntegration.scala:102:23, :112:20, :153:20, :167:22, :169:{30,47}, :178:34, :195:35, :199:26, :205:35, :208:26
+    .pcpi_ready   (_GEN_6),	// src/main/scala/RiscvAiIntegration.scala:154:21, :167:22
     .irq          (io_irq),
     .eoi          (/* unused */),
     .trace_valid  (/* unused */),
     .trace_data   (/* unused */)
   );
-  CompactScaleAiChip aiAccel (	// src/main/scala/RiscvAiIntegration.scala:97:23
+  CompactScaleAiChip aiAccel (	// src/main/scala/RiscvAiIntegration.scala:102:23
     .clock              (clock),
     .reset              (reset),
-    .io_axi_awaddr      (_GEN_1 ? _cpu_pcpi_rs1[9:0] : 10'h0),	// src/main/scala/RiscvAiIntegration.scala:94:19, :152:25, :162:22, :164:47, :165:37, :170:24, :172:33
-    .io_axi_awvalid     (_GEN_3),	// src/main/scala/RiscvAiIntegration.scala:153:26, :162:22, :164:47, :170:24
-    .io_axi_wdata       (_GEN_1 ? _cpu_pcpi_rs2 : 32'h0),	// src/main/scala/RiscvAiIntegration.scala:94:19, :143:28, :152:25, :154:24, :162:22, :164:47, :170:24, :172:33, :174:32
-    .io_axi_wvalid      (_GEN_3),	// src/main/scala/RiscvAiIntegration.scala:153:26, :162:22, :164:47, :170:24
+    .io_axi_awaddr      (_GEN_1 ? _cpu_pcpi_rs1[9:0] : 10'h0),	// src/main/scala/RiscvAiIntegration.scala:99:19, :157:25, :167:22, :169:47, :170:37, :175:24, :177:33
+    .io_axi_awvalid     (_GEN_3),	// src/main/scala/RiscvAiIntegration.scala:158:26, :167:22, :169:47, :175:24
+    .io_axi_wdata       (_GEN_1 ? _cpu_pcpi_rs2 : 32'h0),	// src/main/scala/RiscvAiIntegration.scala:99:19, :148:28, :157:25, :159:24, :167:22, :169:47, :175:24, :177:33, :179:32
+    .io_axi_wvalid      (_GEN_3),	// src/main/scala/RiscvAiIntegration.scala:158:26, :167:22, :169:47, :175:24
     .io_axi_bvalid      (_aiAccel_io_axi_bvalid),
-    .io_axi_araddr      (~_GEN_2 | is_store ? 10'h0 : _cpu_pcpi_rs1[9:0]),	// src/main/scala/RiscvAiIntegration.scala:94:19, :152:25, :153:26, :157:25, :162:22, :164:47, :165:37, :168:47, :170:24
-    .io_axi_arvalid     (_GEN_2 & ~is_store),	// src/main/scala/RiscvAiIntegration.scala:107:20, :153:26, :158:26, :162:22, :164:47, :168:47, :170:24, :173:34, :181:34
+    .io_axi_araddr      (~_GEN_2 | is_store ? 10'h0 : _cpu_pcpi_rs1[9:0]),	// src/main/scala/RiscvAiIntegration.scala:99:19, :157:25, :158:26, :162:25, :167:22, :169:47, :170:37, :173:47, :175:24
+    .io_axi_arvalid     (_GEN_2 & ~is_store),	// src/main/scala/RiscvAiIntegration.scala:112:20, :158:26, :163:26, :167:22, :169:47, :173:47, :175:24, :178:34, :186:34
     .io_axi_rdata       (_aiAccel_io_axi_rdata),
     .io_axi_rvalid      (_aiAccel_io_axi_rvalid),
     .io_status_busy     (io_ai_busy),
@@ -826,25 +826,25 @@ module RiscvAiSystem(	// src/main/scala/RiscvAiIntegration.scala:59:7
   );
 endmodule
 
-module RiscvAiChip(	// src/main/scala/RiscvAiIntegration.scala:225:7
+module RiscvAiChip(	// src/main/scala/RiscvAiIntegration.scala:230:7
   input         clock,	// <stdin>:1192:11
                 reset,	// <stdin>:1193:11
-  output        io_mem_valid,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  input         io_mem_ready,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  output [31:0] io_mem_addr,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_mem_wdata,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  output [3:0]  io_mem_wstrb,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  input  [31:0] io_mem_rdata,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_irq,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  output        io_trap,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_busy,	// src/main/scala/RiscvAiIntegration.scala:226:14
-  output [31:0] io_perf_counters_0,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_perf_counters_1,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_perf_counters_2,	// src/main/scala/RiscvAiIntegration.scala:226:14
-                io_perf_counters_3	// src/main/scala/RiscvAiIntegration.scala:226:14
+  output        io_mem_valid,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  input         io_mem_ready,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  output [31:0] io_mem_addr,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_mem_wdata,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  output [3:0]  io_mem_wstrb,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  input  [31:0] io_mem_rdata,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_irq,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  output        io_trap,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_busy,	// src/main/scala/RiscvAiIntegration.scala:231:14
+  output [31:0] io_perf_counters_0,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_perf_counters_1,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_perf_counters_2,	// src/main/scala/RiscvAiIntegration.scala:231:14
+                io_perf_counters_3	// src/main/scala/RiscvAiIntegration.scala:231:14
 );
 
-  RiscvAiSystem system (	// src/main/scala/RiscvAiIntegration.scala:247:22
+  RiscvAiSystem system (	// src/main/scala/RiscvAiIntegration.scala:252:22
     .clock              (clock),
     .reset              (reset),
     .io_mem_valid       (io_mem_valid),

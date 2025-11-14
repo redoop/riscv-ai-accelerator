@@ -23,6 +23,7 @@ get_chip_name() {
         "FixedMediumScaleAiChip") echo "修复版本设计" ;;
         "NoiJinScaleAiChip") echo "NoiJin规模设计" ;;
         "CompactScaleAiChip") echo "紧凑规模设计" ;;
+        "SimpleEdgeAiSoC") echo "简化边缘AI SoC" ;;
         *) echo "" ;;
     esac
 }
@@ -36,6 +37,7 @@ get_test_class() {
         "FixedMediumScaleAiChip") echo "FixedMediumScaleTest" ;;
         "NoiJinScaleAiChip") echo "ScaleComparisonTest" ;;
         "CompactScaleAiChip") echo "ScaleComparisonTest" ;;
+        "SimpleEdgeAiSoC") echo "SimpleEdgeAiSoCTest" ;;
         *) echo "" ;;
     esac
 }
@@ -63,6 +65,7 @@ case $MODE in
             echo "  FixedMediumScaleAiChip - 修复版本设计"
             echo "  NoiJinScaleAiChip - NoiJin规模设计"
             echo "  CompactScaleAiChip - 紧凑规模设计"
+            echo "  SimpleEdgeAiSoC - 简化边缘AI SoC (推荐)"
             exit 1
         fi
         ;;
@@ -87,11 +90,14 @@ case $MODE in
         echo "  FixedMediumScaleAiChip - 修复版本设计"
         echo "  NoiJinScaleAiChip - NoiJin规模设计"
         echo "  CompactScaleAiChip - 紧凑规模设计"
+        echo "  SimpleEdgeAiSoC - 简化边缘AI SoC (推荐)"
         echo ""
         echo "示例："
         echo "  $0 generate                             # 生成所有 SystemVerilog 文件"
         echo "  $0 integration                          # RISC-V集成测试"
+        echo "  $0 matrix SimpleEdgeAiSoC               # SimpleEdgeAiSoC 矩阵演示"
         echo "  $0 matrix PhysicalOptimizedRiscvAiChip  # 物理优化设计的矩阵演示"
+        echo "  $0 full SimpleEdgeAiSoC                 # SimpleEdgeAiSoC 完整测试"
         echo "  $0 full FixedMediumScaleAiChip          # 修复版本的完整测试"
         exit 1
         ;;
@@ -163,6 +169,7 @@ if [ "$MODE" = "generate" ]; then
     generate_module "RiscvAiChipMain" "RiscvAiChip" "RISC-V AI 芯片 (顶层)"
     generate_module "RiscvAiSystemMain" "RiscvAiSystem" "RISC-V AI 系统 (完整集成)"
     generate_module "CompactScaleAiChipMain" "CompactScaleAiChip" "紧凑规模 AI 加速器"
+    generate_module "SimpleEdgeAiSoCMain" "simple_edgeaisoc/SimpleEdgeAiSoC" "简化边缘AI SoC (推荐)"
     
     # Phase 2: 生成其他设计版本
     echo -e "${YELLOW}=========================================${NC}"
@@ -201,6 +208,7 @@ if [ "$MODE" = "generate" ]; then
         [ -f "generated/RiscvAiChip.sv" ] && echo "  ✓ RiscvAiChip.sv - RISC-V AI 芯片顶层"
         [ -f "generated/RiscvAiSystem.sv" ] && echo "  ✓ RiscvAiSystem.sv - 完整系统集成"
         [ -f "generated/CompactScaleAiChip.sv" ] && echo "  ✓ CompactScaleAiChip.sv - AI 加速器"
+        [ -f "generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv" ] && echo "  ✓ SimpleEdgeAiSoC.sv - 简化边缘AI SoC (推荐)"
         echo ""
         echo -e "${YELLOW}优化版本 (generated/optimized/):${NC}"
         [ -f "generated/optimized/PhysicalOptimizedRiscvAiChip.sv" ] && echo "  ✓ PhysicalOptimizedRiscvAiChip.sv - 物理优化设计"
@@ -347,6 +355,9 @@ elif [ "$MODE" = "matrix" ]; then
     elif [ "$CHIP" = "CompactScaleAiChip" ]; then
         echo "   🔹 运行紧凑规模设计测试..."
         sbt "testOnly riscv.ai.ScaleComparisonTest -- -z \"CompactScaleAiChip\""
+    elif [ "$CHIP" = "SimpleEdgeAiSoC" ]; then
+        echo "   🔹 运行 SimpleEdgeAiSoC 矩阵计算测试..."
+        sbt "testOnly riscv.ai.SimpleEdgeAiSoCTest"
     else
         echo "   🔹 运行原始设计矩阵计算..."
         sbt "testOnly riscv.ai.MatrixComputationTest -- -z \"perform detailed matrix multiplication\""
