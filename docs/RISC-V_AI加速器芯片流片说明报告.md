@@ -2,11 +2,11 @@
 
 # 流片说明报告
 
-**编 写：tongxiaojun**
+**编 写：tongxiaojun **
 
-**时 间：2024年**
+**时 间：2025年11月14日**
 
-**redoop**
+**组 织：红象云腾(redoop)**
 
 ---
 
@@ -19,32 +19,8 @@
 本设计为一款集成RISC-V处理器和AI加速器的边缘计算SoC芯片，采用PicoRV32 (RV32I指令集)处理器核心，通过简化寄存器接口与CompactAccel (8x8矩阵加速器)和BitNetAccel (8x8无乘法器加速器)进行通信，支持UART串口、GPIO通用IO和中断控制，可实现边缘AI推理计算。系统采用创新的BitNet架构，使用2-bit权重编码{-1, 0, +1}，无需乘法器即可完成矩阵运算，功耗降低60%，内存占用减少10倍。系统峰值性能达到6.4 GOPS @ 100MHz，目标功耗小于100mW。所有模块均已通过ChiselTest验证，测试覆盖率达到95%以上。
 
 如图1所示，为系统架构框图：
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SimpleEdgeAiSoC                          │
-│                                                             │
-│  ┌──────────────┐         ┌──────────────────────────┐      │
-│  │  PicoRV32    │◄───────►│   Address Decoder        │      │
-│  │   CPU Core   │         │   (Memory Map)           │      │
-│  │   (RV32I)    │         └──────────┬───────────────┘      │
-│  └──────────────┘                    │                      │
-│         │                            │                      │
-│         │                            ├──► CompactAccel      │
-│         │                            │    (8x8 Matrix)      │
-│         │                            │                      │
-│         │                            ├──► BitNetAccel       │
-│         │                            │    (16x16 BitNet)    │
-│         │                            │                      │
-│         │                            ├──► UART              │
-│         │                            │                      │
-│         │                            └──► GPIO              │
-│         │                                                   │
-│         └──► Interrupt Controller                           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
 
-**图1 系统架构框图**
+![图1 处理器系统架构](image/system.png)
 
 为处理器启动riscv-tests仿真结果（前仿）：
 
@@ -54,6 +30,7 @@
 cd chisel
 ./run.sh riscv 2>&1 | tail -60
 ```
+
 如图2所示:
 
 ![图2 处理器前仿结果](image/riscv-test.png)
@@ -103,7 +80,6 @@ cd chisel
 
 ![图2 逻辑综合结果](image/synthesis_result.png)
 
-**图2 逻辑综合结果**
 
 ### 2. 逻辑综合后网表仿真[后续完成]
 
@@ -126,9 +102,8 @@ cd chisel
 bash run.sh test
 ```
 
-![图3 综合后网表仿真波形](image/post_synthesis_simulation.png)
+![图3 矩阵计算系统测试截图](image/post_synthesis_simulation.png)
 
-**图3 系统测试截图**
 
 ### 3. 布局布线后网表仿真[后续完成]
 
@@ -161,16 +136,5 @@ bash run.sh test
 
 ![图5 DRC检查结果](image/drc_result.png)
 
-**图5 DRC检查结果**
 
 ![图6 LVS验证结果](image/lvs_result.png)
-
-**图6 LVS验证结果**
-
----
-
-**注：**
-
-1. 本次流片的前仿、综合后网表仿真及后仿均由用户自己完成仿真，选择RTL Merge的方案ECOS团队会提供综合后的网表及布局布线后的网表。
-
-2. 物理验证均由ECOS团队完成，选择版图Merge的用户若出现DRC或LVS问题，ECOS团队会提供对应的report，由用户自己修改版图再进行提交。
