@@ -8,10 +8,10 @@ import circt.stage.ChiselStage
 object Main extends App {
   println("生成RISC-V AI芯片...")
   
-  // 生成矩阵乘法器 Verilog (Chisel 6.x 语法)
-  println("\n🔧 生成矩阵乘法器...")
+  // 生成 RISC-V AI 芯片 Verilog (Chisel 6.x 语法)
+  println("\n🔧 生成 RISC-V AI 芯片...")
   ChiselStage.emitSystemVerilogFile(
-    new RiscvAiChip(dataWidth = 32, matrixSize = 4, addrWidth = 8),
+    new RiscvAiChip,
     Array("--target-dir", "generated")
   )
   

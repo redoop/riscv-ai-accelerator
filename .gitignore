@@ -7,6 +7,7 @@
 # 所有 target 目录（包括 chisel/target/, chisel/project/target/ 等）
 target/
 **/target/
+**/generated
 
 # SBT 项目编译产物
 project/target/
