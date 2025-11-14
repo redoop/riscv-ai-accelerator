@@ -426,12 +426,22 @@ else
 fi
 
 echo ""
-echo "🔧 3. 生成所有版本的Verilog代码..."
-sbt "runMain riscv.ai.VerilogGenerator"
-
-if [ $? -ne 0 ]; then
-    echo "❌ Verilog生成失败"
-    exit 1
+if [ "$CHIP" = "SimpleEdgeAiSoC" ]; then
+    echo "🔧 3. 生成 SimpleEdgeAiSoC Verilog代码..."
+    sbt "runMain riscv.ai.SimpleEdgeAiSoCMain"
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Verilog生成失败"
+        exit 1
+    fi
+else
+    echo "🔧 3. 生成所有版本的Verilog代码..."
+    sbt "runMain riscv.ai.VerilogGenerator"
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Verilog生成失败"
+        exit 1
+    fi
 fi
 
 echo ""
@@ -441,27 +451,43 @@ echo "⏩ 跳过详细分析以节省时间，使用快速测试结果"
 echo ""
 echo "✅ 所有步骤完成！"
 echo ""
-echo "📁 生成的设计文件："
-echo "  🔹 原始设计:"
-echo "    - generated/original/RiscvAiChip.sv"
-echo "  🔹 物理优化设计:"
-echo "    - generated/optimized/PhysicalOptimizedRiscvAiChip.sv"
-echo "  🔹 简化扩容设计:"
-echo "    - generated/scalable/SimpleScalableAiChip.sv"
-echo "  🔹 修复版本设计 (推荐流片):"
-echo "    - generated/fixed/FixedMediumScaleAiChip.sv"
-echo ""
-echo "📋 分析报告文件："
-echo "  - test_results/reports/design_scale_report.md"
-echo "  - test_results/reports/optimization_suggestions.md"
-echo "  - test_results/reports/performance_prediction.md"
-echo ""
-echo "🎯 关键发现："
-if [ -f "generated/fixed/FixedMediumScaleAiChip.sv" ]; then
-    FIXED_LINES=$(wc -l < generated/fixed/FixedMediumScaleAiChip.sv)
-    echo "  🏆 推荐设计规模: FixedMediumScaleAiChip ($FIXED_LINES 行)"
-    echo "  📊 预期Instance数: ~25,000"
-    echo "  🔧 工具链兼容: yosys + 创芯55nm PDK"
+
+if [ "$CHIP" = "SimpleEdgeAiSoC" ]; then
+    echo "📁 生成的设计文件："
+    echo "  🔹 SimpleEdgeAiSoC (推荐):"
+    echo "    - generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv"
+    echo ""
+    if [ -f "generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv" ]; then
+        SOC_LINES=$(wc -l < generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv)
+        echo "🎯 关键信息："
+        echo "  📊 代码行数: $SOC_LINES 行"
+        echo "  🏗️  架构: PicoRV32 + CompactAccel + BitNetAccel"
+        echo "  💾 内存映射: 简单寄存器接口"
+        echo "  ⚡ 性能: ~6.4 GOPS @ 100MHz"
+    fi
+else
+    echo "📁 生成的设计文件："
+    echo "  🔹 原始设计:"
+    echo "    - generated/original/RiscvAiChip.sv"
+    echo "  🔹 物理优化设计:"
+    echo "    - generated/optimized/PhysicalOptimizedRiscvAiChip.sv"
+    echo "  🔹 简化扩容设计:"
+    echo "    - generated/scalable/SimpleScalableAiChip.sv"
+    echo "  🔹 修复版本设计 (推荐流片):"
+    echo "    - generated/fixed/FixedMediumScaleAiChip.sv"
+    echo ""
+    echo "📋 分析报告文件："
+    echo "  - test_results/reports/design_scale_report.md"
+    echo "  - test_results/reports/optimization_suggestions.md"
+    echo "  - test_results/reports/performance_prediction.md"
+    echo ""
+    echo "🎯 关键发现："
+    if [ -f "generated/fixed/FixedMediumScaleAiChip.sv" ]; then
+        FIXED_LINES=$(wc -l < generated/fixed/FixedMediumScaleAiChip.sv)
+        echo "  🏆 推荐设计规模: FixedMediumScaleAiChip ($FIXED_LINES 行)"
+        echo "  📊 预期Instance数: ~25,000"
+        echo "  🔧 工具链兼容: yosys + 创芯55nm PDK"
+    fi
 fi
 echo ""
 echo "💡 下一步建议："
