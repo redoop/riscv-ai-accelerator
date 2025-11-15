@@ -12,4 +12,4 @@
 ./synthesis/testbench/test_utils.sv
 
 # 网表文件将在命令行中指定
-# ./synthesis/netlist/SimpleEdgeAiSoC_syn.v
+# ./synthesis/netlist/SimpleEdgeAiSoC_synth.v

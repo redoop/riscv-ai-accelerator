@@ -29,17 +29,50 @@ synthesis/
 ### 前提条件
 
 1. **综合网表**: 需要先运行逻辑综合生成网表文件
-2. **仿真工具**: VCS、Verilator 或其他 Verilog 仿真器
+2. **仿真工具**: VCS、Verilator、Icarus Verilog 等
 3. **波形查看器**: Verdi、GTKWave 等
+4. **PDK（可选）**: IHP SG13G2 或 ICS55 PDK（用于特定工艺综合）
+
+### 支持的 PDK
+
+本项目支持多种 PDK 进行逻辑综合：
+
+| PDK | 工艺节点 | 综合脚本 | 仿真命令 | 文档 |
+|-----|---------|---------|---------|------|
+| **通用** | - | `run_generic_synthesis.sh` | `--netlist generic` | - |
+| **IHP SG13G2** | 130nm | `run_ihp_synthesis.sh` | `--netlist ihp` | [IHP_PDK_GUIDE.md](IHP_PDK_GUIDE.md) |
+| **ICS55** | 55nm | `run_ics55_synthesis.sh` | `--netlist ics55` | [ICS55_PDK_GUIDE.md](ICS55_PDK_GUIDE.md) |
+
+#### 使用不同 PDK 的示例
+
+```bash
+# 使用 IHP SG13G2 PDK
+./run_ihp_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ihp
+
+# 使用 ICS55 PDK
+./run_ics55_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# 使用通用综合（不依赖特定 PDK）
+./run_generic_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist generic
+```
 
 ### 方法 1: 使用 Python 脚本（推荐）
 
 ```bash
-# 运行完整仿真流程
+# 运行完整仿真流程（默认使用 Icarus Verilog）
 python run_post_syn_sim.py
 
-# 使用 Verilator
+# 使用不同的仿真器
 python run_post_syn_sim.py --simulator verilator
+python run_post_syn_sim.py --simulator vcs
+
+# 使用不同的网表类型
+python run_post_syn_sim.py --simulator iverilog --netlist ihp      # IHP PDK
+python run_post_syn_sim.py --simulator iverilog --netlist ics55    # ICS55 PDK
+python run_post_syn_sim.py --simulator iverilog --netlist generic  # 通用
 
 # 使用基本测试平台
 python run_post_syn_sim.py --testbench basic
@@ -299,14 +332,23 @@ parameter TEST_CYCLES = 1000;  // 测试周期数
 
 ## 📚 参考资料
 
+### PDK 相关
+- [IHP SG13G2 PDK 使用指南](IHP_PDK_GUIDE.md)
+- [ICS55 PDK 使用指南](ICS55_PDK_GUIDE.md)
+- [ICS55 PDK 快速开始](QUICK_START_ICS55.md)
+- [IHP Open PDK](https://github.com/IHP-GmbH/IHP-Open-PDK)
+- [ICS55 PDK](https://github.com/IDE-Platform/icsprout55-pdk)
+
 ### 综合相关
 - [Synopsys Design Compiler User Guide](https://www.synopsys.com/)
 - [Cadence Genus User Guide](https://www.cadence.com/)
+- [Yosys Documentation](https://yosyshq.readthedocs.io/)
 
 ### 仿真相关
 - [VCS User Guide](https://www.synopsys.com/verification/simulation/vcs.html)
 - [Verilator Manual](https://verilator.org/guide/latest/)
 - [ModelSim User Manual](https://www.intel.com/content/www/us/en/software/programmable/quartus-prime/model-sim.html)
+- [Icarus Verilog](http://iverilog.icarus.com/)
 
 ### 波形查看
 - [Verdi User Guide](https://www.synopsys.com/verification/debug/verdi.html)

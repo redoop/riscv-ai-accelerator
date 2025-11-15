@@ -9,12 +9,17 @@ target/
 **/target/
 */.coursier
 */test_run_dir
-
+*/lib_ics55
+*.lib
+*.vvp
+*.vcd
+*.sv
 
 # SBT 项目编译产物
 project/target/
 project/project/
 **/project/target/
+**/chisel/synthesis/netlist/
 *.bin
 *.class
 *.log

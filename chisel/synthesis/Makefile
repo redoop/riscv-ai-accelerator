@@ -13,7 +13,7 @@ WAVE_DIR = ./waves
 
 # 设计配置
 DESIGN = SimpleEdgeAiSoC
-NETLIST = $(NETLIST_DIR)/$(DESIGN)_syn.v
+NETLIST = $(NETLIST_DIR)/$(DESIGN)_synth.v
 TB_BASIC = $(TB_DIR)/post_syn_tb.sv
 TB_ADVANCED = $(TB_DIR)/advanced_post_syn_tb.sv
 
@@ -50,6 +50,16 @@ help:
 	@echo "  wave             - 查看波形"
 	@echo "  clean            - 清理生成文件"
 	@echo "  report           - 生成测试报告"
+	@echo ""
+	@echo "PDK 综合:"
+	@echo "  synth_ihp        - 使用 IHP SG13G2 PDK 综合"
+	@echo "  synth_ics55      - 使用 ICS55 PDK 综合"
+	@echo "  synth_generic    - 使用通用综合"
+	@echo ""
+	@echo "PDK 仿真:"
+	@echo "  sim_ihp          - 仿真 IHP PDK 网表"
+	@echo "  sim_ics55        - 仿真 ICS55 PDK 网表"
+	@echo "  sim_generic      - 仿真通用网表"
 	@echo ""
 	@echo "完整流程:"
 	@echo "  make compile_advanced"
@@ -200,6 +210,38 @@ verilator: check_netlist
 	$(SIM_DIR)/Vsim
 	@echo "✓ Verilator 仿真完成"
 
+# PDK 综合目标
+.PHONY: synth_ihp
+synth_ihp:
+	@echo "使用 IHP SG13G2 PDK 进行综合..."
+	./run_ihp_synthesis.sh
+
+.PHONY: synth_ics55
+synth_ics55:
+	@echo "使用 ICS55 PDK 进行综合..."
+	./run_ics55_synthesis.sh
+
+.PHONY: synth_generic
+synth_generic:
+	@echo "使用通用综合..."
+	./run_generic_synthesis.sh
+
+# PDK 仿真目标
+.PHONY: sim_ihp
+sim_ihp:
+	@echo "仿真 IHP PDK 网表..."
+	python run_post_syn_sim.py --simulator iverilog --netlist ihp
+
+.PHONY: sim_ics55
+sim_ics55:
+	@echo "仿真 ICS55 PDK 网表..."
+	python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+.PHONY: sim_generic
+sim_generic:
+	@echo "仿真通用网表..."
+	python run_post_syn_sim.py --simulator iverilog --netlist generic
+
 .PHONY: info
 info:
 	@echo "配置信息:"
@@ -213,3 +255,8 @@ info:
 	@echo "  VCS: $(shell which $(VCS) 2>/dev/null || echo '未安装')"
 	@echo "  Verdi: $(shell which $(VERDI) 2>/dev/null || echo '未安装')"
 	@echo "  Verilator: $(shell which $(VERILATOR) 2>/dev/null || echo '未安装')"
+	@echo "  Icarus Verilog: $(shell which iverilog 2>/dev/null || echo '未安装')"
+	@echo ""
+	@echo "PDK:"
+	@echo "  IHP SG13G2: $(shell [ -d pdk/IHP-Open-PDK ] && echo '已安装' || echo '未安装')"
+	@echo "  ICS55: $(shell [ -d pdk/icsprout55-pdk ] && echo '已安装' || echo '未安装')"

@@ -1,0 +1,114 @@
+#!/bin/bash
+# 使用 IHP SG13G2 PDK 进行逻辑综合
+# 生成可以用 Icarus Verilog 仿真的网表
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# 设置路径
+YOSYS_BIN="/opt/tools/oss-cad/oss-cad-suite/bin/yosys"
+PDK_ROOT="$SCRIPT_DIR/pdk/IHP-Open-PDK/ihp-sg13g2"
+LIBERTY_FILE="$PDK_ROOT/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib"
+VERILOG_MODEL="$PDK_ROOT/libs.ref/sg13g2_stdcell/verilog/sg13g2_stdcell.v"
+RTL_FILE="../generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv"
+OUTPUT_DIR="netlist"
+NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_ihp.v"
+
+# 检查 RTL 文件
+if [ ! -f "$RTL_FILE" ]; then
+    echo "错误: 未找到 RTL 文件: $RTL_FILE"
+    echo "请先生成 Chisel RTL"
+    exit 1
+fi
+
+# 检查 PDK 是否存在
+if [ ! -f "$LIBERTY_FILE" ]; then
+    echo "错误: 未找到 IHP PDK Liberty 文件"
+    echo "请运行: python pdk/get_pdk.py"
+    exit 1
+fi
+
+if [ ! -f "$VERILOG_MODEL" ]; then
+    echo "错误: 未找到 IHP PDK Verilog 模型"
+    exit 1
+fi
+
+# 创建输出目录
+mkdir -p "$OUTPUT_DIR"
+
+echo "=========================================="
+echo "IHP SG13G2 PDK 逻辑综合"
+echo "=========================================="
+echo "PDK: IHP SG13G2 (130nm)"
+echo "Liberty: $LIBERTY_FILE"
+echo "Verilog: $VERILOG_MODEL"
+echo "RTL: $RTL_FILE"
+echo "输出: $NETLIST_FILE"
+echo ""
+
+# 创建 Yosys 综合脚本
+cat > /tmp/ihp_synth.ys << EOF
+# 加载 slang 插件以支持完整的 SystemVerilog
+plugin -i slang
+
+# 读取 RTL 设计（使用 slang）
+read_slang $RTL_FILE --top SimpleEdgeAiSoC \\
+    --compat-mode --keep-hierarchy \\
+    --allow-use-before-declare --ignore-unknown-modules \\
+    --ignore-timing --ignore-initial
+
+# 设置顶层模块
+hierarchy -top SimpleEdgeAiSoC
+hierarchy -check
+
+# 综合流程
+proc
+opt
+fsm
+opt
+memory
+opt
+techmap
+opt
+
+# 映射到 IHP SG13G2 标准单元
+dfflibmap -liberty $LIBERTY_FILE
+abc -liberty $LIBERTY_FILE
+
+# 清理
+clean
+
+# 统计
+tee -o $OUTPUT_DIR/synthesis_stats.txt stat -liberty $LIBERTY_FILE
+
+# 输出网表
+write_verilog -noattr -noexpr $NETLIST_FILE
+
+EOF
+
+echo "运行 Yosys 综合..."
+$YOSYS_BIN /tmp/ihp_synth.ys 2>&1 | tee "$OUTPUT_DIR/synthesis.log"
+
+if [ -f "$NETLIST_FILE" ]; then
+    echo ""
+    echo "✓ 综合成功！"
+    echo "网表文件: $NETLIST_FILE"
+    echo ""
+    echo "网表统计:"
+    wc -l "$NETLIST_FILE"
+    echo ""
+    
+    # 复制 Verilog 模型到 netlist 目录以便仿真
+    cp "$VERILOG_MODEL" "$OUTPUT_DIR/sg13g2_stdcell.v"
+    echo "✓ 已复制标准单元 Verilog 模型"
+    echo ""
+    
+    echo "下一步: 运行仿真"
+    echo "  python run_post_syn_sim.py --simulator iverilog --netlist ihp"
+else
+    echo ""
+    echo "✗ 综合失败，请查看日志: $OUTPUT_DIR/synthesis.log"
+    exit 1
+fi

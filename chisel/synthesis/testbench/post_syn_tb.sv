@@ -35,12 +35,7 @@ module post_syn_tb;
     .reset(reset),
     .io_uart_rx(uart_rx),
     .io_uart_tx(uart_tx),
-    .io_gpio_in(gpio_in),
-    .io_gpio_out(gpio_out),
-    .io_gpio_oe(gpio_oe),
-    .io_compact_irq(compact_irq),
-    .io_bitnet_irq(bitnet_irq),
-    .io_trap(trap)
+    .io_gpio_out(gpio_out[16:0])
   );
   
   // 测试序列
@@ -141,7 +136,7 @@ module post_syn_tb;
   // 生成测试报告
   task generate_report();
     integer report_file;
-    report_file = $fopen("synthesis/sim/post_syn_report.txt", "w");
+    report_file = $fopen("sim/post_syn_report.txt", "w");
     
     $fdisplay(report_file, "========================================");
     $fdisplay(report_file, "逻辑综合后网表仿真报告");
@@ -164,12 +159,12 @@ module post_syn_tb;
     $fdisplay(report_file, "");
     
     $fclose(report_file);
-    $display("✓ 测试报告已生成: synthesis/sim/post_syn_report.txt");
+    $display("✓ 测试报告已生成: sim/post_syn_report.txt");
   endtask
   
   // 波形记录
   initial begin
-    $dumpfile("synthesis/waves/post_syn.vcd");
+    $dumpfile("waves/post_syn.vcd");
     $dumpvars(0, post_syn_tb);
   end
   

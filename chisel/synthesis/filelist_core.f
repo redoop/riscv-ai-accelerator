@@ -1,0 +1,1 @@
+../generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv
