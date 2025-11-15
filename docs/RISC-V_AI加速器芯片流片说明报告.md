@@ -104,6 +104,14 @@ bash run.sh test
 
 ![图3.1 矩阵计算系统测试截图](image/post_synthesis_simulation.png)
 
+
+```
+# 使用 ICS55 PDK
+cd chisel/synthesis
+./run_ics55_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+```
+
 ![图3.2 综合网表仿真波形图](image/waveform_post_syn.png)
 
 ### 3. 布局布线后网表仿真[后续完成]

@@ -254,6 +254,7 @@ when(wVal === 1.U) {
 2. **集成测试**: 模块间接口验证
 3. **系统测试**: 完整 SoC 功能验证
 4. **性能测试**: 性能指标验证
+5. **综合后仿真**: 网表级功能验证
 
 ### 5.2 测试覆盖
 
@@ -283,16 +284,98 @@ when(wVal === 1.U) {
 - ✅ 中断处理
 - ✅ 综合测试套件
 
+#### 5.2.4 综合后网表仿真
+- ✅ 通用综合网表验证
+- ✅ IHP SG13G2 (130nm) PDK 网表验证
+- ✅ ICS55 (55nm) PDK 网表验证
+- ✅ 时序功能正确性验证
+- ✅ 波形查看与分析
+
 ### 5.3 测试工具
 
+**RTL 仿真**:
 - **仿真工具**: Verilator
 - **测试框架**: ChiselTest
 - **构建工具**: SBT (Scala Build Tool)
 - **语言**: Chisel 3.x (Scala-based HDL)
 
-### 5.4 测试结果
+**综合后仿真**:
+- **综合工具**: Yosys (开源)
+- **仿真器**: Icarus Verilog / Verilator
+- **波形查看**: 
+  - GTKWave (开源)
+  - 自研 Web 波形查看器 (Python + HTTP)
+- **PDK 支持**: 
+  - IHP SG13G2 (130nm 开源 PDK)
+  - ICS55 (55nm 开源 PDK)
+  - 通用综合（无特定 PDK）
 
-所有测试用例通过，测试覆盖率达到 95% 以上。详细测试报告见 `chisel/test_run_dir/` 目录。
+### 5.4 综合与仿真流程
+
+#### 5.4.1 快速开始
+
+```bash
+# 进入综合目录
+cd chisel/synthesis
+
+# 方法 1: 使用 ICS55 PDK (推荐)
+./run_ics55_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# 方法 2: 使用 IHP PDK
+./run_ihp_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ihp
+
+# 方法 3: 通用综合
+./run_generic_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist generic
+```
+
+#### 5.4.2 波形查看
+
+**方法 1: 使用 GTKWave**
+```bash
+gtkwave waves/post_syn.vcd
+```
+
+**方法 2: 使用 Web 波形查看器**
+```bash
+# 启动 HTTP 服务器
+./start_http.sh
+
+# 或使用 Python 脚本
+python serve_wave.py
+
+# 浏览器访问: http://localhost:8000
+```
+
+**方法 3: 生成静态波形图**
+```bash
+python generate_static_wave.py
+```
+
+#### 5.4.3 详细文档
+
+- **快速开始**: `chisel/synthesis/QUICK_START.md`
+- **ICS55 PDK 指南**: `chisel/synthesis/ICS55_PDK_GUIDE.md`
+- **ICS55 快速开始**: `chisel/synthesis/QUICK_START_ICS55.md`
+- **IHP PDK 指南**: `chisel/synthesis/IHP_PDK_GUIDE.md`
+- **波形查看器使用**: `chisel/synthesis/WAVE_VIEWER_README.md`
+- **波形查看器快速开始**: `chisel/synthesis/WAVE_QUICK_START.md`
+
+### 5.5 测试结果
+
+**RTL 仿真**:
+- ✅ 所有测试用例通过
+- ✅ 测试覆盖率达到 95% 以上
+- ✅ 详细测试报告见 `chisel/test_run_dir/` 目录
+
+**综合后仿真**:
+- ✅ ICS55 PDK 网表功能验证通过
+- ✅ IHP PDK 网表功能验证通过
+- ✅ 通用综合网表功能验证通过
+- ✅ 波形分析确认时序正确
+- ✅ 测试报告见 `chisel/synthesis/sim/post_syn_report.txt`
 
 ---
 
@@ -510,94 +593,126 @@ chisel/generated/simple_edgeaisoc/
 #### 8.3.1 方案一：国际社区流程 (OpenROAD)
 
 ```
-RTL 设计 (Chisel)
+RTL 设计 (Chisel) ✅ 已完成
+    ├── 代码规模: ~5,350 行
+    ├── 主要模块: CPU + 2个加速器 + 外设
+    └── 生成 SystemVerilog: ~3,000 行
     ↓
-功能仿真 (Verilator)
+功能仿真 (Verilator) ✅ 已完成
+    ├── 测试覆盖率: 95%+
+    ├── 所有测试用例通过
+    └── 性能验证完成
     ↓
 逻辑综合 (Yosys) ✅ 已完成
     ├── 设计规模: 73,829 instances
     ├── 工作频率: 178.569 MHz
-    └── 静态功耗: 627.4 uW
+    ├── 静态功耗: 627.4 uW
+    ├── 芯片面积: 300,138 um² (~0.3 mm²)
+    ├── 支持 PDK: ICS55 (55nm) / IHP SG13G2 (130nm)
+    └── 综合脚本: run_ics55_synthesis.sh / run_ihp_synthesis.sh
     ↓
-静态时序分析 (OpenSTA)
+综合后仿真 (Icarus Verilog) ✅ 已完成
+    ├── ICS55 PDK 网表验证通过
+    ├── IHP PDK 网表验证通过
+    ├── 波形分析工具: GTKWave / Web 查看器
+    └── 仿真脚本: run_post_syn_sim.py
     ↓
-布局规划 (OpenROAD - Floorplan)
+静态时序分析 (OpenSTA) ⏳ 待完成
     ↓
-布局布线 (OpenROAD - Place & Route)
+布局规划 (OpenROAD - Floorplan) ⏳ 待完成
     ↓
-时钟树综合 (OpenROAD - CTS)
+布局布线 (OpenROAD - Place & Route) ⏳ 待完成
     ↓
-优化 (OpenROAD - Optimization)
+时钟树综合 (OpenROAD - CTS) ⏳ 待完成
     ↓
-签核 (Sign-off)
+优化 (OpenROAD - Optimization) ⏳ 待完成
+    ↓
+签核 (Sign-off) ⏳ 待完成
     ├── 时序签核 (OpenSTA)
     ├── 功耗签核 (OpenROAD)
     ├── 物理验证 (Magic/KLayout - DRC/LVS)
     └── 形式验证 (Yosys - Equivalence)
     ↓
-GDSII 生成 (Magic/KLayout)
+GDSII 生成 (Magic/KLayout) ⏳ 待完成
     ↓
-流片 (Tape-out)
+流片 (Tape-out) ⏳ 待完成
 ```
 
 #### 8.3.2 方案二：中国开源流程 (iEDA) ⭐ 推荐
 
 ```
-RTL 设计 (Chisel)
+RTL 设计 (Chisel) ✅ 已完成
+    ├── 代码规模: ~5,350 行
+    ├── 主要模块: CPU + 2个加速器 + 外设
+    └── 生成 SystemVerilog: ~3,000 行
     ↓
-功能仿真 (Verilator)
+功能仿真 (Verilator) ✅ 已完成
+    ├── 测试覆盖率: 95%+
+    ├── 所有测试用例通过
+    └── 性能验证完成
     ↓
-逻辑综合 (iMAP) ✅ 已完成
+逻辑综合 (Yosys/iMAP) ✅ 已完成
     ├── 设计规模: 73,829 instances
     ├── 工作频率: 178.569 MHz
-    └── 静态功耗: 627.4 uW
+    ├── 静态功耗: 627.4 uW
+    ├── 芯片面积: 300,138 um² (~0.3 mm²)
+    ├── 支持 PDK: ICS55 (55nm) / IHP SG13G2 (130nm)
+    ├── 综合工具: Yosys (当前) / iMAP (可选)
+    └── 综合脚本: run_ics55_synthesis.sh / run_ihp_synthesis.sh
     ↓
-网表优化 (iTO - Timing Optimization)
+综合后仿真 (Icarus Verilog) ✅ 已完成
+    ├── ICS55 PDK 网表验证通过
+    ├── IHP PDK 网表验证通过
+    ├── 波形分析工具: GTKWave / Web 查看器
+    ├── 测试平台: post_syn_tb.sv / advanced_post_syn_tb.sv
+    └── 仿真脚本: run_post_syn_sim.py
     ↓
-布局规划 (iFP - Floorplan)
+网表优化 (iTO - Timing Optimization) ⏳ 待完成
+    ↓
+布局规划 (iFP - Floorplan) ⏳ 待完成
     ├── Die 尺寸规划
     ├── 电源网络规划
     └── I/O 规划
     ↓
-单元布局 (iPL - Placement)
+单元布局 (iPL - Placement) ⏳ 待完成
     ├── 全局布局
     ├── 详细布局
     └── 合法化
     ↓
-时钟树综合 (iCTS - Clock Tree Synthesis)
+时钟树综合 (iCTS - Clock Tree Synthesis) ⏳ 待完成
     ├── 时钟树构建
     ├── 时钟缓冲器插入
     └── 时钟偏斜优化
     ↓
-布线 (iRT - Routing)
+布线 (iRT - Routing) ⏳ 待完成
     ├── 全局布线
     ├── 轨道分配
     └── 详细布线
     ↓
-静态时序分析 (iSTA)
+静态时序分析 (iSTA) ⏳ 待完成
     ├── 建立时间检查
     ├── 保持时间检查
     └── 时序报告生成
     ↓
-功耗分析 (iPW - Power Analysis)
+功耗分析 (iPW - Power Analysis) ⏳ 待完成
     ├── 动态功耗
     ├── 静态功耗
     └── 功耗优化
     ↓
-物理验证 (iDRC - Design Rule Check)
+物理验证 (iDRC - Design Rule Check) ⏳ 待完成
     ├── DRC 检查
     ├── LVS 验证
     └── 天线效应检查
     ↓
-签核 (Sign-off)
+签核 (Sign-off) ⏳ 待完成
     ├── 时序签核 (iSTA)
     ├── 功耗签核 (iPW)
     ├── 物理验证 (iDRC)
     └── 形式验证 (iEDA-FV)
     ↓
-GDSII 生成 (iEDA)
+GDSII 生成 (iEDA) ⏳ 待完成
     ↓
-流片 (Tape-out)
+流片 (Tape-out) ⏳ 待完成
 ```
 
 **iEDA 流程优势**:
@@ -618,23 +733,343 @@ GDSII 生成 (iEDA)
 
 | 里程碑 | 计划时间 | 状态 | 工具链选择 | 备注 |
 |-------|---------|------|-----------|------|
-| RTL 设计完成 | 2024年11月 | ✅ | Chisel | 已完成 |
-| 功能验证完成 | 2024年11月 | ✅ | Verilator | 测试覆盖率95%+ |
-| 逻辑综合完成 | 2024年11月 | ✅ | Yosys/iMAP | 73,829 instances |
-| 综合后仿真 | 2024年11月 | ✅ | Verilator | 验证通过 |
+| RTL 设计完成 | 2024年11月 | ✅ | Chisel | ~5,350 行代码 |
+| 功能验证完成 | 2024年11月 | ✅ | Verilator + ChiselTest | 测试覆盖率95%+ |
+| 逻辑综合完成 | 2024年11月 | ✅ | Yosys | 73,829 instances, 178.569 MHz |
+| 综合后仿真 | 2024年11月 | ✅ | Icarus Verilog | ICS55/IHP PDK 验证通过 |
+| 波形分析工具 | 2024年11月 | ✅ | GTKWave + Web 查看器 | 支持在线查看 |
 | 布局布线完成 | 待定 | ⏳ | iEDA/OpenROAD | 两套方案并行 |
 | 签核完成 | 待定 | ⏳ | iEDA/OpenSTA | DRC/LVS/STA |
 | GDSII 交付 | 待定 | ⏳ | iEDA/Magic | 生成版图 |
 | 流片 | 待定 | ⏳ | 创芯55nm | 国产工艺 |
 
+**当前进展**:
+- ✅ **RTL 设计**: 完整的 SoC 设计，包含 CPU、加速器、外设
+- ✅ **功能验证**: 95%+ 测试覆盖率，所有测试通过
+- ✅ **逻辑综合**: 支持 ICS55 (55nm) 和 IHP (130nm) 两种 PDK
+- ✅ **综合后仿真**: 网表级功能验证完成，波形分析工具完善
+- ✅ **文档完善**: 提供快速开始指南、PDK 使用指南、波形查看器文档
+
 **工具链选择说明**:
 - **推荐使用 iEDA**: 国产自主可控，中文支持，适合国内流片
 - **备选 OpenROAD**: 国际主流方案，生态成熟
 - **两套方案并行**: 确保流片成功率，降低风险
+- **当前使用 Yosys**: 开源综合工具，支持多种 PDK
 
 ---
 
-## 九、iEDA 国产工具链简介
+## 九、综合与仿真工具详解
+
+### 9.1 目录结构
+
+```
+chisel/synthesis/
+├── README.md                      # 综合仿真总体说明
+├── QUICK_START.md                 # 快速开始指南
+├── QUICK_START_ICS55.md          # ICS55 PDK 快速开始
+├── ICS55_PDK_GUIDE.md            # ICS55 PDK 详细指南
+├── IHP_PDK_GUIDE.md              # IHP PDK 详细指南
+├── ICS55_SETUP_SUMMARY.md        # ICS55 设置摘要
+├── Makefile                       # Make 构建文件
+│
+├── run_generic_synthesis.sh       # 通用综合脚本
+├── run_ics55_synthesis.sh        # ICS55 PDK 综合脚本
+├── run_ihp_synthesis.sh          # IHP PDK 综合脚本
+├── run_core.sh                   # 核心综合脚本
+├── run_post_syn_sim.py           # 综合后仿真 Python 脚本
+│
+├── pdk/                          # PDK 目录
+│   ├── get_ics55_pdk.py         # ICS55 PDK 下载脚本
+│   ├── get_ihp_pdk.py           # IHP PDK 下载脚本
+│   ├── icsprout55-pdk/          # ICS55 PDK (55nm)
+│   └── IHP-Open-PDK/            # IHP PDK (130nm)
+│
+├── testbench/                    # 测试平台
+│   ├── post_syn_tb.sv           # 基本测试平台
+│   ├── advanced_post_syn_tb.sv  # 高级测试平台
+│   ├── simple_post_syn_tb.sv    # 简化测试平台
+│   ├── dut_wrapper.sv           # DUT 包装器
+│   ├── test_utils.sv            # 测试工具
+│   └── filelist.f               # 文件列表
+│
+├── yosys/                        # Yosys 综合配置
+│   ├── global_var.tcl           # 全局变量
+│   ├── scripts/                 # 综合脚本
+│   │   ├── yosys_synthesis.tcl # 主综合脚本
+│   │   ├── abc-opt.script      # ABC 优化脚本
+│   │   ├── init_tech.tcl       # 技术初始化
+│   │   └── filter_output.awk   # 输出过滤
+│   └── src/                     # 源文件
+│       ├── abc.constr          # ABC 约束
+│       └── lazy_man_synth_library.aig  # 综合库
+│
+├── lib_ics55/                    # ICS55 库文件
+│   └── yosys_primitives.v       # Yosys 原语
+│
+├── sim/                          # 仿真输出
+│   └── post_syn_report.txt      # 仿真报告
+│
+├── waves/                        # 波形文件
+│   └── *.vcd                    # VCD 波形
+│
+├── wave_viewer.py                # Web 波形查看器
+├── wave_renderer.py              # 波形渲染器
+├── serve_wave.py                 # HTTP 服务器
+├── generate_static_wave.py       # 静态波形生成
+├── start_wave_viewer.sh          # 启动波形查看器
+├── start_http.sh                 # 启动 HTTP 服务
+├── view_wave.sh                  # 查看波形
+├── test_wave_viewer.py           # 波形查看器测试
+├── test_image_render.py          # 图像渲染测试
+│
+├── WAVE_VIEWER_README.md         # 波形查看器说明
+├── WAVE_QUICK_START.md           # 波形查看器快速开始
+├── WAVE_VIEWER_USAGE.md          # 波形查看器使用指南
+└── WAVE_VIEWER_OPTIMIZATION.md   # 波形查看器优化
+```
+
+### 9.2 支持的 PDK
+
+| PDK | 工艺节点 | 来源 | 综合脚本 | 仿真命令 |
+|-----|---------|------|---------|---------|
+| **通用** | - | - | `run_generic_synthesis.sh` | `--netlist generic` |
+| **ICS55** | 55nm | IDE Platform | `run_ics55_synthesis.sh` | `--netlist ics55` |
+| **IHP SG13G2** | 130nm | IHP GmbH | `run_ihp_synthesis.sh` | `--netlist ihp` |
+
+### 9.3 综合工具链
+
+#### 9.3.1 Yosys 综合
+
+**工具信息**:
+- **名称**: Yosys Open SYnthesis Suite
+- **版本**: 建议 0.30+
+- **来源**: https://yosyshq.net/yosys/
+- **许可**: ISC License (开源)
+
+**主要功能**:
+- RTL 到门级网表的转换
+- 技术映射到标准单元库
+- 优化和面积/时序权衡
+- 支持多种 PDK
+
+**使用示例**:
+```bash
+# ICS55 PDK 综合
+cd chisel/synthesis
+./run_ics55_synthesis.sh
+
+# 查看综合统计
+cat netlist/synthesis_stats_ics55.txt
+
+# 查看综合日志
+less netlist/synthesis_ics55.log
+```
+
+#### 9.3.2 综合配置
+
+**全局变量** (`yosys/global_var.tcl`):
+- 设计名称
+- PDK 路径
+- 库文件路径
+- 输出目录
+
+**综合脚本** (`yosys/scripts/yosys_synthesis.tcl`):
+- 读取 RTL
+- 综合优化
+- 技术映射
+- 输出网表
+
+**ABC 优化** (`yosys/scripts/abc-opt.script`):
+- 逻辑优化
+- 面积优化
+- 时序优化
+
+### 9.4 仿真工具链
+
+#### 9.4.1 Icarus Verilog
+
+**工具信息**:
+- **名称**: Icarus Verilog
+- **版本**: 建议 11.0+
+- **来源**: http://iverilog.icarus.com/
+- **许可**: GPL (开源)
+
+**主要功能**:
+- Verilog/SystemVerilog 仿真
+- VCD 波形生成
+- 快速编译和运行
+- 支持标准单元库
+
+**使用示例**:
+```bash
+# 运行综合后仿真
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# 查看仿真日志
+cat sim/sim_advanced.log
+
+# 查看测试报告
+cat sim/detailed_report.txt
+```
+
+#### 9.4.2 测试平台
+
+**基本测试平台** (`testbench/post_syn_tb.sv`):
+- 简单功能验证
+- 快速运行
+- 基本信号监控
+
+**高级测试平台** (`testbench/advanced_post_syn_tb.sv`):
+- 详细功能测试
+- 性能分析
+- 完整测试报告
+- 包含以下测试:
+  1. 复位功能测试
+  2. 基本操作测试
+  3. GPIO 模式测试
+  4. 中断响应测试
+  5. UART 接口测试
+  6. 压力测试
+  7. 性能分析
+
+**简化测试平台** (`testbench/simple_post_syn_tb.sv`):
+- 最小化测试
+- 快速验证
+- 适合调试
+
+### 9.5 波形查看工具
+
+#### 9.5.1 GTKWave (传统方式)
+
+**工具信息**:
+- **名称**: GTKWave
+- **来源**: http://gtkwave.sourceforge.net/
+- **许可**: GPL (开源)
+
+**使用方法**:
+```bash
+# 查看波形
+gtkwave waves/post_syn.vcd
+
+# 或使用 Makefile
+make wave_gtk
+```
+
+#### 9.5.2 Web 波形查看器 (创新方式) ⭐
+
+**特点**:
+- 🌐 **基于 Web**: 浏览器中查看，无需安装客户端
+- 🎨 **美观界面**: 现代化 UI 设计
+- 🚀 **快速响应**: Python 后端 + HTTP 服务
+- 📊 **交互式**: 支持缩放、平移、信号选择
+- 💾 **导出功能**: 支持导出为图片
+
+**使用方法**:
+
+**方法 1: 使用启动脚本**
+```bash
+cd chisel/synthesis
+./start_wave_viewer.sh
+# 浏览器访问: http://localhost:8000
+```
+
+**方法 2: 使用 Python 脚本**
+```bash
+python serve_wave.py
+# 浏览器访问: http://localhost:8000
+```
+
+**方法 3: 使用 HTTP 服务器**
+```bash
+./start_http.sh
+# 浏览器访问: http://localhost:8000
+```
+
+**方法 4: 生成静态波形图**
+```bash
+python generate_static_wave.py
+# 生成 PNG 图片
+```
+
+**详细文档**:
+- 使用说明: `WAVE_VIEWER_README.md`
+- 快速开始: `WAVE_QUICK_START.md`
+- 使用指南: `WAVE_VIEWER_USAGE.md`
+- 优化技巧: `WAVE_VIEWER_OPTIMIZATION.md`
+
+### 9.6 快速命令参考
+
+#### 9.6.1 综合命令
+
+```bash
+# 通用综合
+./run_generic_synthesis.sh
+
+# ICS55 PDK 综合
+./run_ics55_synthesis.sh
+
+# IHP PDK 综合
+./run_ihp_synthesis.sh
+
+# 使用 Makefile
+make synth_ics55
+make synth_ihp
+```
+
+#### 9.6.2 仿真命令
+
+```bash
+# 完整仿真流程
+python run_post_syn_sim.py
+
+# 指定仿真器和网表
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# 使用基本测试平台
+python run_post_syn_sim.py --testbench basic
+
+# 查看波形
+python run_post_syn_sim.py --wave
+
+# 生成报告
+python run_post_syn_sim.py --report
+
+# 使用 Makefile
+make sim_ics55
+make full
+```
+
+#### 9.6.3 波形查看命令
+
+```bash
+# GTKWave
+gtkwave waves/post_syn.vcd
+
+# Web 波形查看器
+./start_wave_viewer.sh
+
+# 生成静态图片
+python generate_static_wave.py
+
+# 使用 Makefile
+make wave
+```
+
+### 9.7 文档资源
+
+| 文档 | 说明 | 路径 |
+|-----|------|------|
+| 综合仿真总览 | 完整说明文档 | `chisel/synthesis/README.md` |
+| 快速开始 | 5分钟上手指南 | `chisel/synthesis/QUICK_START.md` |
+| ICS55 快速开始 | ICS55 PDK 快速指南 | `chisel/synthesis/QUICK_START_ICS55.md` |
+| ICS55 详细指南 | ICS55 PDK 完整文档 | `chisel/synthesis/ICS55_PDK_GUIDE.md` |
+| IHP 详细指南 | IHP PDK 完整文档 | `chisel/synthesis/IHP_PDK_GUIDE.md` |
+| 波形查看器说明 | Web 查看器文档 | `chisel/synthesis/WAVE_VIEWER_README.md` |
+| 波形快速开始 | 波形查看快速指南 | `chisel/synthesis/WAVE_QUICK_START.md` |
+
+---
+
+## 十、iEDA 国产工具链简介
 
 iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室等单位联合开发的国产开源 EDA 平台，旨在打破国外 EDA 工具垄断，实现芯片设计工具的自主可控。
 
@@ -654,9 +1089,9 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 
 ---
 
-## 十、风险评估与应对
+## 十一、风险评估与应对
 
-### 10.1 技术风险
+### 11.1 技术风险
 
 | 风险 | 等级 | 应对措施 |
 |-----|------|---------|
@@ -665,7 +1100,7 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 | 面积超标 | 低 | 设计紧凑，资源占用已评估 |
 | 验证不充分 | 中 | 增加测试用例，提高覆盖率 |
 
-### 10.2 项目风险
+### 11.2 项目风险
 
 | 风险 | 等级 | 应对措施 |
 |-----|------|---------|
@@ -676,9 +1111,9 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 
 ---
 
-## 十一、后续工作计划
+## 十二、后续工作计划
 
-### 11.1 短期计划（1-3个月）
+### 12.1 短期计划（1-3个月）
 
 1. **完成综合**
    - 生成网表
@@ -695,13 +1130,13 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
    - 功耗分析
    - 物理验证 (DRC/LVS)
 
-### 11.2 中期计划（3-6个月）
+### 12.2 中期计划（3-6个月）
 
 1. **GDSII 生成与交付**
 2. **流片制造**
 3. **芯片封装**
 
-### 11.3 长期计划（6-12个月）
+### 12.3 长期计划（6-12个月）
 
 1. **芯片测试**
    - 功能测试
@@ -720,9 +1155,9 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 
 ---
 
-## 十二、总结
+## 十三、总结
 
-### 12.1 项目亮点
+### 13.1 项目亮点
 
 1. **创新的 BitNet 架构**: 无乘法器设计，显著降低功耗和面积
 2. **完整的 SoC 方案**: 集成 CPU、加速器、外设，开箱即用
@@ -734,7 +1169,7 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 8. **优异的时序**: 实测频率178.569MHz，远超100MHz目标
 9. **紧凑的设计**: 73,829 instances，满足10万限制，余量充足
 
-### 12.2 技术指标总结
+### 13.2 技术指标总结
 
 | 指标 | 数值 |
 |-----|------|
@@ -747,14 +1182,14 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 | 资源占用 (FPGA) | 8K LUTs, 6K FFs, 20 BRAMs |
 | 时序性能 | WNS: 14.400ns, TNS: 0.000ns, 无违例 |
 
-### 12.3 应用场景
+### 13.3 应用场景
 
 - **边缘 AI 推理**: 智能摄像头、智能音箱
 - **IoT 设备**: 传感器数据处理
 - **嵌入式系统**: 工业控制、机器人
 - **可穿戴设备**: 健康监测、运动追踪
 
-### 12.4 市场前景
+### 13.4 市场前景
 
 随着边缘 AI 的快速发展，本芯片具有广阔的市场前景：
 - 低功耗优势适合电池供电设备
@@ -814,7 +1249,7 @@ iEDA (Infrastructure for EDA) 是由中科院、北京大学、鹏城实验室�
 10. iEDA 官方网站 (https://ieda.oscc.cc/)
 11. iEDA 代码仓库 (https://gitee.com/oscc-project/iEDA)
 12. iEDA 用户手册 (https://ieda-docs.oscc.cc/)
-13. iEDA 技术论文集 (北京大学、鹏城实验室)
+13. iEDA 技术论文集 (中科院、北京大学、鹏城实验室)
 14. 开源芯片社区 OSCC (https://oscc.cc/)
 
 #### 相关项目

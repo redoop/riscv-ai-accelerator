@@ -189,6 +189,7 @@ Multi-level verification approach:
 2. **Integration Testing**: Interface verification between modules
 3. **System Testing**: Complete SoC functional verification
 4. **Performance Testing**: Performance metrics verification
+5. **Post-Synthesis Simulation**: Netlist-level functional verification
 
 ### 5.2 Test Coverage
 
@@ -209,16 +210,107 @@ Multi-level verification approach:
 - ✅ 9x9 matrix (identity matrix)
 - ✅ 16x16 matrix (maximum scale)
 
+#### 5.2.3 PicoRV32 Core Tests
+- ✅ Memory adapter integration
+- ✅ Address decoder functionality
+- ✅ Complete SoC integration
+- ✅ CPU and accelerator interaction
+- ✅ Memory mapping verification
+- ✅ Interrupt handling
+- ✅ Comprehensive test suite
+
+#### 5.2.4 Post-Synthesis Netlist Simulation
+- ✅ Generic synthesis netlist verification
+- ✅ IHP SG13G2 (130nm) PDK netlist verification
+- ✅ ICS55 (55nm) PDK netlist verification
+- ✅ Timing functional correctness verification
+- ✅ Waveform viewing and analysis
+
 ### 5.3 Test Tools
 
+**RTL Simulation**:
 - **Simulation Tool**: Verilator
 - **Test Framework**: ChiselTest
 - **Build Tool**: SBT (Scala Build Tool)
 - **Language**: Chisel 3.x (Scala-based HDL)
 
-### 5.4 Test Results
+**Post-Synthesis Simulation**:
+- **Synthesis Tool**: Yosys (open-source)
+- **Simulator**: Icarus Verilog / Verilator
+- **Waveform Viewer**: 
+  - GTKWave (open-source)
+  - Custom Web Waveform Viewer (Python + HTTP)
+- **PDK Support**: 
+  - IHP SG13G2 (130nm open-source PDK)
+  - ICS55 (55nm open-source PDK)
+  - Generic synthesis (no specific PDK)
 
-All test cases passed with test coverage exceeding 95%. Detailed test reports available in `chisel/test_run_dir/` directory.
+### 5.4 Synthesis and Simulation Flow
+
+#### 5.4.1 Quick Start
+
+```bash
+# Enter synthesis directory
+cd chisel/synthesis
+
+# Method 1: Using ICS55 PDK (Recommended)
+./run_ics55_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# Method 2: Using IHP PDK
+./run_ihp_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist ihp
+
+# Method 3: Generic synthesis
+./run_generic_synthesis.sh
+python run_post_syn_sim.py --simulator iverilog --netlist generic
+```
+
+#### 5.4.2 Waveform Viewing
+
+**Method 1: Using GTKWave**
+```bash
+gtkwave waves/post_syn.vcd
+```
+
+**Method 2: Using Web Waveform Viewer**
+```bash
+# Start HTTP server
+./start_http.sh
+
+# Or use Python script
+python serve_wave.py
+
+# Access in browser: http://localhost:8000
+```
+
+**Method 3: Generate Static Waveform Images**
+```bash
+python generate_static_wave.py
+```
+
+#### 5.4.3 Detailed Documentation
+
+- **Quick Start**: `chisel/synthesis/QUICK_START.md`
+- **ICS55 PDK Guide**: `chisel/synthesis/ICS55_PDK_GUIDE.md`
+- **ICS55 Quick Start**: `chisel/synthesis/QUICK_START_ICS55.md`
+- **IHP PDK Guide**: `chisel/synthesis/IHP_PDK_GUIDE.md`
+- **Waveform Viewer Usage**: `chisel/synthesis/WAVE_VIEWER_README.md`
+- **Waveform Viewer Quick Start**: `chisel/synthesis/WAVE_QUICK_START.md`
+
+### 5.5 Test Results
+
+**RTL Simulation**:
+- ✅ All test cases passed
+- ✅ Test coverage exceeds 95%
+- ✅ Detailed test reports in `chisel/test_run_dir/` directory
+
+**Post-Synthesis Simulation**:
+- ✅ ICS55 PDK netlist functional verification passed
+- ✅ IHP PDK netlist functional verification passed
+- ✅ Generic synthesis netlist functional verification passed
+- ✅ Waveform analysis confirms timing correctness
+- ✅ Test reports in `chisel/synthesis/sim/post_syn_report.txt`
 
 
 ---
@@ -331,94 +423,126 @@ This project supports two complete open-source EDA toolchains:
 ### 8.1 International Community Process (OpenROAD)
 
 ```
-RTL Design (Chisel)
+RTL Design (Chisel) ✅ Completed
+    ├── Code Scale: ~5,350 lines
+    ├── Main Modules: CPU + 2 accelerators + peripherals
+    └── Generated SystemVerilog: ~3,000 lines
     ↓
-Functional Simulation (Verilator)
+Functional Simulation (Verilator) ✅ Completed
+    ├── Test Coverage: 95%+
+    ├── All test cases passed
+    └── Performance verification completed
     ↓
 Logic Synthesis (Yosys) ✅ Completed
     ├── Design Scale: 73,829 instances
     ├── Operating Frequency: 178.569 MHz
-    └── Static Power: 627.4 uW
+    ├── Static Power: 627.4 uW
+    ├── Chip Area: 300,138 um² (~0.3 mm²)
+    ├── Supported PDK: ICS55 (55nm) / IHP SG13G2 (130nm)
+    └── Synthesis Scripts: run_ics55_synthesis.sh / run_ihp_synthesis.sh
     ↓
-Static Timing Analysis (OpenSTA)
+Post-Synthesis Simulation (Icarus Verilog) ✅ Completed
+    ├── ICS55 PDK netlist verification passed
+    ├── IHP PDK netlist verification passed
+    ├── Waveform Analysis Tools: GTKWave / Web Viewer
+    └── Simulation Script: run_post_syn_sim.py
     ↓
-Floorplan (OpenROAD - Floorplan)
+Static Timing Analysis (OpenSTA) ⏳ To be completed
     ↓
-Place & Route (OpenROAD - Place & Route)
+Floorplan (OpenROAD - Floorplan) ⏳ To be completed
     ↓
-Clock Tree Synthesis (OpenROAD - CTS)
+Place & Route (OpenROAD - Place & Route) ⏳ To be completed
     ↓
-Optimization (OpenROAD - Optimization)
+Clock Tree Synthesis (OpenROAD - CTS) ⏳ To be completed
     ↓
-Sign-off
+Optimization (OpenROAD - Optimization) ⏳ To be completed
+    ↓
+Sign-off ⏳ To be completed
     ├── Timing Sign-off (OpenSTA)
     ├── Power Sign-off (OpenROAD)
     ├── Physical Verification (Magic/KLayout - DRC/LVS)
     └── Formal Verification (Yosys - Equivalence)
     ↓
-GDSII Generation (Magic/KLayout)
+GDSII Generation (Magic/KLayout) ⏳ To be completed
     ↓
-Tape-out
+Tape-out ⏳ To be completed
 ```
 
 ### 8.2 Chinese Open-Source Process (iEDA) ⭐ Recommended
 
 ```
-RTL Design (Chisel)
+RTL Design (Chisel) ✅ Completed
+    ├── Code Scale: ~5,350 lines
+    ├── Main Modules: CPU + 2 accelerators + peripherals
+    └── Generated SystemVerilog: ~3,000 lines
     ↓
-Functional Simulation (Verilator)
+Functional Simulation (Verilator) ✅ Completed
+    ├── Test Coverage: 95%+
+    ├── All test cases passed
+    └── Performance verification completed
     ↓
-Logic Synthesis (iMAP) ✅ Completed
+Logic Synthesis (Yosys/iMAP) ✅ Completed
     ├── Design Scale: 73,829 instances
     ├── Operating Frequency: 178.569 MHz
-    └── Static Power: 627.4 uW
+    ├── Static Power: 627.4 uW
+    ├── Chip Area: 300,138 um² (~0.3 mm²)
+    ├── Supported PDK: ICS55 (55nm) / IHP SG13G2 (130nm)
+    ├── Synthesis Tool: Yosys (current) / iMAP (optional)
+    └── Synthesis Scripts: run_ics55_synthesis.sh / run_ihp_synthesis.sh
     ↓
-Netlist Optimization (iTO - Timing Optimization)
+Post-Synthesis Simulation (Icarus Verilog) ✅ Completed
+    ├── ICS55 PDK netlist verification passed
+    ├── IHP PDK netlist verification passed
+    ├── Waveform Analysis Tools: GTKWave / Web Viewer
+    ├── Test Benches: post_syn_tb.sv / advanced_post_syn_tb.sv
+    └── Simulation Script: run_post_syn_sim.py
     ↓
-Floorplan (iFP - Floorplan)
+Netlist Optimization (iTO - Timing Optimization) ⏳ To be completed
+    ↓
+Floorplan (iFP - Floorplan) ⏳ To be completed
     ├── Die Size Planning
     ├── Power Network Planning
     └── I/O Planning
     ↓
-Placement (iPL - Placement)
+Placement (iPL - Placement) ⏳ To be completed
     ├── Global Placement
     ├── Detailed Placement
     └── Legalization
     ↓
-Clock Tree Synthesis (iCTS)
+Clock Tree Synthesis (iCTS) ⏳ To be completed
     ├── Clock Tree Construction
     ├── Clock Buffer Insertion
     └── Clock Skew Optimization
     ↓
-Routing (iRT - Routing)
+Routing (iRT - Routing) ⏳ To be completed
     ├── Global Routing
     ├── Track Assignment
     └── Detailed Routing
     ↓
-Static Timing Analysis (iSTA)
+Static Timing Analysis (iSTA) ⏳ To be completed
     ├── Setup Time Check
     ├── Hold Time Check
     └── Timing Report Generation
     ↓
-Power Analysis (iPW - Power Analysis)
+Power Analysis (iPW - Power Analysis) ⏳ To be completed
     ├── Dynamic Power
     ├── Static Power
     └── Power Optimization
     ↓
-Physical Verification (iDRC - Design Rule Check)
+Physical Verification (iDRC - Design Rule Check) ⏳ To be completed
     ├── DRC Check
     ├── LVS Verification
     └── Antenna Effect Check
     ↓
-Sign-off
+Sign-off ⏳ To be completed
     ├── Timing Sign-off (iSTA)
     ├── Power Sign-off (iPW)
     ├── Physical Verification (iDRC)
     └── Formal Verification (iEDA-FV)
     ↓
-GDSII Generation (iEDA)
+GDSII Generation (iEDA) ⏳ To be completed
     ↓
-Tape-out
+Tape-out ⏳ To be completed
 ```
 
 **iEDA Process Advantages**:
@@ -437,7 +561,299 @@ Tape-out
 
 ---
 
-## 9. iEDA Chinese Open-Source Toolchain Introduction
+## 9. Synthesis and Simulation Tools Details
+
+### 9.1 Directory Structure
+
+```
+chisel/synthesis/
+├── README.md                      # Synthesis and simulation overview
+├── QUICK_START.md                 # Quick start guide
+├── QUICK_START_ICS55.md          # ICS55 PDK quick start
+├── ICS55_PDK_GUIDE.md            # ICS55 PDK detailed guide
+├── IHP_PDK_GUIDE.md              # IHP PDK detailed guide
+├── ICS55_SETUP_SUMMARY.md        # ICS55 setup summary
+├── Makefile                       # Make build file
+│
+├── run_generic_synthesis.sh       # Generic synthesis script
+├── run_ics55_synthesis.sh        # ICS55 PDK synthesis script
+├── run_ihp_synthesis.sh          # IHP PDK synthesis script
+├── run_core.sh                   # Core synthesis script
+├── run_post_syn_sim.py           # Post-synthesis simulation Python script
+│
+├── pdk/                          # PDK directory
+│   ├── get_ics55_pdk.py         # ICS55 PDK download script
+│   ├── get_ihp_pdk.py           # IHP PDK download script
+│   ├── icsprout55-pdk/          # ICS55 PDK (55nm)
+│   └── IHP-Open-PDK/            # IHP PDK (130nm)
+│
+├── testbench/                    # Test benches
+│   ├── post_syn_tb.sv           # Basic test bench
+│   ├── advanced_post_syn_tb.sv  # Advanced test bench
+│   ├── simple_post_syn_tb.sv    # Simplified test bench
+│   ├── dut_wrapper.sv           # DUT wrapper
+│   ├── test_utils.sv            # Test utilities
+│   └── filelist.f               # File list
+│
+├── yosys/                        # Yosys synthesis configuration
+│   ├── global_var.tcl           # Global variables
+│   ├── scripts/                 # Synthesis scripts
+│   │   ├── yosys_synthesis.tcl # Main synthesis script
+│   │   ├── abc-opt.script      # ABC optimization script
+│   │   ├── init_tech.tcl       # Technology initialization
+│   │   └── filter_output.awk   # Output filter
+│   └── src/                     # Source files
+│       ├── abc.constr          # ABC constraints
+│       └── lazy_man_synth_library.aig  # Synthesis library
+│
+├── lib_ics55/                    # ICS55 library files
+│   └── yosys_primitives.v       # Yosys primitives
+│
+├── sim/                          # Simulation output
+│   └── post_syn_report.txt      # Simulation report
+│
+├── waves/                        # Waveform files
+│   └── *.vcd                    # VCD waveforms
+│
+├── wave_viewer.py                # Web waveform viewer
+├── wave_renderer.py              # Waveform renderer
+├── serve_wave.py                 # HTTP server
+├── generate_static_wave.py       # Static waveform generation
+├── start_wave_viewer.sh          # Start waveform viewer
+├── start_http.sh                 # Start HTTP service
+├── view_wave.sh                  # View waveforms
+├── test_wave_viewer.py           # Waveform viewer test
+├── test_image_render.py          # Image render test
+│
+├── WAVE_VIEWER_README.md         # Waveform viewer documentation
+├── WAVE_QUICK_START.md           # Waveform viewer quick start
+├── WAVE_VIEWER_USAGE.md          # Waveform viewer usage guide
+└── WAVE_VIEWER_OPTIMIZATION.md   # Waveform viewer optimization
+```
+
+### 9.2 Supported PDKs
+
+| PDK | Process Node | Source | Synthesis Script | Simulation Command |
+|-----|-------------|--------|-----------------|-------------------|
+| **Generic** | - | - | `run_generic_synthesis.sh` | `--netlist generic` |
+| **ICS55** | 55nm | IDE Platform | `run_ics55_synthesis.sh` | `--netlist ics55` |
+| **IHP SG13G2** | 130nm | IHP GmbH | `run_ihp_synthesis.sh` | `--netlist ihp` |
+
+### 9.3 Synthesis Toolchain
+
+#### 9.3.1 Yosys Synthesis
+
+**Tool Information**:
+- **Name**: Yosys Open SYnthesis Suite
+- **Version**: Recommended 0.30+
+- **Source**: https://yosyshq.net/yosys/
+- **License**: ISC License (open-source)
+
+**Main Features**:
+- RTL to gate-level netlist conversion
+- Technology mapping to standard cell libraries
+- Optimization and area/timing trade-offs
+- Support for multiple PDKs
+
+**Usage Example**:
+```bash
+# ICS55 PDK synthesis
+cd chisel/synthesis
+./run_ics55_synthesis.sh
+
+# View synthesis statistics
+cat netlist/synthesis_stats_ics55.txt
+
+# View synthesis log
+less netlist/synthesis_ics55.log
+```
+
+### 9.4 Simulation Toolchain
+
+#### 9.4.1 Icarus Verilog
+
+**Tool Information**:
+- **Name**: Icarus Verilog
+- **Version**: Recommended 11.0+
+- **Source**: http://iverilog.icarus.com/
+- **License**: GPL (open-source)
+
+**Main Features**:
+- Verilog/SystemVerilog simulation
+- VCD waveform generation
+- Fast compilation and execution
+- Standard cell library support
+
+**Usage Example**:
+```bash
+# Run post-synthesis simulation
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# View simulation log
+cat sim/sim_advanced.log
+
+# View test report
+cat sim/detailed_report.txt
+```
+
+#### 9.4.2 Test Benches
+
+**Basic Test Bench** (`testbench/post_syn_tb.sv`):
+- Simple functional verification
+- Fast execution
+- Basic signal monitoring
+
+**Advanced Test Bench** (`testbench/advanced_post_syn_tb.sv`):
+- Detailed functional testing
+- Performance analysis
+- Complete test reports
+- Includes the following tests:
+  1. Reset functionality test
+  2. Basic operation test
+  3. GPIO mode test
+  4. Interrupt response test
+  5. UART interface test
+  6. Stress test
+  7. Performance analysis
+
+**Simplified Test Bench** (`testbench/simple_post_syn_tb.sv`):
+- Minimal testing
+- Quick verification
+- Suitable for debugging
+
+### 9.5 Waveform Viewing Tools
+
+#### 9.5.1 GTKWave (Traditional Method)
+
+**Tool Information**:
+- **Name**: GTKWave
+- **Source**: http://gtkwave.sourceforge.net/
+- **License**: GPL (open-source)
+
+**Usage**:
+```bash
+# View waveforms
+gtkwave waves/post_syn.vcd
+
+# Or use Makefile
+make wave_gtk
+```
+
+#### 9.5.2 Web Waveform Viewer (Innovative Method) ⭐
+
+**Features**:
+- 🌐 **Web-based**: View in browser, no client installation needed
+- 🎨 **Beautiful Interface**: Modern UI design
+- 🚀 **Fast Response**: Python backend + HTTP service
+- 📊 **Interactive**: Supports zoom, pan, signal selection
+- 💾 **Export Function**: Supports export to images
+
+**Usage**:
+
+**Method 1: Using Launch Script**
+```bash
+cd chisel/synthesis
+./start_wave_viewer.sh
+# Access in browser: http://localhost:8000
+```
+
+**Method 2: Using Python Script**
+```bash
+python serve_wave.py
+# Access in browser: http://localhost:8000
+```
+
+**Method 3: Using HTTP Server**
+```bash
+./start_http.sh
+# Access in browser: http://localhost:8000
+```
+
+**Method 4: Generate Static Waveform Images**
+```bash
+python generate_static_wave.py
+# Generates PNG images
+```
+
+**Detailed Documentation**:
+- Usage Guide: `WAVE_VIEWER_README.md`
+- Quick Start: `WAVE_QUICK_START.md`
+- Usage Manual: `WAVE_VIEWER_USAGE.md`
+- Optimization Tips: `WAVE_VIEWER_OPTIMIZATION.md`
+
+### 9.6 Quick Command Reference
+
+#### 9.6.1 Synthesis Commands
+
+```bash
+# Generic synthesis
+./run_generic_synthesis.sh
+
+# ICS55 PDK synthesis
+./run_ics55_synthesis.sh
+
+# IHP PDK synthesis
+./run_ihp_synthesis.sh
+
+# Using Makefile
+make synth_ics55
+make synth_ihp
+```
+
+#### 9.6.2 Simulation Commands
+
+```bash
+# Complete simulation flow
+python run_post_syn_sim.py
+
+# Specify simulator and netlist
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+
+# Use basic test bench
+python run_post_syn_sim.py --testbench basic
+
+# View waveforms
+python run_post_syn_sim.py --wave
+
+# Generate report
+python run_post_syn_sim.py --report
+
+# Using Makefile
+make sim_ics55
+make full
+```
+
+#### 9.6.3 Waveform Viewing Commands
+
+```bash
+# GTKWave
+gtkwave waves/post_syn.vcd
+
+# Web waveform viewer
+./start_wave_viewer.sh
+
+# Generate static images
+python generate_static_wave.py
+
+# Using Makefile
+make wave
+```
+
+### 9.7 Documentation Resources
+
+| Document | Description | Path |
+|----------|-------------|------|
+| Synthesis & Simulation Overview | Complete documentation | `chisel/synthesis/README.md` |
+| Quick Start | 5-minute getting started guide | `chisel/synthesis/QUICK_START.md` |
+| ICS55 Quick Start | ICS55 PDK quick guide | `chisel/synthesis/QUICK_START_ICS55.md` |
+| ICS55 Detailed Guide | ICS55 PDK complete documentation | `chisel/synthesis/ICS55_PDK_GUIDE.md` |
+| IHP Detailed Guide | IHP PDK complete documentation | `chisel/synthesis/IHP_PDK_GUIDE.md` |
+| Waveform Viewer Guide | Web viewer documentation | `chisel/synthesis/WAVE_VIEWER_README.md` |
+| Waveform Quick Start | Waveform viewing quick guide | `chisel/synthesis/WAVE_QUICK_START.md` |
+
+---
+
+## 10. iEDA Chinese Open-Source Toolchain Introduction
 
 iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platform jointly developed by the Chinese Academy of Sciences, Peking University, Peng Cheng Laboratory, and other institutions, aiming to break the monopoly of foreign EDA tools and achieve autonomous control of chip design tools.
 
@@ -458,9 +874,9 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 
 ---
 
-## 10. Risk Assessment and Mitigation
+## 11. Risk Assessment and Mitigation
 
-### 10.1 Technical Risks
+### 11.1 Technical Risks
 
 | Risk | Level | Mitigation |
 |------|-------|-----------|
@@ -470,7 +886,7 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 | Insufficient Verification | Medium | Increase test cases, improve coverage |
 | EDA Tool Compatibility | Low | Support both iEDA and OpenROAD solutions |
 
-### 10.2 Project Risks
+### 11.2 Project Risks
 
 | Risk | Level | Mitigation |
 |------|-------|-----------|
@@ -481,9 +897,9 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 
 ---
 
-## 11. Future Work Plan
+## 12. Future Work Plan
 
-### 11.1 Short-term Plan (1-3 months)
+### 12.1 Short-term Plan (1-3 months)
 
 1. **Complete Synthesis**
    - Generate netlist
@@ -500,13 +916,13 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
    - Power analysis
    - Physical verification (DRC/LVS)
 
-### 11.2 Mid-term Plan (3-6 months)
+### 12.2 Mid-term Plan (3-6 months)
 
 1. **GDSII Generation and Delivery**
 2. **Tape-out Manufacturing**
 3. **Chip Packaging**
 
-### 11.3 Long-term Plan (6-12 months)
+### 12.3 Long-term Plan (6-12 months)
 
 1. **Chip Testing**
    - Functional testing
@@ -525,9 +941,9 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 
 ---
 
-## 12. Summary
+## 13. Summary
 
-### 12.1 Project Highlights
+### 13.1 Project Highlights
 
 1. **Innovative BitNet Architecture**: Multiplier-free design, significantly reduces power and area
 2. **Complete SoC Solution**: Integrates CPU, accelerators, peripherals, ready to use
@@ -540,7 +956,7 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 9. **Compact Design**: 73,829 instances, meets 100K limit with sufficient margin
 10. **Chinese Support**: iEDA provides complete Chinese documentation and technical support
 
-### 12.2 Technical Specifications Summary
+### 13.2 Technical Specifications Summary
 
 | Specification | Value |
 |--------------|-------|
@@ -553,14 +969,14 @@ iEDA (Infrastructure for EDA) is a domestically developed open-source EDA platfo
 | Resource Usage (FPGA) | 8K LUTs, 6K FFs, 20 BRAMs |
 | Timing Performance | WNS: 14.400ns, TNS: 0.000ns, no violations |
 
-### 12.3 Application Scenarios
+### 13.3 Application Scenarios
 
 - **Edge AI Inference**: Smart cameras, smart speakers
 - **IoT Devices**: Sensor data processing
 - **Embedded Systems**: Industrial control, robotics
 - **Wearable Devices**: Health monitoring, activity tracking
 
-### 12.4 Market Prospects
+### 13.4 Market Prospects
 
 With the rapid development of edge AI, this chip has broad market prospects:
 - Low-power advantage suitable for battery-powered devices
@@ -608,7 +1024,7 @@ With the rapid development of edge AI, this chip has broad market prospects:
 10. iEDA Official Website (https://ieda.oscc.cc/)
 11. iEDA Code Repository (https://gitee.com/oscc-project/iEDA)
 12. iEDA User Manual (https://ieda-docs.oscc.cc/)
-13. iEDA Technical Papers (Peking University, Peng Cheng Laboratory)
+13. iEDA Technical Papers (Chinese Academy of Sciences, Peking University, Peng Cheng Laboratory)
 14. Open-Source Chip Community OSCC (https://oscc.cc/)
 
 #### Related Projects
