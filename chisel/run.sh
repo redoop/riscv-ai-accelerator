@@ -1,6 +1,58 @@
 #!/bin/bash
 
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk-11.0.16.jdk/Contents/Home
+# 自动检测 JAVA_HOME
+detect_java_home() {
+    # 如果已经设置了 JAVA_HOME，直接使用
+    if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/java" ]; then
+        return 0
+    fi
+    
+    # 尝试使用 java 命令查找
+    if command -v java &> /dev/null; then
+        # Linux/Ubuntu 方式
+        if command -v readlink &> /dev/null; then
+            JAVA_BIN=$(readlink -f $(which java) 2>/dev/null)
+            if [ -n "$JAVA_BIN" ]; then
+                export JAVA_HOME=$(dirname $(dirname "$JAVA_BIN"))
+                return 0
+            fi
+        fi
+        
+        # macOS 方式
+        if [ -x /usr/libexec/java_home ]; then
+            export JAVA_HOME=$(/usr/libexec/java_home 2>/dev/null)
+            if [ -n "$JAVA_HOME" ]; then
+                return 0
+            fi
+        fi
+    fi
+    
+    # 尝试常见的 Java 安装路径
+    for java_dir in \
+        /usr/lib/jvm/java-11-openjdk* \
+        /usr/lib/jvm/java-11-* \
+        /usr/lib/jvm/java-1.11.* \
+        /usr/lib/jvm/default-java \
+        /Library/Java/JavaVirtualMachines/*/Contents/Home \
+        /opt/java/openjdk \
+        /usr/java/latest; do
+        if [ -d "$java_dir" ] && [ -x "$java_dir/bin/java" ]; then
+            export JAVA_HOME="$java_dir"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# 检测并设置 JAVA_HOME
+if ! detect_java_home; then
+    echo -e "\033[0;31m❌ 未找到 Java 安装，请先安装 Java 11 或更高版本\033[0m"
+    echo "Ubuntu/Debian: sudo apt install openjdk-11-jdk"
+    echo "macOS: brew install openjdk@11"
+    exit 1
+fi
+
 export PATH=$JAVA_HOME/bin:$PATH
 
 # 检查参数

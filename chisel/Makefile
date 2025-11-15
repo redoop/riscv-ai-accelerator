@@ -1,6 +1,39 @@
 # RISC-V AI Accelerator Chisel Project Makefile
-# 设置Java环境
-JAVA_HOME := /Library/Java/JavaVirtualMachines/jdk-11.0.16.jdk/Contents/Home
+
+# 自动检测 JAVA_HOME
+ifeq ($(JAVA_HOME),)
+    # 尝试使用 java_home 命令 (macOS)
+    JAVA_HOME_DETECT := $(shell /usr/libexec/java_home 2>/dev/null)
+    ifneq ($(JAVA_HOME_DETECT),)
+        JAVA_HOME := $(JAVA_HOME_DETECT)
+    else
+        # 尝试从 java 命令路径推断 (Linux/Ubuntu)
+        JAVA_BIN := $(shell which java 2>/dev/null)
+        ifneq ($(JAVA_BIN),)
+            JAVA_REAL := $(shell readlink -f $(JAVA_BIN) 2>/dev/null)
+            ifneq ($(JAVA_REAL),)
+                JAVA_HOME := $(shell dirname $(shell dirname $(JAVA_REAL)))
+            endif
+        endif
+    endif
+    
+    # 如果还是找不到，尝试常见路径
+    ifeq ($(JAVA_HOME),)
+        JAVA_HOME := $(firstword $(wildcard \
+            /usr/lib/jvm/java-11-openjdk* \
+            /usr/lib/jvm/java-11-* \
+            /usr/lib/jvm/default-java \
+            /Library/Java/JavaVirtualMachines/*/Contents/Home \
+            /opt/java/openjdk \
+            /usr/java/latest))
+    endif
+endif
+
+# 检查 JAVA_HOME 是否有效
+ifeq ($(JAVA_HOME),)
+    $(error Java 未找到！请安装 Java 11 或更高版本。Ubuntu: sudo apt install openjdk-11-jdk, macOS: brew install openjdk@11)
+endif
+
 export JAVA_HOME
 export PATH := $(JAVA_HOME)/bin:$(PATH)
 
