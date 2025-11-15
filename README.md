@@ -6,7 +6,7 @@
 **Chip Code**: EdgeAI-SoC-v0.1  
 **Design Organization**: [redoop]  
 **Project Lead**: [tongxiaojun]  
-**Report Date**: 2024  
+**Report Date**: 2025,11  
 **Version**: v0.1
 
 ---
