@@ -13,8 +13,7 @@ target/
 *.lib
 *.vvp
 *.vcd
-*.sv
-
+*.pyc
 # SBT 项目编译产物
 project/target/
 project/project/

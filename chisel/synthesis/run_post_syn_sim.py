@@ -371,7 +371,8 @@ class PostSynthesisSimulator:
         print("完整流程完成")
         print("=" * 60)
         print("\n下一步:")
-        print("  查看波形: python run_post_syn_sim.py --wave")
+        print("  查看波形 (静态页面): ./view_wave.sh")
+        print("  查看波形 (Web 服务): python3 wave_viewer.py")
         print("  查看报告: python run_post_syn_sim.py --report")
         print()
         

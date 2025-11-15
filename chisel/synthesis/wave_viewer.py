@@ -226,7 +226,12 @@ wave_renderer = WaveformRenderer()
 
 @app.route('/')
 def index():
-    """主页 - 图片模式（默认）"""
+    """主页 - 流式加载模式（默认，适合大文件）"""
+    return render_template('wave_viewer_streaming.html')
+
+@app.route('/image')
+def image_mode():
+    """图片模式（一次性渲染）"""
     return render_template('wave_viewer_image.html')
 
 @app.route('/canvas')
