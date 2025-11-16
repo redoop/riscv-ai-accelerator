@@ -477,8 +477,10 @@ class SimpleGPIO extends Module {
   }
 }
 
-// Placeholder LCD controller (will be implemented in Phase 2)
-class SimpleLCDPlaceholder extends Module {
+// Import TFTLCD from peripherals package
+import riscv.ai.peripherals.TFTLCD
+
+class SimpleLCDWrapper(clockFreq: Int = 50000000, spiFreq: Int = 10000000) extends Module {
   val io = IO(new Bundle {
     val reg = new SimpleRegIO()
     val lcd_spi_clk = Output(Bool())
@@ -489,16 +491,24 @@ class SimpleLCDPlaceholder extends Module {
     val lcd_backlight = Output(Bool())
   })
   
-  // Default outputs
-  io.lcd_spi_clk := false.B
-  io.lcd_spi_mosi := false.B
-  io.lcd_spi_cs := true.B
-  io.lcd_spi_dc := false.B
-  io.lcd_spi_rst := true.B
-  io.lcd_backlight := false.B
+  val lcd = Module(new TFTLCD(clockFreq, spiFreq))
   
-  io.reg.rdata := 0.U
-  io.reg.ready := true.B
+  // Connect register interface
+  lcd.io.addr := io.reg.addr
+  lcd.io.wdata := io.reg.wdata
+  io.reg.rdata := lcd.io.rdata
+  lcd.io.wen := io.reg.wen
+  lcd.io.ren := io.reg.ren
+  lcd.io.valid := io.reg.valid
+  io.reg.ready := lcd.io.ready
+  
+  // Connect SPI interface
+  io.lcd_spi_clk := lcd.io.spi_clk
+  io.lcd_spi_mosi := lcd.io.spi_mosi
+  io.lcd_spi_cs := lcd.io.spi_cs
+  io.lcd_spi_dc := lcd.io.spi_dc
+  io.lcd_spi_rst := lcd.io.spi_rst
+  io.lcd_backlight := lcd.io.backlight
 }
 
 // ============================================================================
@@ -682,7 +692,7 @@ class SimpleEdgeAiSoC(clockFreq: Int = 50000000, baudRate: Int = 115200) extends
   io.uart_tx_irq := uart.io.tx_irq
   io.uart_rx_irq := uart.io.rx_irq
   
-  val lcd = Module(new SimpleLCDPlaceholder())
+  val lcd = Module(new SimpleLCDWrapper(clockFreq, 10000000))
   lcd.io.reg <> decoder.io.lcd
   io.lcd_spi_clk := lcd.io.lcd_spi_clk
   io.lcd_spi_mosi := lcd.io.lcd_spi_mosi
