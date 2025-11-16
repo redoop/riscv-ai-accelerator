@@ -13,15 +13,15 @@
 - [x] 编写单元测试并验证
 - [x] 集成到 SoC
 
-### 🟡 Phase 3: 程序上传协议（2-3 天）
-- [ ] 编写 Bootloader C 代码
-- [ ] 编写 Python 上传工具
-- [ ] 测试端到端上传流程
+### ✅ Phase 3: 程序上传协议（2-3 天）
+- [x] 编写 Bootloader C 代码
+- [x] 编写 Python 上传工具
+- [x] 测试端到端上传流程
 
-### 🟡 Phase 4: 图形库（2-3 天）
-- [ ] 实现基本图形函数和字体
-- [ ] 编写示例程序
-- [ ] 测试所有功能
+### ✅ Phase 4: 图形库（2-3 天）
+- [x] 实现基本图形函数和字体
+- [x] 编写示例程序
+- [x] 测试所有功能
 
 ### 🟢 Phase 5: 集成测试（2-3 天）
 - [ ] 综合测试和性能测试
@@ -31,7 +31,7 @@
 - [ ] 生成 Verilog 并综合
 - [ ] 硬件测试和问题修复
 
-**进度：** 2/6 阶段完成 | **预计：** 16-22 天
+**进度：** 4/6 阶段完成 | **预计：** 16-22 天
 
 ---
 
@@ -533,6 +533,53 @@ void display_boot_logo() {
   - 自动初始化状态机
 - 集成：通过 SimpleLCDWrapper 集成到 SimpleEdgeAiSoC
 - Commit: 226035b
+
+### ✅ Phase 3: 程序上传协议（已完成 - 2025-11-16）
+- [x] 编写 Bootloader C 代码
+- [x] 编写 Python 上传工具
+- [x] 测试端到端上传流程
+
+**实现细节：**
+- 文件：`chisel/software/bootloader/bootloader.c`
+- 工具：`chisel/software/tools/upload.py`
+- 功能：
+  - 完整的 Bootloader 实现
+  - 支持程序上传（U 命令）
+  - 支持程序运行（R 命令）
+  - 支持内存读取（M 命令）
+  - 支持寄存器写入（W 命令）
+  - 支持 LCD 测试（L 命令）
+  - 支持 Ping（P 命令）
+  - 支持信息查询（I 命令）
+- Python 工具：
+  - 串口通信
+  - 程序上传进度显示
+  - LCD 测试
+  - 图像显示（需要 PIL）
+- 协议：简单的命令字节 + 数据格式
+
+### ✅ Phase 4: 图形库（已完成 - 2025-11-16）
+- [x] 实现基本图形函数和字体
+- [x] 编写示例程序
+- [x] 测试所有功能
+
+**实现细节：**
+- 文件：
+  - `chisel/software/lib/hal.h` - 硬件抽象层头文件
+  - `chisel/software/lib/hal.c` - HAL 实现
+  - `chisel/software/lib/graphics.h` - 图形库头文件
+  - `chisel/software/lib/graphics.c` - 图形库实现
+  - `chisel/software/lib/font_8x8.c` - 8x8 ASCII 字体
+- 功能：
+  - 基本图形：点、线、矩形、圆
+  - 填充图形：矩形、圆
+  - 文本渲染：字符、字符串、格式化输出
+  - 图像显示
+  - 8x8 ASCII 字体（128 个字符）
+- 示例程序：
+  - `hello_lcd.c` - Hello World 示例
+  - `ai_demo.c` - AI 推理演示
+- 文档：`chisel/software/README.md`
 
 ### Phase 3: 程序上传协议（2-3 天）
 - [ ] 编写 Bootloader C 代码

@@ -42,6 +42,18 @@ module SimpleAddressDecoder(
   output        io_bitnet_wen,
                 io_bitnet_ren,
                 io_bitnet_valid,
+  output [31:0] io_uart_addr,
+                io_uart_wdata,
+  input  [31:0] io_uart_rdata,
+  output        io_uart_wen,
+                io_uart_ren,
+                io_uart_valid,
+  output [31:0] io_lcd_addr,
+                io_lcd_wdata,
+  input  [31:0] io_lcd_rdata,
+  output        io_lcd_wen,
+                io_lcd_ren,
+                io_lcd_valid,
   output [31:0] io_gpio_wdata,
   input  [31:0] io_gpio_rdata,
   output        io_gpio_wen,
@@ -51,15 +63,17 @@ module SimpleAddressDecoder(
 
   wire sel_compact = (|(io_cpu_addr[31:28])) & io_cpu_addr < 32'h10001000;
   wire sel_bitnet = io_cpu_addr > 32'h10000FFF & io_cpu_addr < 32'h10002000;
+  wire sel_uart = (|(io_cpu_addr[31:29])) & io_cpu_addr < 32'h20010000;
+  wire sel_lcd = io_cpu_addr > 32'h2000FFFF & io_cpu_addr < 32'h20020000;
   wire sel_gpio = io_cpu_addr > 32'h2001FFFF & io_cpu_addr < 32'h20030000;
   assign io_cpu_rdata =
     sel_compact
       ? io_compact_rdata
       : sel_bitnet
           ? io_bitnet_rdata
-          : (|(io_cpu_addr[31:29])) & io_cpu_addr < 32'h20010000 | ~sel_gpio
-              ? 32'h0
-              : io_gpio_rdata;
+          : sel_uart
+              ? io_uart_rdata
+              : sel_lcd ? io_lcd_rdata : sel_gpio ? io_gpio_rdata : 32'h0;
   assign io_compact_addr = io_cpu_addr;
   assign io_compact_wdata = io_cpu_wdata;
   assign io_compact_wen = io_cpu_wen & sel_compact;
@@ -70,6 +84,16 @@ module SimpleAddressDecoder(
   assign io_bitnet_wen = io_cpu_wen & sel_bitnet;
   assign io_bitnet_ren = io_cpu_ren & sel_bitnet;
   assign io_bitnet_valid = io_cpu_valid & sel_bitnet;
+  assign io_uart_addr = io_cpu_addr;
+  assign io_uart_wdata = io_cpu_wdata;
+  assign io_uart_wen = io_cpu_wen & sel_uart;
+  assign io_uart_ren = io_cpu_ren & sel_uart;
+  assign io_uart_valid = io_cpu_valid & sel_uart;
+  assign io_lcd_addr = io_cpu_addr;
+  assign io_lcd_wdata = io_cpu_wdata;
+  assign io_lcd_wen = io_cpu_wen & sel_lcd;
+  assign io_lcd_ren = io_cpu_ren & sel_lcd;
+  assign io_lcd_valid = io_cpu_valid & sel_lcd;
   assign io_gpio_wdata = io_cpu_wdata;
   assign io_gpio_wen = io_cpu_wen & sel_gpio;
   assign io_gpio_ren = io_cpu_ren & sel_gpio;
@@ -555,6 +579,581 @@ module SimpleBitNetAccel(
   assign io_irq = ~(_GEN | _GEN_0 | _GEN_6) & (&state);
 endmodule
 
+// VCS coverage exclude_file
+module ram_16x8(
+  input  [3:0] R0_addr,
+  input        R0_en,
+               R0_clk,
+  output [7:0] R0_data,
+  input  [3:0] W0_addr,
+  input        W0_en,
+               W0_clk,
+  input  [7:0] W0_data
+);
+
+  reg [7:0] Memory[0:15];
+  always @(posedge W0_clk) begin
+    if (W0_en & 1'h1)
+      Memory[W0_addr] <= W0_data;
+  end // always @(posedge)
+  assign R0_data = R0_en ? Memory[R0_addr] : 8'bx;
+endmodule
+
+module Queue16_UInt8(
+  input        clock,
+               reset,
+  output       io_enq_ready,
+  input        io_enq_valid,
+  input  [7:0] io_enq_bits,
+  input        io_deq_ready,
+  output       io_deq_valid,
+  output [7:0] io_deq_bits
+);
+
+  reg  [3:0] enq_ptr_value;
+  reg  [3:0] deq_ptr_value;
+  reg        maybe_full;
+  wire       ptr_match = enq_ptr_value == deq_ptr_value;
+  wire       empty = ptr_match & ~maybe_full;
+  wire       full = ptr_match & maybe_full;
+  wire       do_enq = ~full & io_enq_valid;
+  always @(posedge clock) begin
+    if (reset) begin
+      enq_ptr_value <= 4'h0;
+      deq_ptr_value <= 4'h0;
+      maybe_full <= 1'h0;
+    end
+    else begin
+      automatic logic do_deq = io_deq_ready & ~empty;
+      if (do_enq)
+        enq_ptr_value <= enq_ptr_value + 4'h1;
+      if (do_deq)
+        deq_ptr_value <= deq_ptr_value + 4'h1;
+      if (~(do_enq == do_deq))
+        maybe_full <= do_enq;
+    end
+  end // always @(posedge)
+  ram_16x8 ram_ext (
+    .R0_addr (deq_ptr_value),
+    .R0_en   (1'h1),
+    .R0_clk  (clock),
+    .R0_data (io_deq_bits),
+    .W0_addr (enq_ptr_value),
+    .W0_en   (do_enq),
+    .W0_clk  (clock),
+    .W0_data (io_enq_bits)
+  );
+  assign io_enq_ready = ~full;
+  assign io_deq_valid = ~empty;
+endmodule
+
+module RealUART(
+  input         clock,
+                reset,
+  input  [31:0] io_addr,
+                io_wdata,
+  output [31:0] io_rdata,
+  input         io_wen,
+                io_ren,
+                io_valid,
+  output        io_tx,
+  input         io_rx,
+  output        io_tx_irq,
+                io_rx_irq
+);
+
+  wire        _rxFifo_io_deq_valid;
+  wire [7:0]  _rxFifo_io_deq_bits;
+  wire        _txFifo_io_enq_ready;
+  wire        _txFifo_io_deq_valid;
+  wire [7:0]  _txFifo_io_deq_bits;
+  reg  [31:0] control;
+  reg  [31:0] baudDiv;
+  reg  [31:0] baudCounter;
+  wire [31:0] _GEN = baudDiv - 32'h1;
+  wire        baudTick = baudCounter >= _GEN;
+  reg  [1:0]  txState;
+  reg  [3:0]  txBitCounter;
+  reg  [7:0]  txShiftReg;
+  reg         txReg;
+  wire        _GEN_0 = txState == 2'h0;
+  wire        _GEN_1 = control[0] & _txFifo_io_deq_valid & baudTick;
+  reg  [1:0]  rxState;
+  reg  [3:0]  rxBitCounter;
+  reg  [7:0]  rxShiftReg;
+  reg         rxSync_REG;
+  reg         rxSync;
+  reg  [31:0] rxBaudCounter;
+  wire        rxBaudTick = rxBaudCounter >= _GEN;
+  wire        _GEN_2 = rxState == 2'h0;
+  wire        _GEN_3 = rxState == 2'h1;
+  wire        _GEN_4 = rxState == 2'h2;
+  wire        _GEN_5 = (&rxState) & rxBaudTick;
+  wire        _GEN_6 = _GEN_2 | _GEN_3 | _GEN_4;
+  wire        _GEN_7 = io_addr[7:0] == 8'h0;
+  wire        _GEN_8 = io_valid & io_wen;
+  wire        _GEN_9 = io_addr[7:0] == 8'h8;
+  wire        _GEN_10 = io_addr[7:0] == 8'hC;
+  wire        _GEN_11 = io_valid & io_ren;
+  always @(posedge clock) begin
+    if (reset) begin
+      control <= 32'h0;
+      baudDiv <= 32'h1B2;
+      baudCounter <= 32'h0;
+      txState <= 2'h0;
+      txBitCounter <= 4'h0;
+      txShiftReg <= 8'h0;
+      txReg <= 1'h1;
+      rxState <= 2'h0;
+      rxBitCounter <= 4'h0;
+      rxShiftReg <= 8'h0;
+      rxBaudCounter <= 32'h0;
+    end
+    else begin
+      automatic logic            _GEN_12;
+      automatic logic            _GEN_13;
+      automatic logic            _GEN_14;
+      automatic logic            rxHalfBaudTick;
+      automatic logic            _GEN_15 = control[1] & ~rxSync;
+      automatic logic [3:0][1:0] _GEN_16 =
+        {{(&txState) & baudTick ? 2'h0 : txState},
+         {baudTick & txBitCounter == 4'h7 ? 2'h3 : txState},
+         {baudTick ? 2'h2 : txState},
+         {_GEN_1 ? 2'h1 : txState}};
+      automatic logic [3:0][1:0] _GEN_17;
+      _GEN_12 = txState == 2'h1;
+      _GEN_13 = txState == 2'h2;
+      _GEN_14 = rxBaudCounter == {1'h0, baudDiv[31:1]};
+      rxHalfBaudTick = ~rxBaudTick & _GEN_14;
+      if (~_GEN_8 | _GEN_7 | ~_GEN_9) begin
+      end
+      else
+        control <= io_wdata;
+      if (~_GEN_8 | _GEN_7 | _GEN_9 | ~_GEN_10) begin
+      end
+      else
+        baudDiv <= io_wdata;
+      if (baudTick)
+        baudCounter <= 32'h0;
+      else
+        baudCounter <= baudCounter + 32'h1;
+      txState <= _GEN_16[txState];
+      if (_GEN_0) begin
+        if (_GEN_1) begin
+          txBitCounter <= 4'h0;
+          txShiftReg <= _txFifo_io_deq_bits;
+        end
+      end
+      else if (_GEN_12 | ~(_GEN_13 & baudTick)) begin
+      end
+      else begin
+        txBitCounter <= txBitCounter + 4'h1;
+        txShiftReg <= {1'h0, txShiftReg[7:1]};
+      end
+      txReg <= _GEN_0 | ~_GEN_12 & (_GEN_13 ? txShiftReg[0] : (&txState) | txReg);
+      _GEN_17 =
+        {{_GEN_5 ? 2'h0 : rxState},
+         {rxBaudTick & rxBitCounter == 4'h7 ? 2'h3 : rxState},
+         {rxHalfBaudTick ? {~rxSync, 1'h0} : rxState},
+         {_GEN_15 ? 2'h1 : rxState}};
+      rxState <= _GEN_17[rxState];
+      if (~_GEN_2) begin
+        if (_GEN_3) begin
+          if (rxHalfBaudTick & ~rxSync) begin
+            rxBitCounter <= 4'h0;
+            rxShiftReg <= 8'h0;
+          end
+        end
+        else if (_GEN_4 & rxBaudTick) begin
+          rxBitCounter <= rxBitCounter + 4'h1;
+          rxShiftReg <= {rxSync, rxShiftReg[7:1]};
+        end
+      end
+      if (_GEN_2 & _GEN_15 | rxBaudTick)
+        rxBaudCounter <= 32'h0;
+      else if (_GEN_14)
+        rxBaudCounter <= rxBaudCounter + 32'h1;
+      else
+        rxBaudCounter <= rxBaudCounter + 32'h1;
+    end
+    rxSync_REG <= io_rx;
+    rxSync <= rxSync_REG;
+  end // always @(posedge)
+  Queue16_UInt8 txFifo (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_ready (_txFifo_io_enq_ready),
+    .io_enq_valid (_GEN_8 & _GEN_7),
+    .io_enq_bits  (io_valid & io_wen & _GEN_7 ? io_wdata[7:0] : 8'h0),
+    .io_deq_ready (_GEN_0 & _GEN_1),
+    .io_deq_valid (_txFifo_io_deq_valid),
+    .io_deq_bits  (_txFifo_io_deq_bits)
+  );
+  Queue16_UInt8 rxFifo (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_ready (/* unused */),
+    .io_enq_valid (~_GEN_6 & _GEN_5 & rxSync),
+    .io_enq_bits  (_GEN_6 | ~((&rxState) & rxBaudTick & rxSync) ? 8'h0 : rxShiftReg),
+    .io_deq_ready (_GEN_11 & _GEN_7),
+    .io_deq_valid (_rxFifo_io_deq_valid),
+    .io_deq_bits  (_rxFifo_io_deq_bits)
+  );
+  assign io_rdata =
+    _GEN_11
+      ? (_GEN_7
+           ? {24'h0, _rxFifo_io_deq_bits}
+           : io_addr[7:0] == 8'h4
+               ? {28'h0,
+                  ~_rxFifo_io_deq_valid,
+                  ~_txFifo_io_enq_ready,
+                  _rxFifo_io_deq_valid,
+                  |txState}
+               : _GEN_9 ? control : _GEN_10 ? baudDiv : 32'h0)
+      : 32'h0;
+  assign io_tx = txReg;
+  assign io_tx_irq = control[2] & _txFifo_io_enq_ready;
+  assign io_rx_irq = control[3] & _rxFifo_io_deq_valid;
+endmodule
+
+module SimpleUARTWrapper(
+  input         clock,
+                reset,
+  input  [31:0] io_reg_addr,
+                io_reg_wdata,
+  output [31:0] io_reg_rdata,
+  input         io_reg_wen,
+                io_reg_ren,
+                io_reg_valid,
+  output        io_tx,
+  input         io_rx,
+  output        io_tx_irq,
+                io_rx_irq
+);
+
+  RealUART uart (
+    .clock     (clock),
+    .reset     (reset),
+    .io_addr   (io_reg_addr),
+    .io_wdata  (io_reg_wdata),
+    .io_rdata  (io_reg_rdata),
+    .io_wen    (io_reg_wen),
+    .io_ren    (io_reg_ren),
+    .io_valid  (io_reg_valid),
+    .io_tx     (io_tx),
+    .io_rx     (io_rx),
+    .io_tx_irq (io_tx_irq),
+    .io_rx_irq (io_rx_irq)
+  );
+endmodule
+
+// VCS coverage exclude_file
+module framebuffer_16384x16(
+  input  [13:0] R0_addr,
+  input         R0_en,
+                R0_clk,
+  output [15:0] R0_data,
+  input  [13:0] W0_addr,
+  input         W0_en,
+                W0_clk,
+  input  [15:0] W0_data
+);
+
+  reg [15:0] Memory[0:16383];
+  always @(posedge W0_clk) begin
+    if (W0_en & 1'h1)
+      Memory[W0_addr] <= W0_data;
+  end // always @(posedge)
+  assign R0_data = R0_en ? Memory[R0_addr] : 16'bx;
+endmodule
+
+module TFTLCD(
+  input         clock,
+                reset,
+  input  [31:0] io_addr,
+                io_wdata,
+  output [31:0] io_rdata,
+  input         io_wen,
+                io_ren,
+                io_valid,
+  output        io_spi_clk,
+                io_spi_mosi,
+                io_spi_cs,
+                io_spi_dc,
+                io_spi_rst,
+                io_backlight
+);
+
+  wire            _dataQueue_io_deq_valid;
+  wire [7:0]      _dataQueue_io_deq_bits;
+  wire            _cmdQueue_io_enq_ready;
+  wire            _cmdQueue_io_deq_valid;
+  wire [7:0]      _cmdQueue_io_deq_bits;
+  wire [15:0]     _framebuffer_ext_R0_data;
+  wire [7:0][5:0] _GEN = '{6'h1, 6'h1, 6'h1, 6'h29, 6'h5, 6'h3A, 6'h11, 6'h1};
+  reg  [31:0]     control;
+  reg  [7:0]      xStart;
+  reg  [7:0]      yStart;
+  reg  [7:0]      xEnd;
+  reg  [7:0]      yEnd;
+  reg  [15:0]     spiCounter;
+  reg             spiClkReg;
+  reg  [2:0]      state;
+  reg  [7:0]      spiShiftReg;
+  reg  [3:0]      spiBitCounter;
+  reg             spiDC;
+  reg             spiCS;
+  reg             busy;
+  reg             initDone;
+  reg  [7:0]      initCounter;
+  reg  [15:0]     initDelay;
+  wire            _GEN_0 = state == 3'h0;
+  wire            _GEN_1 = ~initDone & control[1];
+  wire            _GEN_2 = _cmdQueue_io_deq_valid & ~busy;
+  wire            _GEN_3 = _dataQueue_io_deq_valid & ~busy;
+  wire            _GEN_4 = state == 3'h1;
+  wire            _GEN_5 = initCounter < 8'h5;
+  wire            _GEN_6 = _GEN_5 & _cmdQueue_io_enq_ready;
+  wire            _GEN_7 = io_addr[15:0] == 16'h0;
+  wire            _GEN_8 = io_valid & io_wen & _GEN_7;
+  wire            _GEN_9 = io_addr[15:0] == 16'h4;
+  wire            _GEN_10 = io_addr[15:0] == 16'hC;
+  wire            _GEN_11 = io_valid & io_wen;
+  wire            _GEN_12 = io_addr[15:0] == 16'h10;
+  wire            _GEN_13 = io_addr[15:0] == 16'h14;
+  wire            _GEN_14 = _GEN_10 | _GEN_12;
+  wire            _GEN_15 = io_addr[15:0] == 16'h18;
+  wire            _GEN_16 = io_addr[15:0] == 16'h1C;
+  wire            _GEN_17 = io_addr[15:0] == 16'h20;
+  wire            _GEN_18 = (|(io_addr[15:12])) & io_addr[15:0] < 16'h9000;
+  wire [14:0]     _fbAddr_T = io_addr[14:0] - 15'h1000;
+  wire [14:0]     _fbAddr_T_2 = io_addr[14:0] - 15'h1000;
+  wire            _GEN_19 = io_valid & io_ren;
+  always @(posedge clock) begin
+    if (reset) begin
+      control <= 32'h0;
+      xStart <= 8'h0;
+      yStart <= 8'h0;
+      xEnd <= 8'h7F;
+      yEnd <= 8'h7F;
+      spiCounter <= 16'h0;
+      spiClkReg <= 1'h0;
+      state <= 3'h0;
+      spiShiftReg <= 8'h0;
+      spiBitCounter <= 4'h0;
+      spiDC <= 1'h0;
+      spiCS <= 1'h1;
+      busy <= 1'h0;
+      initDone <= 1'h0;
+      initCounter <= 8'h0;
+      initDelay <= 16'h0;
+    end
+    else begin
+      automatic logic _GEN_20;
+      _GEN_20 = (|initDelay) | _GEN_5;
+      if (~_GEN_11 | _GEN_7 | _GEN_9 | ~_GEN_10) begin
+      end
+      else
+        control <= io_wdata;
+      if (~_GEN_11 | _GEN_7 | _GEN_9 | _GEN_10 | ~_GEN_12) begin
+      end
+      else
+        xStart <= io_wdata[7:0];
+      if (~_GEN_11 | _GEN_7 | _GEN_9 | _GEN_14 | ~_GEN_13) begin
+      end
+      else
+        yStart <= io_wdata[7:0];
+      if (~_GEN_11 | _GEN_7 | _GEN_9 | _GEN_10 | _GEN_12 | _GEN_13 | ~_GEN_15) begin
+      end
+      else
+        xEnd <= io_wdata[7:0];
+      if (~_GEN_11 | _GEN_7 | _GEN_9 | _GEN_10 | _GEN_12 | _GEN_13 | _GEN_15
+          | ~_GEN_16) begin
+      end
+      else
+        yEnd <= io_wdata[7:0];
+      if (|spiCounter)
+        spiCounter <= 16'h0;
+      else
+        spiCounter <= spiCounter + 16'h1;
+      spiClkReg <= (|spiCounter) ^ spiClkReg;
+      if (_GEN_0) begin
+        automatic logic _GEN_21 = _GEN_2 | _GEN_3;
+        if (_GEN_1) begin
+          state <= 3'h1;
+          initCounter <= 8'h0;
+          initDelay <= 16'h0;
+        end
+        else if (_GEN_2) begin
+          state <= 3'h2;
+          spiShiftReg <= _cmdQueue_io_deq_bits;
+        end
+        else if (_GEN_3) begin
+          state <= 3'h3;
+          spiShiftReg <= _dataQueue_io_deq_bits;
+        end
+        if (_GEN_1 | ~_GEN_21) begin
+        end
+        else
+          spiBitCounter <= 4'h0;
+        spiCS <= _GEN_1 | ~_GEN_21;
+        busy <= ~_GEN_1 & (_GEN_2 | _GEN_3);
+      end
+      else begin
+        automatic logic _GEN_22;
+        automatic logic _GEN_23;
+        automatic logic _GEN_24;
+        automatic logic _GEN_25;
+        _GEN_22 = state == 3'h2;
+        _GEN_23 = state == 3'h3;
+        _GEN_24 = state == 3'h4;
+        _GEN_25 = _GEN_22 | _GEN_23;
+        if (_GEN_4) begin
+          if (~_GEN_20)
+            state <= 3'h0;
+          busy <= (|initDelay) | _GEN_5;
+          if (|initDelay)
+            initDelay <= initDelay - 16'h1;
+          else if (_GEN_6)
+            initDelay <= 16'h64;
+        end
+        else begin
+          automatic logic       _GEN_26;
+          automatic logic [7:0] _GEN_27;
+          _GEN_26 = (|spiCounter) & spiClkReg;
+          _GEN_27 = {spiShiftReg[6:0], 1'h0};
+          if (_GEN_22 | _GEN_23) begin
+            if (_GEN_26 & spiBitCounter == 4'h7)
+              state <= 3'h4;
+          end
+          else if (_GEN_24 & (|spiCounter))
+            state <= 3'h0;
+          if (_GEN_22) begin
+            if (_GEN_26) begin
+              spiShiftReg <= _GEN_27;
+              spiBitCounter <= spiBitCounter + 4'h1;
+            end
+          end
+          else if (_GEN_23 & _GEN_26) begin
+            spiShiftReg <= _GEN_27;
+            spiBitCounter <= spiBitCounter + 4'h1;
+          end
+          busy <= _GEN_25 | ~_GEN_24 & busy;
+        end
+        spiCS <= ~(_GEN_4 | _GEN_25) & _GEN_24 | spiCS;
+        if (~_GEN_4 | (|initDelay) | ~_GEN_6) begin
+        end
+        else
+          initCounter <= initCounter + 8'h1;
+      end
+      if (~_GEN_0 | _GEN_1) begin
+      end
+      else
+        spiDC <= ~_GEN_2 & (_GEN_3 | spiDC);
+      initDone <= ~_GEN_0 & _GEN_4 & ~_GEN_20 | initDone;
+    end
+  end // always @(posedge)
+  framebuffer_16384x16 framebuffer_ext (
+    .R0_addr (_fbAddr_T_2[14:1]),
+    .R0_en   (_GEN_19 & _GEN_18),
+    .R0_clk  (clock),
+    .R0_data (_framebuffer_ext_R0_data),
+    .W0_addr (_fbAddr_T[14:1]),
+    .W0_en   (_GEN_11 & _GEN_18),
+    .W0_clk  (clock),
+    .W0_data (io_wdata[15:0])
+  );
+  Queue16_UInt8 cmdQueue (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_ready (_cmdQueue_io_enq_ready),
+    .io_enq_valid
+      (_GEN_8 | ~_GEN_0 & _GEN_4 & ~(|initDelay) & _GEN_5 & _cmdQueue_io_enq_ready),
+    .io_enq_bits
+      (_GEN_8
+         ? io_wdata[7:0]
+         : _GEN_0 | ~_GEN_4 | (|initDelay) | ~_GEN_6
+             ? 8'h0
+             : {2'h0, _GEN[initCounter[2:0]]}),
+    .io_deq_ready (_GEN_0 & ~_GEN_1 & _GEN_2),
+    .io_deq_valid (_cmdQueue_io_deq_valid),
+    .io_deq_bits  (_cmdQueue_io_deq_bits)
+  );
+  Queue16_UInt8 dataQueue (
+    .clock        (clock),
+    .reset        (reset),
+    .io_enq_ready (/* unused */),
+    .io_enq_valid
+      (_GEN_11 & ~_GEN_7 & (_GEN_9 | ~(_GEN_14 | _GEN_13 | _GEN_15 | _GEN_16) & _GEN_17)),
+    .io_enq_bits
+      (~_GEN_11 | _GEN_7
+         ? 8'h0
+         : _GEN_9
+             ? io_wdata[7:0]
+             : _GEN_10 | _GEN_12 | _GEN_13 | _GEN_15 | _GEN_16 | ~_GEN_17
+                 ? 8'h0
+                 : io_wdata[15:8]),
+    .io_deq_ready (_GEN_0 & ~(_GEN_1 | _GEN_2) & _GEN_3),
+    .io_deq_valid (_dataQueue_io_deq_valid),
+    .io_deq_bits  (_dataQueue_io_deq_bits)
+  );
+  assign io_rdata =
+    _GEN_19
+      ? (_GEN_18
+           ? {16'h0, _framebuffer_ext_R0_data}
+           : io_addr[15:0] == 16'h8
+               ? {30'h0, initDone, busy}
+               : _GEN_10
+                   ? control
+                   : _GEN_12
+                       ? {24'h0, xStart}
+                       : _GEN_13
+                           ? {24'h0, yStart}
+                           : _GEN_15 ? {24'h0, xEnd} : _GEN_16 ? {24'h0, yEnd} : 32'h0)
+      : 32'h0;
+  assign io_spi_clk = spiClkReg;
+  assign io_spi_mosi = spiShiftReg[7];
+  assign io_spi_cs = spiCS;
+  assign io_spi_dc = spiDC;
+  assign io_spi_rst = control[1];
+  assign io_backlight = control[0];
+endmodule
+
+module SimpleLCDWrapper(
+  input         clock,
+                reset,
+  input  [31:0] io_reg_addr,
+                io_reg_wdata,
+  output [31:0] io_reg_rdata,
+  input         io_reg_wen,
+                io_reg_ren,
+                io_reg_valid,
+  output        io_lcd_spi_clk,
+                io_lcd_spi_mosi,
+                io_lcd_spi_cs,
+                io_lcd_spi_dc,
+                io_lcd_spi_rst,
+                io_lcd_backlight
+);
+
+  TFTLCD lcd (
+    .clock        (clock),
+    .reset        (reset),
+    .io_addr      (io_reg_addr),
+    .io_wdata     (io_reg_wdata),
+    .io_rdata     (io_reg_rdata),
+    .io_wen       (io_reg_wen),
+    .io_ren       (io_reg_ren),
+    .io_valid     (io_reg_valid),
+    .io_spi_clk   (io_lcd_spi_clk),
+    .io_spi_mosi  (io_lcd_spi_mosi),
+    .io_spi_cs    (io_lcd_spi_cs),
+    .io_spi_dc    (io_lcd_spi_dc),
+    .io_spi_rst   (io_lcd_spi_rst),
+    .io_backlight (io_lcd_backlight)
+  );
+endmodule
+
 module SimpleGPIO(
   input         clock,
                 reset,
@@ -583,14 +1182,26 @@ module SimpleEdgeAiSoC(
                 reset,
   output        io_uart_tx,
   input         io_uart_rx,
+  output        io_lcd_spi_clk,
+                io_lcd_spi_mosi,
+                io_lcd_spi_cs,
+                io_lcd_spi_dc,
+                io_lcd_spi_rst,
+                io_lcd_backlight,
   output [31:0] io_gpio_out,
   input  [31:0] io_gpio_in,
   output        io_trap,
                 io_compact_irq,
-                io_bitnet_irq
+                io_bitnet_irq,
+                io_uart_tx_irq,
+                io_uart_rx_irq
 );
 
   wire [31:0] _gpio_io_reg_rdata;
+  wire [31:0] _lcd_io_reg_rdata;
+  wire [31:0] _uart_io_reg_rdata;
+  wire        _uart_io_tx_irq;
+  wire        _uart_io_rx_irq;
   wire [31:0] _bitnetAccel_io_reg_rdata;
   wire        _bitnetAccel_io_irq;
   wire [31:0] _compactAccel_io_reg_rdata;
@@ -606,6 +1217,16 @@ module SimpleEdgeAiSoC(
   wire        _decoder_io_bitnet_wen;
   wire        _decoder_io_bitnet_ren;
   wire        _decoder_io_bitnet_valid;
+  wire [31:0] _decoder_io_uart_addr;
+  wire [31:0] _decoder_io_uart_wdata;
+  wire        _decoder_io_uart_wen;
+  wire        _decoder_io_uart_ren;
+  wire        _decoder_io_uart_valid;
+  wire [31:0] _decoder_io_lcd_addr;
+  wire [31:0] _decoder_io_lcd_wdata;
+  wire        _decoder_io_lcd_wen;
+  wire        _decoder_io_lcd_ren;
+  wire        _decoder_io_lcd_valid;
   wire [31:0] _decoder_io_gpio_wdata;
   wire        _decoder_io_gpio_wen;
   wire        _decoder_io_gpio_ren;
@@ -631,7 +1252,13 @@ module SimpleEdgeAiSoC(
     .mem_wdata (_riscv_mem_wdata),
     .mem_wstrb (_riscv_mem_wstrb),
     .mem_rdata (_memAdapter_io_mem_rdata),
-    .irq       ({14'h0, _bitnetAccel_io_irq, _compactAccel_io_irq, 16'h0}),
+    .irq
+      ({12'h0,
+        _uart_io_rx_irq,
+        _uart_io_tx_irq,
+        _bitnetAccel_io_irq,
+        _compactAccel_io_irq,
+        16'h0}),
     .eoi       (/* unused */)
   );
   SimpleMemAdapter memAdapter (
@@ -666,6 +1293,18 @@ module SimpleEdgeAiSoC(
     .io_bitnet_wen    (_decoder_io_bitnet_wen),
     .io_bitnet_ren    (_decoder_io_bitnet_ren),
     .io_bitnet_valid  (_decoder_io_bitnet_valid),
+    .io_uart_addr     (_decoder_io_uart_addr),
+    .io_uart_wdata    (_decoder_io_uart_wdata),
+    .io_uart_rdata    (_uart_io_reg_rdata),
+    .io_uart_wen      (_decoder_io_uart_wen),
+    .io_uart_ren      (_decoder_io_uart_ren),
+    .io_uart_valid    (_decoder_io_uart_valid),
+    .io_lcd_addr      (_decoder_io_lcd_addr),
+    .io_lcd_wdata     (_decoder_io_lcd_wdata),
+    .io_lcd_rdata     (_lcd_io_reg_rdata),
+    .io_lcd_wen       (_decoder_io_lcd_wen),
+    .io_lcd_ren       (_decoder_io_lcd_ren),
+    .io_lcd_valid     (_decoder_io_lcd_valid),
     .io_gpio_wdata    (_decoder_io_gpio_wdata),
     .io_gpio_rdata    (_gpio_io_reg_rdata),
     .io_gpio_wen      (_decoder_io_gpio_wen),
@@ -694,6 +1333,36 @@ module SimpleEdgeAiSoC(
     .io_reg_valid (_decoder_io_bitnet_valid),
     .io_irq       (_bitnetAccel_io_irq)
   );
+  SimpleUARTWrapper uart (
+    .clock        (clock),
+    .reset        (reset),
+    .io_reg_addr  (_decoder_io_uart_addr),
+    .io_reg_wdata (_decoder_io_uart_wdata),
+    .io_reg_rdata (_uart_io_reg_rdata),
+    .io_reg_wen   (_decoder_io_uart_wen),
+    .io_reg_ren   (_decoder_io_uart_ren),
+    .io_reg_valid (_decoder_io_uart_valid),
+    .io_tx        (io_uart_tx),
+    .io_rx        (io_uart_rx),
+    .io_tx_irq    (_uart_io_tx_irq),
+    .io_rx_irq    (_uart_io_rx_irq)
+  );
+  SimpleLCDWrapper lcd (
+    .clock            (clock),
+    .reset            (reset),
+    .io_reg_addr      (_decoder_io_lcd_addr),
+    .io_reg_wdata     (_decoder_io_lcd_wdata),
+    .io_reg_rdata     (_lcd_io_reg_rdata),
+    .io_reg_wen       (_decoder_io_lcd_wen),
+    .io_reg_ren       (_decoder_io_lcd_ren),
+    .io_reg_valid     (_decoder_io_lcd_valid),
+    .io_lcd_spi_clk   (io_lcd_spi_clk),
+    .io_lcd_spi_mosi  (io_lcd_spi_mosi),
+    .io_lcd_spi_cs    (io_lcd_spi_cs),
+    .io_lcd_spi_dc    (io_lcd_spi_dc),
+    .io_lcd_spi_rst   (io_lcd_spi_rst),
+    .io_lcd_backlight (io_lcd_backlight)
+  );
   SimpleGPIO gpio (
     .clock        (clock),
     .reset        (reset),
@@ -705,9 +1374,10 @@ module SimpleEdgeAiSoC(
     .io_gpio_out  (io_gpio_out),
     .io_gpio_in   (io_gpio_in)
   );
-  assign io_uart_tx = 1'h1;
   assign io_compact_irq = _compactAccel_io_irq;
   assign io_bitnet_irq = _bitnetAccel_io_irq;
+  assign io_uart_tx_irq = _uart_io_tx_irq;
+  assign io_uart_rx_irq = _uart_io_rx_irq;
 endmodule
 
 
