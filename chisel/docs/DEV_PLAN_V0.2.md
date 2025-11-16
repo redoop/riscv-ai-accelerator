@@ -1019,6 +1019,32 @@ riscv32-unknown-elf-gcc -march=rv32i -mabi=ilp32 \
 python software/tools/upload.py /dev/ttyUSB0 program.bin --run
 ```
 
+### 额外改进（2025-11-16）
+
+#### 构建系统 ✅
+- [x] 创建完整的 Makefile
+- [x] 添加 linker script
+- [x] 添加启动代码（start.S）
+- [x] 支持所有示例的构建
+- [x] 添加上传和测试目标
+
+#### 新增示例程序 ✅
+- [x] benchmark.c - 性能基准测试
+- [x] system_monitor.c - 系统监控
+
+**文件：**
+- `software/Makefile` - 完整的构建系统
+- `software/linker.ld` - 链接脚本
+- `software/lib/start.S` - 启动代码
+- `software/examples/benchmark.c` - 基准测试（150 行）
+- `software/examples/system_monitor.c` - 系统监控（120 行）
+
+**功能：**
+- 一键构建所有示例
+- 自动上传和运行
+- 性能测试和监控
+- 完整的文档
+
 ### 下一步（可选）
 
 #### Phase 6: FPGA 验证
@@ -1031,10 +1057,10 @@ python software/tools/upload.py /dev/ttyUSB0 program.bin --run
 #### 未来改进
 - [ ] 添加 DMA 支持
 - [ ] 优化 LCD 刷新速度
-- [ ] 添加更多示例程序
 - [ ] 支持更多 LCD 型号
 - [ ] 添加 SD 卡支持
 - [ ] 添加音频输出
+- [ ] 添加网络支持
 
 ---
 
@@ -1082,10 +1108,12 @@ python software/tools/upload.py /dev/ttyUSB0 program.bin --run
 ### 文件统计
 - Chisel 源码：3 个模块（RealUART, TFTLCD, SoC）
 - Chisel 测试：2 个测试套件（15/16 测试通过）
-- C 源码：5 个文件（~1500 行）
+- C 源码：6 个文件（~1800 行）
+- 汇编代码：1 个（start.S）
 - Python 工具：1 个（~200 行）
-- 示例程序：2 个
-- 文档：2 个（DEV_PLAN, README）
+- 示例程序：4 个（hello_lcd, ai_demo, benchmark, system_monitor）
+- 构建系统：Makefile + linker script
+- 文档：4 个（DEV_PLAN, README, QUICKSTART, software/README）
 
 ### Git 提交记录
 - **a8cfe8e** - Phase 1: UART 控制器
@@ -1094,6 +1122,8 @@ python software/tools/upload.py /dev/ttyUSB0 program.bin --run
 - **8fa8310** - Phase 3 & 4: Bootloader + 图形库
 - **5c839de** - Phase 3 & 4 完成总结
 - **2353ffe** - README 整合和文档完善
+- **2e2ee1c** - Phase 5: 集成测试完成
+- **333afb3** - 构建系统和额外示例
 
 ### 下一步
 - ✅ Phase 5: 集成测试（已完成）
