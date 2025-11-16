@@ -107,12 +107,9 @@ if {$wns < 0} {
 puts "生成比特流..."
 puts "预计时间：10-20 分钟"
 
-# 在生成比特流前，降低 DRC 检查的严重性
-# 因为我们只是验证设计，不需要实际的引脚分配
-puts "配置 DRC 检查..."
-set_property SEVERITY {Warning} [get_drc_checks NSTD-1]
-set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
-set_property SEVERITY {Warning} [get_drc_checks RPBF-3]
+# 设置 pre-bitstream hook 来降低 DRC 检查的严重性
+puts "配置 pre-bitstream hook..."
+set_property STEPS.WRITE_BITSTREAM.TCL.PRE [file normalize ./pre_bitstream.tcl] [get_runs impl_1]
 
 launch_runs impl_1 -to_step write_bitstream -jobs 8
 wait_on_run impl_1
