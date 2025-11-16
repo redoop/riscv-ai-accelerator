@@ -361,7 +361,7 @@ def main():
     parser = argparse.ArgumentParser(description='Web 波形查看器')
     parser.add_argument('--port', type=int, default=5000, help='Web 服务器端口')
     parser.add_argument('--host', default='0.0.0.0', help='Web 服务器地址')
-    parser.add_argument('--wave-dir', default='waves', help='波形文件目录')
+    parser.add_argument('--wave-dir', default='.', help='波形文件目录')
     args = parser.parse_args()
     
     global wave_dir

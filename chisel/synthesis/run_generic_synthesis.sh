@@ -8,7 +8,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # 设置路径
-YOSYS_BIN="/opt/tools/oss-cad/oss-cad-suite/bin/yosys"
+# 优先使用系统中的 yosys，如果不存在则使用指定路径
+if command -v yosys &> /dev/null; then
+    YOSYS_BIN="yosys"
+else
+    YOSYS_BIN="/opt/tools/oss-cad/oss-cad-suite/bin/yosys"
+fi
+
 RTL_DIR="../generated"
 OUTPUT_DIR="netlist"
 NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_generic.v"
@@ -26,7 +32,7 @@ echo ""
 # 创建 Yosys 综合脚本
 cat > /tmp/generic_synth.ys << 'EOF'
 # 读取 RTL 设计
-read_verilog -sv ../generated/SimpleEdgeAiSoC.v
+read_verilog -sv ../generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv
 
 # 设置顶层模块
 hierarchy -top SimpleEdgeAiSoC

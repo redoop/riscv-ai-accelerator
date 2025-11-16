@@ -1,6 +1,9 @@
 #!/bin/bash
 # 启动 Web 波形查看器
 
+# 获取脚本所在目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "============================================================"
 echo "启动 Web 波形查看器"
 echo "============================================================"
@@ -11,8 +14,15 @@ if ! python3 -c "import flask" 2>/dev/null; then
     python3 -m pip install flask --user
 fi
 
+# 检查 matplotlib 是否安装
+if ! python3 -c "import matplotlib" 2>/dev/null; then
+    echo "matplotlib 未安装，正在安装..."
+    python3 -m pip install matplotlib --user
+fi
+
 # 启动服务器
-python3 wave_viewer.py --port 5000 --host 0.0.0.0
+cd "$SCRIPT_DIR"
+python3 wave_viewer.py --port 5000 --host 0.0.0.0 --wave-dir .
 
 echo ""
 echo "服务器已停止"

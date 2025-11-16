@@ -143,7 +143,4 @@ python run_post_syn_sim.py --simulator iverilog --netlist ics55
 - 支持开源EDA工具链
 - 适合学术研究和原型验证
 
-![图5 DRC检查结果](image/drc_result.png)
-
-
-![图6 LVS验证结果](image/lvs_result.png)
+![图5 DRC检查和LVS验证结果](image/drc_lvs_result.png)
