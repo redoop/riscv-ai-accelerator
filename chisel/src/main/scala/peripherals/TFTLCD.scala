@@ -107,8 +107,8 @@ class TFTLCD(
   val busy = RegInit(false.B)
   val initDone = RegInit(false.B)
   
-  // 初始化序列计数器
-  val initCounter = RegInit(0.U(8.W))
+  // 初始化序列计数器（3位足够索引5个元素）
+  val initCounter = RegInit(0.U(3.W))
   val initDelay = RegInit(0.U(16.W))
   
   // ============================================================================

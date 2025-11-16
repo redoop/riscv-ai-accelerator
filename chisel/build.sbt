@@ -22,5 +22,10 @@ lazy val root = (project in file("."))
       "-Ywarn-unused",
       "-Ymacro-annotations"
     ),
-    addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full)
+    addCompilerPlugin("org.chipsalliance" % "chisel-plugin" % chiselVersion cross CrossVersion.full),
+    
+    // Test configuration
+    Test / testOptions += Tests.Argument(TestFrameworks.ScalaTest, "-oD"),
+    Test / parallelExecution := false,
+    Test / logBuffered := false
   )

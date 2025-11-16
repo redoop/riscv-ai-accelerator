@@ -331,3 +331,4 @@ chisel/project/target/streams/compile/compileIncremental/_global/streams/out
 chisel/project/target/streams/compile/copyResources/_global/streams/out
 chisel/project/target/streams/compile/incOptions/_global/streams/out
 physical_design/
+chisel/software/*.map

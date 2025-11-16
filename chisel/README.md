@@ -582,8 +582,11 @@ uploader.lcd_display_image('logo.png')
 
 - `chisel/README.md` - 本文件（项目总览）
 - `chisel/QUICKSTART.md` - 快速开始指南
+- `chisel/TESTING.md` - 测试指南（新增）
+- `chisel/HARDWARE_TEST.md` - 硬件测试结果
 - `chisel/docs/DEV_PLAN_V0.2.md` - v0.2 开发计划和进度
 - `chisel/software/README.md` - 软件开发文档
+- `chisel/software/tools/README.md` - 上传工具文档
 - `docs/` - 架构和设计文档
 - `examples/` - 示例代码和测试结果
 

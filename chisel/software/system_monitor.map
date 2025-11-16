@@ -1,23 +1,23 @@
 Archive member included to satisfy reference by file (symbol)
 
 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
-                              /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o (__mulsi3)
+                              /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o (__mulsi3)
 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
-                              /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o (__divsi3)
+                              /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o (__divsi3)
 
 Discarded input sections
 
  .text          0x00000000        0x0 build/lib/start.o
  .data          0x00000000        0x0 build/lib/start.o
  .bss           0x00000000        0x0 build/lib/start.o
- .text          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
- .data          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
- .bss           0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .text          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
+ .data          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
+ .bss           0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .text.update_status
-                0x00000000       0xb0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000000       0xb0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .text.draw_bar
-                0x00000000       0xcc /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
- .comment       0x00000000       0x13 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000000       0xcc /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
+ .comment       0x00000000       0x13 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .text          0x00000000        0x0 build/lib/hal.o
  .data          0x00000000        0x0 build/lib/hal.o
  .bss           0x00000000        0x0 build/lib/hal.o
@@ -62,7 +62,7 @@ RAM              0x00010000         0x0fff0000         xrw
 Linker script and memory map
 
 LOAD build/lib/start.o
-LOAD /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+LOAD /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
 LOAD build/lib/hal.o
 LOAD build/lib/graphics.o
 LOAD build/lib/font_8x8.o
@@ -77,10 +77,10 @@ LOAD /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32
                 0x00010030                trap_handler
  *(.text*)
  .text.display_status
-                0x00010034      0x2b8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00010034      0x2b8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                 0x00010034                display_status
  .text.startup.main
-                0x000102ec       0xd8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x000102ec       0xd8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                 0x000102ec                main
  .text.uart_init
                 0x000103c4       0x34 build/lib/hal.o
@@ -142,10 +142,10 @@ LOAD /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32
                 0x00010ee0                __modsi3
  *(.rodata*)
  .rodata.display_status.str1.4
-                0x00010f10       0x85 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00010f10       0x85 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                                  0x69 (size before relaxing)
  .rodata.main.str1.4
-                0x00010f95        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00010f95        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                                  0x19 (size before relaxing)
  *fill*         0x00010f95        0x3 
  .rodata.font_8x8
@@ -179,7 +179,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
  .riscv.attributes
                 0x00000000       0x1a build/lib/start.o
  .riscv.attributes
-                0x0000001a       0x1c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x0000001a       0x1c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .riscv.attributes
                 0x00000036       0x1c build/lib/hal.o
  .riscv.attributes
@@ -194,7 +194,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 .note.GNU-stack
                 0x00000000        0x0
  .note.GNU-stack
-                0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .note.GNU-stack
                 0x00000000        0x0 build/lib/hal.o
  .note.GNU-stack
@@ -204,7 +204,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 
 .debug_line     0x00000000     0x22d6
  .debug_line    0x00000000       0x7e build/lib/start.o
- .debug_line    0x0000007e      0x5be /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .debug_line    0x0000007e      0x5be /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_line    0x0000063c      0xe4d build/lib/hal.o
  .debug_line    0x00001489      0xc32 build/lib/graphics.o
  .debug_line    0x000020bb       0x4e build/lib/font_8x8.o
@@ -217,7 +217,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
                 0x00000000      0x158 build/lib/start.o
                                  0x4b (size before relaxing)
  .debug_line_str
-                0x00000158        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000158        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                                  0x94 (size before relaxing)
  .debug_line_str
                 0x00000158        0x0 build/lib/hal.o
@@ -237,7 +237,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 
 .debug_info     0x00000000     0x1f5b
  .debug_info    0x00000000       0x24 build/lib/start.o
- .debug_info    0x00000024      0x9d6 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .debug_info    0x00000024      0x9d6 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_info    0x000009fa      0x9bd build/lib/hal.o
  .debug_info    0x000013b7      0xa80 build/lib/graphics.o
  .debug_info    0x00001e37       0x94 build/lib/font_8x8.o
@@ -246,7 +246,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 
 .debug_abbrev   0x00000000      0x846
  .debug_abbrev  0x00000000       0x14 build/lib/start.o
- .debug_abbrev  0x00000014      0x242 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .debug_abbrev  0x00000014      0x242 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_abbrev  0x00000256      0x29d build/lib/hal.o
  .debug_abbrev  0x000004f3      0x28d build/lib/graphics.o
  .debug_abbrev  0x00000780       0x76 build/lib/font_8x8.o
@@ -257,7 +257,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
  .debug_aranges
                 0x00000000       0x20 build/lib/start.o
  .debug_aranges
-                0x00000020       0x38 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000020       0x38 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_aranges
                 0x00000058       0xa8 build/lib/hal.o
  .debug_aranges
@@ -272,7 +272,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 .debug_str      0x00000000      0x4d4
  .debug_str     0x00000000      0x4d4 build/lib/start.o
                                  0x59 (size before relaxing)
- .debug_str     0x000004d4        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .debug_str     0x000004d4        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
                                 0x255 (size before relaxing)
  .debug_str     0x000004d4        0x0 build/lib/hal.o
                                 0x258 (size before relaxing)
@@ -288,7 +288,7 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 .debug_loclists
                 0x00000000     0x12d5
  .debug_loclists
-                0x00000000      0x2d5 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000000      0x2d5 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_loclists
                 0x000002d5      0x3c4 build/lib/hal.o
  .debug_loclists
@@ -297,13 +297,13 @@ OUTPUT(build/system_monitor.elf elf32-littleriscv)
 .debug_rnglists
                 0x00000000      0x2b9
  .debug_rnglists
-                0x00000000       0x7f /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+                0x00000000       0x7f /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_rnglists
                 0x0000007f      0x162 build/lib/hal.o
  .debug_rnglists
                 0x000001e1       0xd8 build/lib/graphics.o
 
 .debug_frame    0x00000000      0x4d4
- .debug_frame   0x00000000       0xd8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccDbSpJf.o
+ .debug_frame   0x00000000       0xd8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//cc5iCjF0.o
  .debug_frame   0x000000d8      0x180 build/lib/hal.o
  .debug_frame   0x00000258      0x27c build/lib/graphics.o
