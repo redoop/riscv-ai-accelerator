@@ -33,6 +33,8 @@ object SimpleMemoryMap {
   val BITNET_SIZE = 0x00001000L
   val UART_BASE = 0x20000000L
   val UART_SIZE = 0x00010000L
+  val LCD_BASE = 0x20010000L
+  val LCD_SIZE = 0x00010000L
   val GPIO_BASE = 0x20020000L
   val GPIO_SIZE = 0x00010000L
 }
@@ -421,28 +423,36 @@ class SimpleBitNetAccel extends Module {
 // Simple Peripherals
 // ============================================================================
 
-class SimpleUART extends Module {
+// Import RealUART from peripherals package
+import riscv.ai.peripherals.RealUART
+
+class SimpleUARTWrapper(clockFreq: Int = 50000000, baudRate: Int = 115200) extends Module {
   val io = IO(new Bundle {
     val reg = new SimpleRegIO()
     val tx = Output(Bool())
     val rx = Input(Bool())
+    val tx_irq = Output(Bool())
+    val rx_irq = Output(Bool())
   })
   
-  val txData = RegInit(0.U(8.W))
-  val rxData = RegInit(0.U(8.W))
+  val uart = Module(new RealUART(clockFreq, baudRate, 16))
   
-  io.tx := true.B
-  io.reg.rdata := 0.U
-  io.reg.ready := true.B
+  // Connect register interface
+  uart.io.addr := io.reg.addr
+  uart.io.wdata := io.reg.wdata
+  io.reg.rdata := uart.io.rdata
+  uart.io.wen := io.reg.wen
+  uart.io.ren := io.reg.ren
+  uart.io.valid := io.reg.valid
+  io.reg.ready := uart.io.ready
   
-  when(io.reg.valid) {
-    when(io.reg.wen) {
-      txData := io.reg.wdata(7, 0)
-    }
-    when(io.reg.ren) {
-      io.reg.rdata := Cat(0.U(24.W), rxData)
-    }
-  }
+  // Connect UART physical interface
+  io.tx := uart.io.tx
+  uart.io.rx := io.rx
+  
+  // Connect interrupts
+  io.tx_irq := uart.io.tx_irq
+  io.rx_irq := uart.io.rx_irq
 }
 
 class SimpleGPIO extends Module {
@@ -467,6 +477,30 @@ class SimpleGPIO extends Module {
   }
 }
 
+// Placeholder LCD controller (will be implemented in Phase 2)
+class SimpleLCDPlaceholder extends Module {
+  val io = IO(new Bundle {
+    val reg = new SimpleRegIO()
+    val lcd_spi_clk = Output(Bool())
+    val lcd_spi_mosi = Output(Bool())
+    val lcd_spi_cs = Output(Bool())
+    val lcd_spi_dc = Output(Bool())
+    val lcd_spi_rst = Output(Bool())
+    val lcd_backlight = Output(Bool())
+  })
+  
+  // Default outputs
+  io.lcd_spi_clk := false.B
+  io.lcd_spi_mosi := false.B
+  io.lcd_spi_cs := true.B
+  io.lcd_spi_dc := false.B
+  io.lcd_spi_rst := true.B
+  io.lcd_backlight := false.B
+  
+  io.reg.rdata := 0.U
+  io.reg.ready := true.B
+}
+
 // ============================================================================
 // Simple Address Decoder
 // ============================================================================
@@ -477,6 +511,7 @@ class SimpleAddressDecoder extends Module {
     val compact = Flipped(new SimpleRegIO())
     val bitnet = Flipped(new SimpleRegIO())
     val uart = Flipped(new SimpleRegIO())
+    val lcd = Flipped(new SimpleRegIO())
     val gpio = Flipped(new SimpleRegIO())
   })
   
@@ -485,6 +520,7 @@ class SimpleAddressDecoder extends Module {
   val sel_compact = addr >= SimpleMemoryMap.COMPACT_BASE.U && addr < (SimpleMemoryMap.COMPACT_BASE + SimpleMemoryMap.COMPACT_SIZE).U
   val sel_bitnet = addr >= SimpleMemoryMap.BITNET_BASE.U && addr < (SimpleMemoryMap.BITNET_BASE + SimpleMemoryMap.BITNET_SIZE).U
   val sel_uart = addr >= SimpleMemoryMap.UART_BASE.U && addr < (SimpleMemoryMap.UART_BASE + SimpleMemoryMap.UART_SIZE).U
+  val sel_lcd = addr >= SimpleMemoryMap.LCD_BASE.U && addr < (SimpleMemoryMap.LCD_BASE + SimpleMemoryMap.LCD_SIZE).U
   val sel_gpio = addr >= SimpleMemoryMap.GPIO_BASE.U && addr < (SimpleMemoryMap.GPIO_BASE + SimpleMemoryMap.GPIO_SIZE).U
   
   // 默认连接到 CompactScale
@@ -506,6 +542,12 @@ class SimpleAddressDecoder extends Module {
   io.uart.ren := io.cpu.ren && sel_uart
   io.uart.valid := io.cpu.valid && sel_uart
   
+  io.lcd.addr := io.cpu.addr
+  io.lcd.wdata := io.cpu.wdata
+  io.lcd.wen := io.cpu.wen && sel_lcd
+  io.lcd.ren := io.cpu.ren && sel_lcd
+  io.lcd.valid := io.cpu.valid && sel_lcd
+  
   io.gpio.addr := io.cpu.addr
   io.gpio.wdata := io.cpu.wdata
   io.gpio.wen := io.cpu.wen && sel_gpio
@@ -516,12 +558,14 @@ class SimpleAddressDecoder extends Module {
   io.cpu.rdata := Mux(sel_compact, io.compact.rdata,
                    Mux(sel_bitnet, io.bitnet.rdata,
                    Mux(sel_uart, io.uart.rdata,
-                   Mux(sel_gpio, io.gpio.rdata, 0.U))))
+                   Mux(sel_lcd, io.lcd.rdata,
+                   Mux(sel_gpio, io.gpio.rdata, 0.U)))))
   
   io.cpu.ready := Mux(sel_compact, io.compact.ready,
                    Mux(sel_bitnet, io.bitnet.ready,
                    Mux(sel_uart, io.uart.ready,
-                   Mux(sel_gpio, io.gpio.ready, true.B))))
+                   Mux(sel_lcd, io.lcd.ready,
+                   Mux(sel_gpio, io.gpio.ready, true.B)))))
 }
 
 // ============================================================================
@@ -585,15 +629,23 @@ class SimplePicoRV32 extends BlackBox with HasBlackBoxResource {
 // Simple EdgeAiSoC - Top Level
 // ============================================================================
 
-class SimpleEdgeAiSoC extends Module {
+class SimpleEdgeAiSoC(clockFreq: Int = 50000000, baudRate: Int = 115200) extends Module {
   val io = IO(new Bundle {
     val uart_tx = Output(Bool())
     val uart_rx = Input(Bool())
+    val lcd_spi_clk = Output(Bool())
+    val lcd_spi_mosi = Output(Bool())
+    val lcd_spi_cs = Output(Bool())
+    val lcd_spi_dc = Output(Bool())
+    val lcd_spi_rst = Output(Bool())
+    val lcd_backlight = Output(Bool())
     val gpio_out = Output(UInt(32.W))
     val gpio_in = Input(UInt(32.W))
     val trap = Output(Bool())
     val compact_irq = Output(Bool())
     val bitnet_irq = Output(Bool())
+    val uart_tx_irq = Output(Bool())
+    val uart_rx_irq = Output(Bool())
   })
   
   // RISC-V 核心
@@ -623,10 +675,21 @@ class SimpleEdgeAiSoC extends Module {
   bitnetAccel.io.reg <> decoder.io.bitnet
   
   // 外设
-  val uart = Module(new SimpleUART())
+  val uart = Module(new SimpleUARTWrapper(clockFreq, baudRate))
   uart.io.reg <> decoder.io.uart
   uart.io.rx := io.uart_rx
   io.uart_tx := uart.io.tx
+  io.uart_tx_irq := uart.io.tx_irq
+  io.uart_rx_irq := uart.io.rx_irq
+  
+  val lcd = Module(new SimpleLCDPlaceholder())
+  lcd.io.reg <> decoder.io.lcd
+  io.lcd_spi_clk := lcd.io.lcd_spi_clk
+  io.lcd_spi_mosi := lcd.io.lcd_spi_mosi
+  io.lcd_spi_cs := lcd.io.lcd_spi_cs
+  io.lcd_spi_dc := lcd.io.lcd_spi_dc
+  io.lcd_spi_rst := lcd.io.lcd_spi_rst
+  io.lcd_backlight := lcd.io.lcd_backlight
   
   val gpio = Module(new SimpleGPIO())
   gpio.io.reg <> decoder.io.gpio
@@ -635,7 +698,9 @@ class SimpleEdgeAiSoC extends Module {
   
   // 中断
   riscv.io.irq := Cat(
-    Fill(14, false.B),
+    Fill(12, false.B),
+    uart.io.rx_irq,
+    uart.io.tx_irq,
     bitnetAccel.io.irq,
     compactAccel.io.irq,
     Fill(16, false.B)
