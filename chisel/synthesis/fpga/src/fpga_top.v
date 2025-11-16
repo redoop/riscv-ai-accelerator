@@ -24,7 +24,9 @@ module fpga_top (
     wire        uart_rx;
     wire [31:0] gpio_out;
     wire [31:0] gpio_in;
-    wire [31:0] gpio_oe;
+    wire        trap;
+    wire        compact_irq;
+    wire        bitnet_irq;
     
     // 时钟和复位处理
     assign sys_clk = clk_main_a0;
@@ -53,7 +55,7 @@ module fpga_top (
             case (pcie_bar_addr)
                 32'h1000: pcie_rdata_reg <= {31'b0, uart_tx};
                 32'h1004: pcie_rdata_reg <= gpio_out;
-                32'h1008: pcie_rdata_reg <= gpio_oe;
+                32'h1008: pcie_rdata_reg <= {29'b0, bitnet_irq, compact_irq, trap};
                 default:  pcie_rdata_reg <= 32'hDEADBEEF;
             endcase
         end
@@ -68,7 +70,9 @@ module fpga_top (
         .io_uart_rx     (uart_rx),
         .io_gpio_out    (gpio_out),
         .io_gpio_in     (gpio_in),
-        .io_gpio_oe     (gpio_oe)
+        .io_trap        (trap),
+        .io_compact_irq (compact_irq),
+        .io_bitnet_irq  (bitnet_irq)
     );
     
     // 调试状态输出

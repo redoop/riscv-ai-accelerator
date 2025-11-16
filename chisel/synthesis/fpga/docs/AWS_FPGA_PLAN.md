@@ -6,6 +6,193 @@
 
 ---
 
+## 📋 执行检查清单
+
+### 阶段 1：本地准备（已完成 ✅）
+
+- [x] **环境检查**
+  - [x] Java 11+ 已安装
+  - [x] sbt 已安装
+  - [x] AWS CLI 已安装（v2.31.37）
+  - [x] Git 已配置
+
+- [x] **RTL 设计**
+  - [x] Chisel 代码编写完成
+  - [x] Verilog 生成成功（3765 行）
+  - [x] 本地测试全部通过（20/20）
+
+- [x] **FPGA 适配层**
+  - [x] fpga_top.v 顶层封装
+  - [x] clock_gen.v 时钟生成
+  - [x] io_adapter.v IO 适配
+  - [x] 约束文件（timing.xdc, pins.xdc, physical.xdc）
+
+- [x] **测试脚本**
+  - [x] 功能测试脚本（test_*.sh）
+  - [x] 性能测试脚本（benchmark_*.sh）
+  - [x] 测试向量准备
+
+- [x] **文档准备**
+  - [x] QUICK_START.md
+  - [x] LOCAL_TEST_GUIDE.md
+  - [x] SETUP_GUIDE.md
+  - [x] BUILD_GUIDE.md
+  - [x] TEST_GUIDE.md
+  - [x] TEST_RESULTS.md
+
+### 阶段 2：AWS 环境配置（100% 完成 ✅）
+
+- [x] **AWS 账户准备**
+  - [x] AWS 账户已创建
+  - [x] IAM 权限已配置（EC2, S3, FPGA）
+  - [x] F1 实例配额已申请（96 个）
+  - [x] 密钥对已创建（fpga-dev-key）
+
+- [x] **AMI 订阅**
+  - [x] FPGA Developer AMI 已订阅（ami-0cb1b6ae2ff99f8bf）
+  - [x] 网络配置完成（VPC, Subnet）
+  - [x] 安全组已创建（sg-03d27449f82b54360）
+
+- [x] **启动 F2 实例**（已完成 ✅）
+  - [x] 订阅 Vivado AMI (ami-0b359c50bdba2aac0)
+  - [x] 启动 f2.6xlarge Spot 实例
+  - [x] 配置安全组和网络
+  - [x] SSH 连接测试成功
+  
+  **实例信息**：
+  - 实例 ID: i-00d976d528e721c43
+  - 公网 IP: 54.81.161.62
+  - 用户名: ubuntu
+  - Spot 请求 ID: sir-nh5zbwyn
+  - 详见：`aws-deployment/F2_VIVADO_GUIDE.md`
+
+- [x] **Vivado 环境验证**（已完成 ✅）
+  - [x] Vivado 2025.1 已确认可用
+  - [x] Vivado 路径：`/tools/Xilinx/2025.1/Vivado/bin/vivado`
+  - [x] 环境设置脚本已创建
+  - [x] 使用指南已创建
+
+- [x] **项目部署**（已完成 ✅）
+  - [x] 上传项目代码到 F2（44KB）
+  - [x] 设置 Vivado 环境
+  - [x] 验证环境配置
+  - [x] 修复端口不匹配问题
+  - [x] Vivado 构建已启动（进程 PID: 7040）
+  
+  **构建状态**：
+  - 开始时间: 2025-11-16 09:14 UTC (17:14 北京时间)
+  - 综合完成: 2025-11-16 09:17 UTC (17:17 北京时间)
+  - 当前阶段: 实现 (Implementation) 进行中
+  - 预计完成: 2025-11-16 10:17-11:17 UTC (18:17-19:17 北京时间)
+  - 详见：`aws-deployment/BUILD_PROGRESS.md`
+
+### 阶段 3：FPGA 构建（40% 完成 🔄）
+
+- [x] **Vivado 综合**（已完成 ✅）
+  - [x] 运行 build_fpga_f2.tcl
+  - [x] 综合完成（用时 9 分钟）
+  - [x] 检查综合报告
+  - [x] 资源利用率检查
+  
+  **综合结果**：
+  - 完成时间: 2025-11-16 09:17 UTC (17:17 北京时间)
+  - RAM 资源: CompactAccel (256x32), BitNetAccel (256x32)
+  - DSP 资源: 4 个 DSP48E2 (SimpleCompactAccel)
+  - 优化: 43 个未使用寄存器被移除
+  - 报告: `fpga-project/build/reports/utilization_synth.rpt`
+
+- [ ] **Vivado 实现**（进行中 🔄）
+  - [x] 启动实现流程
+  - [ ] 优化 (Opt Design) - 进行中
+  - [ ] 布局 (Place Design) - 待执行
+  - [ ] 布线 (Route Design) - 待执行
+  - [ ] 实现完成（预计 1-2 小时）
+  
+  **当前状态**：
+  - 进程 PID: 7040
+  - 阶段: Implementation (opt_design)
+  - 开始时间: 2025-11-16 09:17 UTC
+  - 日志: `fpga-project/build/logs/vivado_build.log`
+
+- [ ] **时序分析**（待执行 ⏳）
+  - [ ] WNS > 0（无时序违例）
+  - [ ] 工作频率达到 100MHz
+  - [ ] 关键路径分析
+  - [ ] 时序报告归档
+
+- [ ] **生成 DCP**（待执行 ⏳）
+  - [ ] DCP 文件生成成功
+  - [ ] 文件位置：build/checkpoints/to_aws/SH_CL_routed.dcp
+  - [ ] 文件大小检查
+
+### 阶段 4：AFI 创建（待执行 ⏳）
+
+- [ ] **S3 准备**
+  - [ ] 创建 S3 bucket
+  - [ ] 配置 bucket 权限
+  - [ ] 上传 DCP 文件
+
+- [ ] **创建 AFI**
+  - [ ] 运行 create_afi.sh
+  - [ ] 获取 AFI ID
+  - [ ] 获取 AGFI ID
+  - [ ] 保存 AFI 信息
+
+- [ ] **等待 AFI 可用**
+  - [ ] 监控 AFI 状态
+  - [ ] 状态变为 "available"（预计 30-60 分钟）
+  - [ ] 检查 S3 日志（如有错误）
+
+### 阶段 5：FPGA 部署与测试（待执行 ⏳）
+
+- [ ] **加载 AFI**
+  - [ ] 清除现有 FPGA 镜像
+  - [ ] 加载新 AFI
+  - [ ] 验证加载状态
+
+- [ ] **功能测试**
+  - [ ] 处理器启动测试
+  - [ ] UART 通信测试
+  - [ ] GPIO 读写测试
+  - [ ] CompactAccel 2x2 测试
+  - [ ] CompactAccel 4x4 测试
+  - [ ] CompactAccel 8x8 测试
+  - [ ] BitNetAccel 2x2 测试
+  - [ ] BitNetAccel 8x8 测试
+  - [ ] 中断处理测试
+
+- [ ] **性能测试**
+  - [ ] GOPS 测量（目标 6.4）
+  - [ ] 延迟测量（目标 <100 cycles）
+  - [ ] 吞吐量测试（目标 >90%）
+  - [ ] 连续运行稳定性测试
+
+- [ ] **功耗测试**
+  - [ ] 读取 FPGA 功耗
+  - [ ] 估算 ASIC 功耗
+  - [ ] 功耗报告生成
+
+### 阶段 6：文档与交付（待执行 ⏳）
+
+- [ ] **测试报告**
+  - [ ] 功能测试报告
+  - [ ] 性能测试报告
+  - [ ] 问题与解决方案
+
+- [ ] **技术文档**
+  - [ ] 综合报告
+  - [ ] 时序报告
+  - [ ] 功耗报告
+  - [ ] 资源利用报告
+
+- [ ] **代码归档**
+  - [ ] 最终 Verilog 代码
+  - [ ] 约束文件
+  - [ ] 测试脚本
+  - [ ] AFI 信息
+
+---
+
 ## 一、方案概述
 
 ### 1.1 验证目标

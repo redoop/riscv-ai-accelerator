@@ -1,0 +1,17 @@
+# 8x8 Matrix Multiplication Test Vectors
+# Format: Matrix A (64 values) | Matrix B (64 values) -> Expected Result (64 values)
+
+# Test 1: Identity matrix
+# A = I (identity), B = random
+# Expected: Result = B
+
+# Test 2: Zero matrix
+# A = 0, B = random
+# Expected: Result = 0
+
+# Test 3: Simple pattern
+# A[i][j] = i+1, B[i][j] = j+1
+# Manual calculation required for expected result
+
+# Note: Full test vectors are generated programmatically in test scripts
+# This file serves as documentation for test vector format

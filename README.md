@@ -79,16 +79,32 @@ git clone https://github.com/redoop/riscv-ai-accelerator.git
 cd riscv-ai-accelerator/chisel
 
 # Run all tests
-make test
+./run.sh test
 
 # Generate Verilog
-make verilog
+./run.sh generate
 
 # Run synthesis and post-synthesis simulation
 cd synthesis
 ./run_ics55_synthesis.sh
 python run_post_syn_sim.py --simulator iverilog --netlist ics55
 ```
+
+### FPGA Verification (AWS F1)
+
+```bash
+# Step 1: Generate Verilog
+cd chisel
+./run.sh generate
+
+# Step 2: FPGA verification
+cd synthesis/fpga
+./run_fpga_flow.sh status      # Check status
+./run_fpga_flow.sh full local  # Local verification (free)
+./run_fpga_flow.sh aws         # AWS F1 verification (requires AWS account)
+```
+
+See [FPGA Guide](chisel/synthesis/fpga/README.md) for details.
 
 ## 📊 Performance Metrics
 
@@ -152,7 +168,14 @@ Mature international open-source toolchain:
 |----------|-------------|------|
 | **🔌 FPGA Guide** | AWS F1 FPGA verification | [chisel/synthesis/fpga/README.md](chisel/synthesis/fpga/README.md) |
 | **☁️ AWS Setup** | AWS environment setup | [chisel/synthesis/fpga/docs/SETUP_GUIDE.md](chisel/synthesis/fpga/docs/SETUP_GUIDE.md) |
-| **📋 AWS Plan** | Complete AWS verification plan | [chisel/synthesis/fpga/docs/AWS_FPGA_PLAN.md](chisel/synthesis/fpga/docs/AWS_FPGA_PLAN.md) |
+| **📋 AWS Plan** | Complete AWS verification plan | [chisel/synthesis/fpga/AWS_FPGA_PLAN.md](chisel/synthesis/fpga/AWS_FPGA_PLAN.md) |
+
+**Quick Commands:**
+```bash
+cd chisel/synthesis/fpga
+./run_fpga_flow.sh help    # View all options
+./run_fpga_flow.sh status  # Check current status
+```
 
 ## 🎓 Project Structure
 
