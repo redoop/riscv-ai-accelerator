@@ -37,7 +37,14 @@ cd chisel
 
 ### 2. 端口说明
 
-**（注：描述设计顶层的端口，目前流片IO数量：INPUT（14）OUTPUT（8）INOUT（GPIO 66） IOPAD TOTAL（88），可允许使用85，3个用于ip_sel）**
+**（注：描述设计顶层的端口）**
+
+本设计的SoC顶层模块为 **SimpleEdgeAiSoC**，采用简化的寄存器接口设计，包含时钟复位、UART串口、LCD显示、GPIO通用IO和中断调试等接口。
+
+**端口资源统计：**
+- 输入端口：35个（clock + reset + UART RX + GPIO IN[31:0]）
+- 输出端口：44个（UART TX + LCD SPI + GPIO OUT[31:0] + 中断信号）
+- 总端口数：79个
 
 本设计的SoC顶层端口功能如表1所示。
 
@@ -45,13 +52,37 @@ cd chisel
 
 | 名称 | 方向 | 位宽 | 功能描述 |
 |------|------|------|----------|
-| clock | input | 1 | 系统主时钟输入，工作频率50-100MHz |
-| reset | input | 1 | 系统复位信号，高电平有效 |
-| io_uart_tx | output | 1 | UART发送数据输出引脚 |
-| io_uart_rx | input | 1 | UART接收数据输入引脚 |
-| io_gpio_out | output | 32 | GPIO输出引脚，32位通用输出 |
-| io_gpio_in | input | 32 | GPIO输入引脚，32位通用输入 |
-| io_gpio_oe | output | 32 | GPIO输出使能信号，控制GPIO方向 |
+| **时钟与复位** | | | |
+| clock | input | 1 | 系统主时钟输入，工作频率50-100MHz，典型值50MHz |
+| reset | input | 1 | 系统复位信号，高电平有效，同步复位 |
+| **UART串口接口** | | | |
+| io_uart_tx | output | 1 | UART发送数据输出，波特率115200bps，8N1格式 |
+| io_uart_rx | input | 1 | UART接收数据输入，波特率115200bps，8N1格式 |
+| io_uart_tx_irq | output | 1 | UART发送中断输出，发送FIFO空时触发 |
+| io_uart_rx_irq | output | 1 | UART接收中断输出，接收FIFO非空时触发 |
+| **LCD显示接口（SPI）** | | | |
+| io_lcd_spi_clk | output | 1 | LCD SPI时钟输出，频率10MHz |
+| io_lcd_spi_mosi | output | 1 | LCD SPI主出从入数据线 |
+| io_lcd_spi_cs | output | 1 | LCD SPI片选信号，低电平有效 |
+| io_lcd_spi_dc | output | 1 | LCD数据/命令选择，高电平=数据，低电平=命令 |
+| io_lcd_spi_rst | output | 1 | LCD硬件复位信号，低电平有效 |
+| io_lcd_backlight | output | 1 | LCD背光控制信号，高电平点亮 |
+| **GPIO通用IO接口** | | | |
+| io_gpio_out[31:0] | output | 32 | GPIO输出数据，32位通用数字输出 |
+| io_gpio_in[31:0] | input | 32 | GPIO输入数据，32位通用数字输入 |
+| **调试与中断信号** | | | |
+| io_trap | output | 1 | CPU异常陷阱信号，指令执行异常时置高 |
+| io_compact_irq | output | 1 | CompactAccel加速器中断，矩阵计算完成时触发 |
+| io_bitnet_irq | output | 1 | BitNetAccel加速器中断，BitNet计算完成时触发 |
+| **端口统计** | | | |
+| 输入端口总数 | - | 35 | clock(1) + reset(1) + io_uart_rx(1) + io_gpio_in(32) |
+| 输出端口总数 | - | 44 | UART(3) + LCD(6) + GPIO(32) + 中断/调试(3) |
+| 总端口数 | - | 79 | 实际设计使用79个端口 |
+
+**说明：** 
+- 本设计为纯数字逻辑设计，所有端口均为数字信号
+- GPIO端口可根据实际需求配置为输入或输出
+- 如需适配特定流片平台的IOPAD限制，可调整GPIO位宽或移除LCD接口
 
 ## 二、测试说明
 
