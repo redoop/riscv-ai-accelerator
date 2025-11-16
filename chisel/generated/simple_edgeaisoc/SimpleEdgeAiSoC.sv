@@ -905,14 +905,14 @@ module TFTLCD(
   reg             spiCS;
   reg             busy;
   reg             initDone;
-  reg  [7:0]      initCounter;
+  reg  [2:0]      initCounter;
   reg  [15:0]     initDelay;
   wire            _GEN_0 = state == 3'h0;
   wire            _GEN_1 = ~initDone & control[1];
   wire            _GEN_2 = _cmdQueue_io_deq_valid & ~busy;
   wire            _GEN_3 = _dataQueue_io_deq_valid & ~busy;
   wire            _GEN_4 = state == 3'h1;
-  wire            _GEN_5 = initCounter < 8'h5;
+  wire            _GEN_5 = initCounter < 3'h5;
   wire            _GEN_6 = _GEN_5 & _cmdQueue_io_enq_ready;
   wire            _GEN_7 = io_addr[15:0] == 16'h0;
   wire            _GEN_8 = io_valid & io_wen & _GEN_7;
@@ -945,7 +945,7 @@ module TFTLCD(
       spiCS <= 1'h1;
       busy <= 1'h0;
       initDone <= 1'h0;
-      initCounter <= 8'h0;
+      initCounter <= 3'h0;
       initDelay <= 16'h0;
     end
     else begin
@@ -981,7 +981,7 @@ module TFTLCD(
         automatic logic _GEN_21 = _GEN_2 | _GEN_3;
         if (_GEN_1) begin
           state <= 3'h1;
-          initCounter <= 8'h0;
+          initCounter <= 3'h0;
           initDelay <= 16'h0;
         end
         else if (_GEN_2) begin
@@ -1044,7 +1044,7 @@ module TFTLCD(
         if (~_GEN_4 | (|initDelay) | ~_GEN_6) begin
         end
         else
-          initCounter <= initCounter + 8'h1;
+          initCounter <= initCounter + 3'h1;
       end
       if (~_GEN_0 | _GEN_1) begin
       end
@@ -1072,9 +1072,7 @@ module TFTLCD(
     .io_enq_bits
       (_GEN_8
          ? io_wdata[7:0]
-         : _GEN_0 | ~_GEN_4 | (|initDelay) | ~_GEN_6
-             ? 8'h0
-             : {2'h0, _GEN[initCounter[2:0]]}),
+         : _GEN_0 | ~_GEN_4 | (|initDelay) | ~_GEN_6 ? 8'h0 : {2'h0, _GEN[initCounter]}),
     .io_deq_ready (_GEN_0 & ~_GEN_1 & _GEN_2),
     .io_deq_valid (_cmdQueue_io_deq_valid),
     .io_deq_bits  (_cmdQueue_io_deq_bits)

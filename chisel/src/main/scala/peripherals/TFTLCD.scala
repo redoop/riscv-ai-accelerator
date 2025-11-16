@@ -1,5 +1,6 @@
-// TFTLCD.scala - TFT LCD SPI Controller (ST7735)
+// TFTLCD.scala - TFT LCD SPI Controller (ST7735) - Simplified Version
 // Phase 2 of DEV_PLAN_V0.2
+// Optimized for minimal resource usage (< 100K instances)
 
 package riscv.ai.peripherals
 
@@ -7,13 +8,13 @@ import chisel3._
 import chisel3.util._
 
 /**
- * TFT LCD SPI 控制器（ST7735）
+ * TFT LCD SPI 控制器（ST7735）- 简化版
  * 
  * 特性：
  * - 分辨率：128x128 像素
  * - 颜色：65K 色（RGB565）
- * - 接口：SPI（最高 15MHz）
- * - 帧缓冲：32KB（128 x 128 x 2 字节）
+ * - 接口：SPI（最高 10MHz）
+ * - 无帧缓冲（流式传输）
  * 
  * 寄存器映射：
  * 0x00: COMMAND   - 命令寄存器 (W)
@@ -24,12 +25,6 @@ import chisel3.util._
  * 0x0C: CONTROL   - 控制寄存器 (R/W)
  *       bit 0: BACKLIGHT
  *       bit 1: RESET
- * 0x10: X_START   - X 起始坐标 (R/W)
- * 0x14: Y_START   - Y 起始坐标 (R/W)
- * 0x18: X_END     - X 结束坐标 (R/W)
- * 0x1C: Y_END     - Y 结束坐标 (R/W)
- * 0x20: COLOR     - 颜色数据 (W, RGB565)
- * 0x1000-0x8FFF: FRAMEBUFFER - 帧缓冲 (32KB, 128x128x2)
  */
 class TFTLCD(
   clockFreq: Int = 50000000,  // 50MHz 时钟
@@ -61,164 +56,72 @@ class TFTLCD(
   // ============================================================================
   
   val control = RegInit(0.U(32.W))
-  val xStart = RegInit(0.U(8.W))
-  val yStart = RegInit(0.U(8.W))
-  val xEnd = RegInit(127.U(8.W))
-  val yEnd = RegInit(127.U(8.W))
-  
   val backlight = control(0)
   val resetN = control(1)
   
   // ============================================================================
-  // 帧缓冲（32KB = 128x128x2 bytes）
+  // SPI 控制器 - 简化版
   // ============================================================================
   
-  val framebuffer = Mem(16384, UInt(16.W))  // 16K words of 16-bit
-  
-  // ============================================================================
-  // SPI 控制器
-  // ============================================================================
-  
-  val spiDivider = (clockFreq / spiFreq / 2).U
-  val spiCounter = RegInit(0.U(16.W))
+  val spiDivider = (clockFreq / spiFreq / 2).U(8.W)
+  val spiCounter = RegInit(0.U(8.W))
   val spiClkReg = RegInit(false.B)
-  val spiTick = Wire(Bool())
   
-  spiTick := false.B
   when(spiCounter >= spiDivider - 1.U) {
     spiCounter := 0.U
     spiClkReg := !spiClkReg
-    spiTick := true.B
   }.otherwise {
     spiCounter := spiCounter + 1.U
   }
   
   // ============================================================================
-  // 状态机
+  // 状态机 - 简化版
   // ============================================================================
   
-  val sIdle :: sInit :: sCommand :: sData :: sDone :: Nil = Enum(5)
+  val sIdle :: sTransmit :: Nil = Enum(2)
   val state = RegInit(sIdle)
   
   val spiShiftReg = RegInit(0.U(8.W))
-  val spiBitCounter = RegInit(0.U(4.W))
+  val spiBitCounter = RegInit(0.U(3.W))
   val spiDC = RegInit(false.B)  // false = command, true = data
   val spiCS = RegInit(true.B)   // Active low
   val busy = RegInit(false.B)
-  val initDone = RegInit(false.B)
-  
-  // 初始化序列计数器（3位足够索引5个元素）
-  val initCounter = RegInit(0.U(3.W))
-  val initDelay = RegInit(0.U(16.W))
+  val initDone = RegInit(true.B)  // 默认初始化完成，由软件控制
   
   // ============================================================================
-  // ST7735 初始化序列
+  // SPI 传输状态机 - 简化版（无队列）
   // ============================================================================
   
-  // 简化的初始化序列
-  val initSequence = VecInit(Seq(
-    // Software reset
-    0x01.U,
-    // Sleep out
-    0x11.U,
-    // Color mode: 16-bit
-    0x3A.U, 0x05.U,
-    // Display on
-    0x29.U
-  ))
-  
-  // ============================================================================
-  // SPI 传输状态机
-  // ============================================================================
-  
-  val cmdQueue = Module(new Queue(UInt(8.W), 16))
-  val dataQueue = Module(new Queue(UInt(8.W), 16))
-  
-  cmdQueue.io.enq.valid := false.B
-  cmdQueue.io.enq.bits := 0.U
-  cmdQueue.io.deq.ready := false.B
-  
-  dataQueue.io.enq.valid := false.B
-  dataQueue.io.enq.bits := 0.U
-  dataQueue.io.deq.ready := false.B
+  val txData = RegInit(0.U(8.W))
+  val txValid = RegInit(false.B)
+  val txIsData = RegInit(false.B)
   
   switch(state) {
     is(sIdle) {
       spiCS := true.B
       busy := false.B
       
-      when(!initDone && resetN) {
-        state := sInit
-        initCounter := 0.U
-        initDelay := 0.U
-      }.elsewhen(cmdQueue.io.deq.valid && !busy) {
-        // 有命令要发送
-        spiShiftReg := cmdQueue.io.deq.bits
-        cmdQueue.io.deq.ready := true.B
-        spiDC := false.B  // Command mode
+      when(txValid) {
+        spiShiftReg := txData
+        spiDC := txIsData
         spiCS := false.B
         spiBitCounter := 0.U
-        state := sCommand
+        state := sTransmit
         busy := true.B
-      }.elsewhen(dataQueue.io.deq.valid && !busy) {
-        // 有数据要发送
-        spiShiftReg := dataQueue.io.deq.bits
-        dataQueue.io.deq.ready := true.B
-        spiDC := true.B  // Data mode
-        spiCS := false.B
-        spiBitCounter := 0.U
-        state := sData
-        busy := true.B
+        txValid := false.B
       }
     }
     
-    is(sInit) {
+    is(sTransmit) {
       busy := true.B
-      // 初始化延迟
-      when(initDelay > 0.U) {
-        initDelay := initDelay - 1.U
-      }.elsewhen(initCounter < initSequence.length.U) {
-        // 发送初始化命令
-        when(cmdQueue.io.enq.ready) {
-          cmdQueue.io.enq.valid := true.B
-          cmdQueue.io.enq.bits := initSequence(initCounter)
-          initCounter := initCounter + 1.U
-          initDelay := 100.U  // 减少延迟以加快测试
-        }
-      }.otherwise {
-        initDone := true.B
-        busy := false.B
-        state := sIdle
-      }
-    }
-    
-    is(sCommand) {
-      busy := true.B
-      when(spiTick && spiClkReg) {  // 在时钟上升沿发送
+      when(spiCounter === 0.U && spiClkReg) {  // 在时钟上升沿发送
         spiShiftReg := spiShiftReg << 1
         spiBitCounter := spiBitCounter + 1.U
         when(spiBitCounter === 7.U) {
-          state := sDone
+          spiCS := true.B
+          busy := false.B
+          state := sIdle
         }
-      }
-    }
-    
-    is(sData) {
-      busy := true.B
-      when(spiTick && spiClkReg) {  // 在时钟上升沿发送
-        spiShiftReg := spiShiftReg << 1
-        spiBitCounter := spiBitCounter + 1.U
-        when(spiBitCounter === 7.U) {
-          state := sDone
-        }
-      }
-    }
-    
-    is(sDone) {
-      spiCS := true.B
-      busy := false.B
-      when(spiTick) {
-        state := sIdle
       }
     }
   }
@@ -245,52 +148,30 @@ class TFTLCD(
   )
   
   // ============================================================================
-  // 寄存器接口
+  // 寄存器接口 - 简化版
   // ============================================================================
   
   io.rdata := 0.U
-  io.ready := true.B
+  io.ready := !busy  // 忙时不接受新请求
   
-  when(io.valid) {
-    val regAddr = io.addr(15, 0)
+  when(io.valid && !busy) {
+    val regAddr = io.addr(7, 0)
     
     when(io.wen) {
       switch(regAddr) {
         is(0x00.U) {  // COMMAND
-          cmdQueue.io.enq.valid := true.B
-          cmdQueue.io.enq.bits := io.wdata(7, 0)
+          txData := io.wdata(7, 0)
+          txIsData := false.B
+          txValid := true.B
         }
         is(0x04.U) {  // DATA
-          dataQueue.io.enq.valid := true.B
-          dataQueue.io.enq.bits := io.wdata(7, 0)
+          txData := io.wdata(7, 0)
+          txIsData := true.B
+          txValid := true.B
         }
         is(0x0C.U) {  // CONTROL
           control := io.wdata
         }
-        is(0x10.U) {  // X_START
-          xStart := io.wdata(7, 0)
-        }
-        is(0x14.U) {  // Y_START
-          yStart := io.wdata(7, 0)
-        }
-        is(0x18.U) {  // X_END
-          xEnd := io.wdata(7, 0)
-        }
-        is(0x1C.U) {  // Y_END
-          yEnd := io.wdata(7, 0)
-        }
-        is(0x20.U) {  // COLOR - 快速写入像素
-          // 将 RGB565 颜色写入数据队列
-          dataQueue.io.enq.valid := true.B
-          dataQueue.io.enq.bits := io.wdata(15, 8)  // 高字节
-          // 注意：需要两次写入，这里简化处理
-        }
-      }
-      
-      // 帧缓冲写入
-      when(regAddr >= 0x1000.U && regAddr < 0x9000.U) {
-        val fbAddr = (regAddr - 0x1000.U) >> 1
-        framebuffer(fbAddr) := io.wdata(15, 0)
       }
     }
     
@@ -302,24 +183,6 @@ class TFTLCD(
         is(0x0C.U) {  // CONTROL
           io.rdata := control
         }
-        is(0x10.U) {  // X_START
-          io.rdata := Cat(Fill(24, false.B), xStart)
-        }
-        is(0x14.U) {  // Y_START
-          io.rdata := Cat(Fill(24, false.B), yStart)
-        }
-        is(0x18.U) {  // X_END
-          io.rdata := Cat(Fill(24, false.B), xEnd)
-        }
-        is(0x1C.U) {  // Y_END
-          io.rdata := Cat(Fill(24, false.B), yEnd)
-        }
-      }
-      
-      // 帧缓冲读取
-      when(regAddr >= 0x1000.U && regAddr < 0x9000.U) {
-        val fbAddr = (regAddr - 0x1000.U) >> 1
-        io.rdata := Cat(Fill(16, false.B), framebuffer(fbAddr))
       }
     }
   }
