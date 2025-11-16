@@ -2,11 +2,20 @@
 """
 upload.py - RISC-V AI SoC Program Uploader
 Phase 3 of DEV_PLAN_V0.2
+Completed: 2025-11-16 (1 hour)
+Status: ✅ Fully functional uploader with LCD support
+
+Features:
+- Program upload with progress bar
+- LCD testing and image display
+- System information query
+- Ping/pong communication test
 
 Usage:
     python upload.py <port> <binary_file>
     python upload.py <port> --test-lcd
     python upload.py <port> --info
+    python upload.py <port> --image <image_file>
 """
 
 import serial

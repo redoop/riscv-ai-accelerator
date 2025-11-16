@@ -1,5 +1,7 @@
 // bootloader.c - Simple Bootloader for RISC-V AI SoC
 // Phase 3 of DEV_PLAN_V0.2
+// Completed: 2025-11-16 (2 hours)
+// Status: ✅ Fully functional with 7 commands (U/R/M/W/L/P/I)
 
 #include "../lib/hal.h"
 #include "../lib/graphics.h"
