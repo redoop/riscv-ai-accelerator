@@ -104,17 +104,24 @@ python upload.py /dev/ttyUSB0 --image logo.png
 ## Examples
 
 ### hello_lcd.c
-Simple "Hello World" example that displays text and shapes on the LCD.
+Simple "Hello World" example that displays text and shapes on the LCD with animation.
 
 ### ai_demo.c
-AI inference demo that shows classification results with confidence bars.
+AI inference demo that shows classification results with confidence bars and FPS counter.
+
+### benchmark.c
+Performance benchmark program that tests UART, LCD, graphics, and AI accelerator performance.
+
+### system_monitor.c
+Real-time system monitor that displays CPU usage, uptime, UART stats, and AI accelerator status.
 
 ## Building Programs
 
-To build programs for the RISC-V AI SoC, you'll need a RISC-V GCC toolchain:
+### Prerequisites
+
+Install RISC-V GCC toolchain:
 
 ```bash
-# Install RISC-V toolchain
 # Ubuntu/Debian:
 sudo apt-get install gcc-riscv64-unknown-elf
 
@@ -123,13 +130,45 @@ brew tap riscv/riscv
 brew install riscv-tools
 ```
 
-**Compile example:**
+### Using Makefile (Recommended)
+
+```bash
+# Build all examples and bootloader
+make all
+
+# Build specific example
+make hello_lcd
+make ai_demo
+make benchmark
+make system_monitor
+
+# Build bootloader
+make bootloader
+
+# Upload and run program
+make run PROG=hello_lcd PORT=/dev/ttyUSB0
+
+# Run LCD test
+make test-lcd PORT=/dev/ttyUSB0
+
+# Get bootloader info
+make info PORT=/dev/ttyUSB0
+
+# Clean build
+make clean
+
+# Show help
+make help
+```
+
+### Manual Compilation
+
 ```bash
 riscv32-unknown-elf-gcc -march=rv32i -mabi=ilp32 \
     -nostdlib -nostartfiles \
     -T linker.ld \
     -o program.elf \
-    lib/hal.c lib/graphics.c lib/font_8x8.c examples/hello_lcd.c
+    lib/start.S lib/hal.c lib/graphics.c lib/font_8x8.c examples/hello_lcd.c
 
 riscv32-unknown-elf-objcopy -O binary program.elf program.bin
 ```
