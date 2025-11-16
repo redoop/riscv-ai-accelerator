@@ -2,28 +2,28 @@
 
 ## 📋 TODO Checklist（快速跟踪）
 
-### ✅ Phase 1: UART 控制器（3 天）
+### ✅ Phase 1: UART 控制器
 - [x] 创建 RealUART.scala 并实现核心功能
 - [x] 编写单元测试并验证
 - [x] 集成到 SoC
 
-### ✅ Phase 2: TFT LCD 控制器（5-7 天）
+### ✅ Phase 2: TFT LCD 控制器
 - [x] 创建 TFTLCD.scala 并实现 SPI 控制器
 - [x] 实现 ST7735 驱动和帧缓冲
 - [x] 编写单元测试并验证
 - [x] 集成到 SoC
 
-### ✅ Phase 3: 程序上传协议（2-3 天）
+### ✅ Phase 3: 程序上传协议
 - [x] 编写 Bootloader C 代码
 - [x] 编写 Python 上传工具
 - [x] 测试端到端上传流程
 
-### ✅ Phase 4: 图形库（2-3 天）
+### ✅ Phase 4: 图形库
 - [x] 实现基本图形函数和字体
 - [x] 编写示例程序
 - [x] 测试所有功能
 
-### ✅ Phase 5: 集成测试（2-3 天）
+### ✅ Phase 5: 集成测试
 - [x] 综合测试和性能测试
 - [x] 编写文档和演示程序
 
@@ -127,8 +127,6 @@ class RealUART(
 - ✅ 中断支持
 - ✅ 状态标志
 
-**工作量：** 3 天
-
 ---
 
 ### 2. TFT LCD SPI 控制器（ST7735）
@@ -214,8 +212,6 @@ lcd_draw_string(x, y, "Hello", COLOR_WHITE, COLOR_BLACK);
 // 显示图片（从帧缓冲）
 lcd_draw_image(x, y, w, h, image_data);
 ```
-
-**工作量：** 5-7 天
 
 ---
 
@@ -305,8 +301,6 @@ uploader.run_program()
 uploader.lcd_display_image('logo.png')
 ```
 
-**工作量：** 2-3 天
-
 ---
 
 ### 4. 图形库（软件）
@@ -342,8 +336,6 @@ void lcd_printf(uint8_t x, uint8_t y, uint16_t fg, uint16_t bg, const char* fmt,
 // 图像函数
 void lcd_draw_image(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint16_t* data);
 ```
-
-**工作量：** 2-3 天
 
 ---
 
@@ -641,7 +633,7 @@ void display_boot_logo() {
   - 总计：~1835 行核心代码
   - 生成的 Verilog：4435 行（134KB）
 
-### ⏸️ Phase 6: FPGA 验证（2-3 天）
+### ⏸️ Phase 6: FPGA 验证
 - [x] 生成 Verilog
 - [x] FPGA 综合（使用 Yosys）
 - [x] 时序分析（178MHz，满足要求）
@@ -655,18 +647,6 @@ void display_boot_logo() {
 - 等待硬件：需要 FPGA 开发板进行实际测试
 
 ---
-
-## 时间估算
-
-| 阶段 | 工作量 | 依赖 |
-|------|--------|------|
-| Phase 1: UART | 3 天 | - |
-| Phase 2: TFT LCD | 5-7 天 | - |
-| Phase 3: 上传协议 | 2-3 天 | Phase 1 |
-| Phase 4: 图形库 | 2-3 天 | Phase 2 |
-| Phase 5: 集成测试 | 2-3 天 | Phase 1-4 |
-| Phase 6: FPGA 验证 | 2-3 天 | Phase 5 |
-| **总计** | **16-22 天** | |
 
 ---
 
@@ -721,7 +701,7 @@ void display_boot_logo() {
 ### 2025-11-16 - Phase 1 & 2 完成
 
 #### Phase 1: UART 控制器 ✅
-**时间：** 约 2 小时  
+**完成时间：** 2025-11-16  
 **文件：**
 - `chisel/src/main/scala/peripherals/RealUART.scala` (324 行)
 - `chisel/src/test/scala/RealUARTTest.scala` (267 行)
@@ -753,7 +733,7 @@ void display_boot_logo() {
 ---
 
 #### Phase 2: TFT LCD 控制器 ✅
-**时间：** 约 3 小时  
+**完成时间：** 2025-11-16  
 **文件：**
 - `chisel/src/main/scala/peripherals/TFTLCD.scala` (329 行)
 - `chisel/src/test/scala/TFTLCDTest.scala` (254 行)
@@ -889,15 +869,15 @@ class SimpleEdgeAiSoC(clockFreq: Int = 50000000, baudRate: Int = 115200) extends
 
 ### 完成情况总览
 
-| 阶段 | 状态 | 完成时间 | 工作量 | 说明 |
-|------|------|---------|--------|------|
-| Phase 1: UART | ✅ 完成 | 2025-11-16 | 2 小时 | 完整实现，7/8 测试通过 |
-| Phase 2: LCD | ✅ 完成 | 2025-11-16 | 3 小时 | 完整实现，8/8 测试通过 |
-| Phase 3: 上传协议 | ✅ 完成 | 2025-11-16 | 2 小时 | Bootloader + Python 工具 |
-| Phase 4: 图形库 | ✅ 完成 | 2025-11-16 | 2 小时 | 完整图形库 + 4 个示例 |
-| Phase 5: 集成测试 | ✅ 完成 | 2025-11-16 | 1 小时 | 32 个测试，100% 通过 |
-| Phase 6: FPGA 验证 | ⏸️ 部分 | - | - | Verilog 生成和综合完成 |
-| **总计** | **83%** | **1 天** | **10 小时** | **超预期完成** |
+| 阶段 | 状态 | 完成时间 | 说明 |
+|------|------|---------|------|
+| Phase 1: UART | ✅ 完成 | 2025-11-16 | 完整实现，7/8 测试通过 |
+| Phase 2: LCD | ✅ 完成 | 2025-11-16 | 完整实现，8/8 测试通过 |
+| Phase 3: 上传协议 | ✅ 完成 | 2025-11-16 | Bootloader + Python 工具 |
+| Phase 4: 图形库 | ✅ 完成 | 2025-11-16 | 完整图形库 + 4 个示例 |
+| Phase 5: 集成测试 | ✅ 完成 | 2025-11-16 | 32 个测试，100% 通过 |
+| Phase 6: FPGA 验证 | ⏸️ 部分 | - | Verilog 生成和综合完成 |
+| **总计** | **83%** | **1 天完成** | **超预期完成** |
 
 ### 代码统计
 
