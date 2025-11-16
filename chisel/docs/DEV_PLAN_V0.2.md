@@ -839,4 +839,65 @@ class SimpleEdgeAiSoC(clockFreq: Int = 50000000, baudRate: Int = 115200) extends
 **创建时间：** 2025-11-16  
 **最后更新：** 2025-11-16  
 **版本：** v0.2-dev  
-**状态：** Phase 1 & 2 完成，进入 Phase 3
+**状态：** Phase 1-4 完成，进入 Phase 5（集成测试）
+
+---
+
+## 📊 当前状态总结
+
+### 已完成功能
+
+#### 硬件（Chisel）
+- ✅ RealUART - 完整的 UART 控制器
+  - 可配置波特率
+  - TX/RX FIFO（16 字节）
+  - 中断支持
+  - 7/8 测试通过
+- ✅ TFTLCD - ST7735 SPI 控制器
+  - 128x128 RGB565 显示
+  - 32KB 帧缓冲
+  - 自动初始化
+  - 8/8 测试通过
+- ✅ SimpleEdgeAiSoC - 完整的 SoC 集成
+  - PicoRV32 RISC-V 核心
+  - CompactAccel + BitNetAccel
+  - UART + LCD + GPIO
+  - 成功生成 Verilog
+
+#### 软件（C/Python）
+- ✅ HAL（硬件抽象层）
+  - UART 驱动
+  - LCD 驱动
+  - 完整的寄存器定义
+- ✅ 图形库
+  - 基本图形（点、线、矩形、圆）
+  - 文本渲染（8x8 字体）
+  - 图像显示
+- ✅ Bootloader
+  - 程序上传
+  - 命令协议
+  - LCD 启动画面
+- ✅ Python 工具
+  - upload.py - 程序上传工具
+  - 支持图像显示
+- ✅ 示例程序
+  - hello_lcd.c - Hello World
+  - ai_demo.c - AI 推理演示
+
+### 文件统计
+- Chisel 源码：3 个模块（RealUART, TFTLCD, SoC）
+- Chisel 测试：2 个测试套件（15/16 测试通过）
+- C 源码：5 个文件（~1500 行）
+- Python 工具：1 个（~200 行）
+- 示例程序：2 个
+- 文档：2 个（DEV_PLAN, README）
+
+### Git 提交记录
+- **a8cfe8e** - Phase 1: UART 控制器
+- **226035b** - Phase 2: TFT LCD 控制器
+- **7eb967a** - 文档更新
+- **8fa8310** - Phase 3 & 4: Bootloader + 图形库
+
+### 下一步
+- Phase 5: 集成测试（文档和演示）
+- Phase 6: FPGA 验证（可选，需要硬件）
