@@ -2,7 +2,9 @@
 # Requires RISC-V GCC toolchain
 
 # Toolchain
-PREFIX = riscv32-unknown-elf-
+# Default to riscv64-elf (Homebrew on macOS)
+# Override with: make PREFIX=riscv32-unknown-elf-
+PREFIX ?= riscv64-elf-
 CC = $(PREFIX)gcc
 OBJCOPY = $(PREFIX)objcopy
 OBJDUMP = $(PREFIX)objdump
@@ -20,6 +22,9 @@ CFLAGS += -ffunction-sections -fdata-sections
 LDFLAGS = -T linker.ld
 LDFLAGS += -Wl,--gc-sections
 LDFLAGS += -Wl,-Map=$@.map
+# Link libgcc for mul/div support
+LIBGCC = $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
+LDFLAGS += -L$(dir $(LIBGCC)) -lgcc
 
 # Directories
 LIB_DIR = lib
@@ -32,8 +37,12 @@ LIB_SRCS = $(LIB_DIR)/hal.c \
            $(LIB_DIR)/graphics.c \
            $(LIB_DIR)/font_8x8.c
 
+# Startup code
+STARTUP = $(LIB_DIR)/start.S
+
 # Library objects
 LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(LIB_SRCS))
+STARTUP_OBJ = $(BUILD_DIR)/$(LIB_DIR)/start.o
 
 # Examples
 EXAMPLES = hello_lcd ai_demo benchmark system_monitor
@@ -55,20 +64,27 @@ $(BUILD_DIR)/%.o: %.c | $(BUILD_DIR)
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile startup code
+$(STARTUP_OBJ): $(STARTUP) | $(BUILD_DIR)
+	@echo "AS $<"
+	@$(CC) $(CFLAGS) -c $< -o $@
+
 # Build examples
-$(EXAMPLES): %: $(EXAMPLES_DIR)/%.c $(LIB_OBJS)
+$(EXAMPLES): %: $(EXAMPLES_DIR)/%.c $(STARTUP_OBJ) $(LIB_OBJS)
 	@echo "Building $@..."
-	@$(CC) $(CFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$@.elf \
-		$(EXAMPLES_DIR)/$@.c $(LIB_OBJS)
+	@$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@.elf \
+		$(STARTUP_OBJ) $(EXAMPLES_DIR)/$@.c $(LIB_OBJS) \
+		$(LDFLAGS) $(LIBGCC)
 	@$(OBJCOPY) -O binary $(BUILD_DIR)/$@.elf $(BUILD_DIR)/$@.bin
 	@$(SIZE) $(BUILD_DIR)/$@.elf
 	@echo "Created $(BUILD_DIR)/$@.bin"
 
 # Build bootloader
-$(BOOTLOADER): $(BOOT_DIR)/$(BOOTLOADER).c $(LIB_OBJS)
+$(BOOTLOADER): $(BOOT_DIR)/$(BOOTLOADER).c $(STARTUP_OBJ) $(LIB_OBJS)
 	@echo "Building $@..."
-	@$(CC) $(CFLAGS) $(LDFLAGS) -o $(BUILD_DIR)/$@.elf \
-		$(BOOT_DIR)/$@.c $(LIB_OBJS)
+	@$(CC) $(CFLAGS) -o $(BUILD_DIR)/$@.elf \
+		$(STARTUP_OBJ) $(BOOT_DIR)/$@.c $(LIB_OBJS) \
+		$(LDFLAGS) $(LIBGCC)
 	@$(OBJCOPY) -O binary $(BUILD_DIR)/$@.elf $(BUILD_DIR)/$@.bin
 	@$(SIZE) $(BUILD_DIR)/$@.elf
 	@echo "Created $(BUILD_DIR)/$@.bin"

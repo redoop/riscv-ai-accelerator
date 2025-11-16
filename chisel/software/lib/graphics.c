@@ -2,8 +2,53 @@
 // Phase 4 of DEV_PLAN_V0.2
 
 #include "graphics.h"
-#include <stdarg.h>
-#include <stdio.h>
+
+// Simple implementations to avoid libc dependency
+typedef __builtin_va_list va_list;
+#define va_start(v,l) __builtin_va_start(v,l)
+#define va_end(v) __builtin_va_end(v)
+#define va_arg(v,l) __builtin_va_arg(v,l)
+
+// Simple sprintf implementation (limited functionality)
+static int simple_sprintf(char* buf, const char* fmt, va_list args) {
+    char* p = buf;
+    const char* f = fmt;
+    
+    while (*f) {
+        if (*f == '%') {
+            f++;
+            if (*f == 'd') {
+                int val = va_arg(args, int);
+                // Simple integer to string
+                if (val < 0) {
+                    *p++ = '-';
+                    val = -val;
+                }
+                char temp[12];
+                int i = 0;
+                do {
+                    temp[i++] = '0' + (val % 10);
+                    val /= 10;
+                } while (val > 0);
+                while (i > 0) {
+                    *p++ = temp[--i];
+                }
+            } else if (*f == 's') {
+                char* s = va_arg(args, char*);
+                while (*s) {
+                    *p++ = *s++;
+                }
+            } else if (*f == '%') {
+                *p++ = '%';
+            }
+            f++;
+        } else {
+            *p++ = *f++;
+        }
+    }
+    *p = '\0';
+    return p - buf;
+}
 
 // ============================================================================
 // Helper Functions
@@ -133,7 +178,7 @@ void lcd_printf(uint8_t x, uint8_t y, uint16_t fg, uint16_t bg, const char* fmt,
     char buffer[128];
     va_list args;
     va_start(args, fmt);
-    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    simple_sprintf(buffer, fmt, args);
     va_end(args);
     lcd_draw_string(x, y, buffer, fg, bg);
 }

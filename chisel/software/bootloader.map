@@ -1,0 +1,340 @@
+Archive member included to satisfy reference by file (symbol)
+
+/opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+                              build/lib/hal.o (__mulsi3)
+/opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+                              build/lib/graphics.o (__divsi3)
+
+Discarded input sections
+
+ .text          0x00000000        0x0 build/lib/start.o
+ .data          0x00000000        0x0 build/lib/start.o
+ .bss           0x00000000        0x0 build/lib/start.o
+ .text          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .data          0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .bss           0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .text.cmd_ping
+                0x00000000        0xc /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .text.cmd_info
+                0x00000000       0x70 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .comment       0x00000000       0x13 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .text          0x00000000        0x0 build/lib/hal.o
+ .data          0x00000000        0x0 build/lib/hal.o
+ .bss           0x00000000        0x0 build/lib/hal.o
+ .text.uart_tx_ready
+                0x00000000       0x18 build/lib/hal.o
+ .text.lcd_reset
+                0x00000000       0x88 build/lib/hal.o
+ .text.lcd_backlight
+                0x00000000       0x24 build/lib/hal.o
+ .text.lcd_send_command
+                0x00000000       0x18 build/lib/hal.o
+ .text.lcd_send_data
+                0x00000000       0x18 build/lib/hal.o
+ .text.delay_us
+                0x00000000       0x34 build/lib/hal.o
+ .comment       0x00000000       0x13 build/lib/hal.o
+ .text          0x00000000        0x0 build/lib/graphics.o
+ .data          0x00000000        0x0 build/lib/graphics.o
+ .bss           0x00000000        0x0 build/lib/graphics.o
+ .text.lcd_printf
+                0x00000000      0x23c build/lib/graphics.o
+ .text.lcd_draw_image
+                0x00000000       0xf0 build/lib/graphics.o
+ .comment       0x00000000       0x13 build/lib/graphics.o
+ .text          0x00000000        0x0 build/lib/font_8x8.o
+ .data          0x00000000        0x0 build/lib/font_8x8.o
+ .bss           0x00000000        0x0 build/lib/font_8x8.o
+ .comment       0x00000000       0x13 build/lib/font_8x8.o
+ .data          0x00000000        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .bss           0x00000000        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .data          0x00000000        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+ .bss           0x00000000        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+RAM              0x00010000         0x0fff0000         xrw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD build/lib/start.o
+LOAD /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+LOAD build/lib/hal.o
+LOAD build/lib/graphics.o
+LOAD build/lib/font_8x8.o
+LOAD /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a
+LOAD /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32/libgcc.a
+                0x00010000                        . = 0x10000
+
+.text           0x00010000     0x16dc
+ *(.text.start)
+ .text.start    0x00010000       0x34 build/lib/start.o
+                0x00010000                _start
+                0x00010030                trap_handler
+ *(.text*)
+ .text.display_boot_screen
+                0x00010034       0xd8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x00010034                display_boot_screen
+ .text.cmd_upload
+                0x0001010c      0x164 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x0001010c                cmd_upload
+ .text.cmd_run  0x00010270       0x74 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x00010270                cmd_run
+ .text.cmd_read_mem
+                0x000102e4       0x8c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x000102e4                cmd_read_mem
+ .text.cmd_write_reg
+                0x00010370       0x7c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x00010370                cmd_write_reg
+ .text.cmd_lcd_test
+                0x000103ec      0x1cc /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x000103ec                cmd_lcd_test
+ .text.handle_command
+                0x000105b8       0xa8 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x000105b8                handle_command
+ .text.startup.main
+                0x00010660       0x48 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                0x00010660                main
+ .text.uart_init
+                0x000106a8       0x34 build/lib/hal.o
+                0x000106a8                uart_init
+ .text.uart_putc
+                0x000106dc       0x18 build/lib/hal.o
+                0x000106dc                uart_putc
+ .text.uart_getc
+                0x000106f4       0x1c build/lib/hal.o
+                0x000106f4                uart_getc
+ .text.uart_puts
+                0x00010710       0x2c build/lib/hal.o
+                0x00010710                uart_puts
+ .text.uart_rx_ready
+                0x0001073c       0x14 build/lib/hal.o
+                0x0001073c                uart_rx_ready
+ .text.lcd_init
+                0x00010750       0x98 build/lib/hal.o
+                0x00010750                lcd_init
+ .text.lcd_set_window
+                0x000107e8       0xfc build/lib/hal.o
+                0x000107e8                lcd_set_window
+ .text.lcd_fill_rect.part.0
+                0x000108e4       0xd8 build/lib/hal.o
+ .text.lcd_draw_pixel
+                0x000109bc       0x90 build/lib/hal.o
+                0x000109bc                lcd_draw_pixel
+ .text.lcd_clear
+                0x00010a4c       0x18 build/lib/hal.o
+                0x00010a4c                lcd_clear
+ .text.lcd_fill_rect
+                0x00010a64       0x18 build/lib/hal.o
+                0x00010a64                lcd_fill_rect
+ .text.delay_ms
+                0x00010a7c       0x48 build/lib/hal.o
+                0x00010a7c                delay_ms
+ .text.lcd_draw_line
+                0x00010ac4      0x110 build/lib/graphics.o
+                0x00010ac4                lcd_draw_line
+ .text.lcd_draw_rect
+                0x00010bd4       0xb0 build/lib/graphics.o
+                0x00010bd4                lcd_draw_rect
+ .text.lcd_draw_circle
+                0x00010c84      0x158 build/lib/graphics.o
+                0x00010c84                lcd_draw_circle
+ .text.lcd_fill_circle
+                0x00010ddc       0xe0 build/lib/graphics.o
+                0x00010ddc                lcd_fill_circle
+ .text.lcd_draw_char
+                0x00010ebc       0xdc build/lib/graphics.o
+                0x00010ebc                lcd_draw_char
+ .text.lcd_draw_string
+                0x00010f98       0xc4 build/lib/graphics.o
+                0x00010f98                lcd_draw_string
+ .text          0x0001105c       0x24 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+                0x0001105c                __mulsi3
+ .text          0x00011080       0xb4 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+                0x00011080                __divsi3
+                0x00011088                __hidden___udivsi3
+                0x00011088                __udivsi3
+                0x000110d0                __umodsi3
+                0x00011104                __modsi3
+ *(.rodata*)
+ .rodata.display_boot_screen.str1.4
+                0x00011134      0x16c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x29 (size before relaxing)
+ .rodata.cmd_upload.str1.4
+                0x000112a0        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x2a (size before relaxing)
+ .rodata.cmd_run.str1.4
+                0x000112a0        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x20 (size before relaxing)
+ .rodata.cmd_lcd_test.str1.4
+                0x000112a0        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x24 (size before relaxing)
+ .rodata.handle_command.str1.4
+                0x000112a0        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x97 (size before relaxing)
+ .rodata.handle_command
+                0x000112a0       0x3c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .rodata.main.str1.4
+                0x000112dc        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x38 (size before relaxing)
+ .rodata.font_8x8
+                0x000112dc      0x400 build/lib/font_8x8.o
+                0x000112dc                font_8x8
+
+.rela.dyn       0x000116dc        0x0
+ .rela.text.start
+                0x000116dc        0x0 build/lib/start.o
+
+.data
+ *(.data*)
+ *(.sdata*)
+
+.bss            0x000116dc        0x0
+                0x000116dc                        __bss_start = .
+ *(.bss*)
+ *(.sbss*)
+ *(COMMON)
+                0x000116dc                        __bss_end = .
+                0x000116e0                        . = ALIGN (0x10)
+                0x00100000                        __stack_top = 0x100000
+
+/DISCARD/
+ *(.comment)
+ *(.eh_frame)
+OUTPUT(build/bootloader.elf elf32-littleriscv)
+
+.riscv.attributes
+                0x00000000       0x1c
+ .riscv.attributes
+                0x00000000       0x1a build/lib/start.o
+ .riscv.attributes
+                0x0000001a       0x1c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .riscv.attributes
+                0x00000036       0x1c build/lib/hal.o
+ .riscv.attributes
+                0x00000052       0x1c build/lib/graphics.o
+ .riscv.attributes
+                0x0000006e       0x1c build/lib/font_8x8.o
+ .riscv.attributes
+                0x0000008a       0x1a /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .riscv.attributes
+                0x000000a4       0x1a /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+.note.GNU-stack
+                0x00000000        0x0
+ .note.GNU-stack
+                0x00000000        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .note.GNU-stack
+                0x00000000        0x0 build/lib/hal.o
+ .note.GNU-stack
+                0x00000000        0x0 build/lib/graphics.o
+ .note.GNU-stack
+                0x00000000        0x0 build/lib/font_8x8.o
+
+.debug_line     0x00000000     0x2549
+ .debug_line    0x00000000       0x7e build/lib/start.o
+ .debug_line    0x0000007e      0x831 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_line    0x000008af      0xe4d build/lib/hal.o
+ .debug_line    0x000016fc      0xc32 build/lib/graphics.o
+ .debug_line    0x0000232e       0x4e build/lib/font_8x8.o
+ .debug_line    0x0000237c       0x7a /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_line    0x000023f6      0x153 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+.debug_line_str
+                0x00000000      0x15a
+ .debug_line_str
+                0x00000000      0x15a build/lib/start.o
+                                 0x4b (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                 0x92 (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 build/lib/hal.o
+                                 0x59 (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 build/lib/graphics.o
+                                 0x6e (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 build/lib/font_8x8.o
+                                 0x6e (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+                                 0x9f (size before relaxing)
+ .debug_line_str
+                0x0000015a        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+                                 0x9c (size before relaxing)
+
+.debug_info     0x00000000     0x227e
+ .debug_info    0x00000000       0x24 build/lib/start.o
+ .debug_info    0x00000024      0xcf9 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_info    0x00000d1d      0x9bd build/lib/hal.o
+ .debug_info    0x000016da      0xa80 build/lib/graphics.o
+ .debug_info    0x0000215a       0x94 build/lib/font_8x8.o
+ .debug_info    0x000021ee       0x31 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_info    0x0000221f       0x5f /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+.debug_abbrev   0x00000000      0x819
+ .debug_abbrev  0x00000000       0x14 build/lib/start.o
+ .debug_abbrev  0x00000014      0x215 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_abbrev  0x00000229      0x29d build/lib/hal.o
+ .debug_abbrev  0x000004c6      0x28d build/lib/graphics.o
+ .debug_abbrev  0x00000753       0x76 build/lib/font_8x8.o
+ .debug_abbrev  0x000007c9       0x28 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_abbrev  0x000007f1       0x28 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+.debug_aranges  0x00000000      0x1e0
+ .debug_aranges
+                0x00000000       0x20 build/lib/start.o
+ .debug_aranges
+                0x00000020       0x68 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_aranges
+                0x00000088       0xa8 build/lib/hal.o
+ .debug_aranges
+                0x00000130       0x58 build/lib/graphics.o
+ .debug_aranges
+                0x00000188       0x18 build/lib/font_8x8.o
+ .debug_aranges
+                0x000001a0       0x20 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_aranges
+                0x000001c0       0x20 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+
+.debug_str      0x00000000      0x4d1
+ .debug_str     0x00000000      0x4d1 build/lib/start.o
+                                 0x59 (size before relaxing)
+ .debug_str     0x000004d1        0x0 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+                                0x238 (size before relaxing)
+ .debug_str     0x000004d1        0x0 build/lib/hal.o
+                                0x258 (size before relaxing)
+ .debug_str     0x000004d1        0x0 build/lib/graphics.o
+                                0x1c9 (size before relaxing)
+ .debug_str     0x000004d1        0x0 build/lib/font_8x8.o
+                                 0xbc (size before relaxing)
+ .debug_str     0x000004d1        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+                                 0xb4 (size before relaxing)
+ .debug_str     0x000004d1        0x0 /opt/homebrew/Cellar/riscv64-elf-gcc/15.2.0/lib/gcc/riscv64-elf/15.2.0/rv32i/ilp32//libgcc.a(div.o)
+                                 0xe1 (size before relaxing)
+
+.debug_loclists
+                0x00000000     0x1151
+ .debug_loclists
+                0x00000000      0x151 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_loclists
+                0x00000151      0x3c4 build/lib/hal.o
+ .debug_loclists
+                0x00000515      0xc3c build/lib/graphics.o
+
+.debug_rnglists
+                0x00000000      0x2d2
+ .debug_rnglists
+                0x00000000       0x98 /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_rnglists
+                0x00000098      0x162 build/lib/hal.o
+ .debug_rnglists
+                0x000001fa       0xd8 build/lib/graphics.o
+
+.debug_frame    0x00000000      0x558
+ .debug_frame   0x00000000      0x15c /var/folders/x1/dw9cr25s1j5606xy8x6yg_yh0000gn/T//ccvH0pDA.o
+ .debug_frame   0x0000015c      0x180 build/lib/hal.o
+ .debug_frame   0x000002dc      0x27c build/lib/graphics.o

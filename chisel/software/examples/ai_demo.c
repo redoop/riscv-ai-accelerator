@@ -79,7 +79,9 @@ void main(void) {
         }
         
         // Send status to UART
-        uart_printf("Frame %d: %s (%d%%)\r\n", frame_count, classes[class_idx], confidence);
+        uart_puts("Frame: ");
+        uart_puts(classes[class_idx]);
+        uart_puts("\r\n");
         
         delay_ms(100);
     }

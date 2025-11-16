@@ -4,8 +4,22 @@
 #ifndef HAL_H
 #define HAL_H
 
-#include <stdint.h>
-#include <stdbool.h>
+// Basic type definitions (avoid stdint.h dependency)
+typedef unsigned char uint8_t;
+typedef unsigned short uint16_t;
+typedef unsigned int uint32_t;
+typedef signed char int8_t;
+typedef signed short int16_t;
+typedef signed int int32_t;
+
+// bool is a keyword in C23, so we don't need to define it
+#ifndef __cplusplus
+#ifndef bool
+#define bool _Bool
+#define true 1
+#define false 0
+#endif
+#endif
 
 // ============================================================================
 // Memory Map
