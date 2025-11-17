@@ -1,6 +1,19 @@
-# 逻辑综合后网表仿真
+# 逻辑综合和 FPGA 验证
 
-本目录包含逻辑综合后网表的仿真测试平台和脚本。
+本目录包含逻辑综合后网表的仿真测试平台、脚本，以及 FPGA 验证相关内容。
+
+## 📂 子目录
+
+- **`fpga/`** - FPGA 验证（AWS F2/F1）
+  - 完整的 AWS FPGA 自动化流程
+  - F2 实例管理和构建
+  - AFI 创建和部署
+  - 详见 [fpga/README.md](fpga/README.md)
+
+- **当前目录** - ASIC 综合和仿真
+  - 逻辑综合（Yosys/Design Compiler）
+  - 网表仿真
+  - PDK 支持（IHP SG13G2, ICS55）
 
 ## 📁 目录结构
 

@@ -51,59 +51,58 @@
 - ✅ F1 实例可用性已确认（us-east-1）
 - ✅ launch_f1_instance.sh - 自动化启动脚本
 
-## ✅ 当前状态：F2 实例已启动，Vivado 已确认，准备开始 FPGA 构建
+## ✅ 当前状态：AWS F2 自动化流程已完成，DCP 文件已生成
 
-### 实例信息
+### 最新实例信息
 
-- ✅ **实例 ID**: i-00d976d528e721c43
+- ✅ **实例 ID**: i-0cebfaf55e595c109
 - ✅ **实例类型**: f2.6xlarge (Xilinx VU47P)
-- ✅ **公网 IP**: 54.81.161.62
+- ✅ **公网 IP**: 98.94.97.22
 - ✅ **用户名**: ubuntu
 - ✅ **AMI**: ami-0b359c50bdba2aac0 (Vivado 2025.1 预装)
 - ✅ **密钥**: fpga-f2-key
 - ✅ **状态**: running
-- ✅ **Spot 请求 ID**: sir-nh5zbwyn
+- ✅ **Spot 请求 ID**: sir-m6iq8y2q
 - ✅ **Spot 价格**: $1.00/小时
+- ✅ **启动时间**: 2025-11-18 01:36:12 UTC
 
-### 已完成配置
+### 已完成配置和构建
 
 - ✅ SSH 连接成功（用户名：ubuntu）
 - ✅ Vivado 2025.1 已确认可用
 - ✅ Vivado 路径：`/tools/Xilinx/2025.1/Vivado/bin/vivado`
 - ✅ 环境设置脚本已创建（setup_vivado_env.sh）
-- ✅ 使用指南已创建（F2_VIVADO_GUIDE.md）
 - ✅ 项目文件已上传（44KB）
-- ✅ Vivado 构建已启动（进程 PID: 5811）
+- ✅ Vivado 构建已完成（用时 14 分 45 秒）
+- ✅ DCP 文件已生成
+- ✅ 自动化脚本已集成（run_fpga_flow.sh）
 
 ### 🎉 构建成功完成！
 
-- ✅ **综合阶段**: 已完成（用时 3 分钟）
-- ✅ **实现阶段**: 已完成（用时 2 分钟）
-- ✅ **比特流生成**: 已完成（用时 1 分钟）
+- ✅ **综合阶段**: 已完成
+- ✅ **实现阶段**: 已完成（布局布线）
 - ✅ **DCP 生成**: 已完成
-- **最终启动**: 2025-11-16 09:51 UTC (17:51 北京时间)
-- **构建完成**: 2025-11-16 09:58 UTC (17:58 北京时间)
-- **总用时**: 约 6 分钟
-- **状态**: ✅ 成功
+- **构建启动**: 2025-11-18 01:45 UTC
+- **构建完成**: 2025-11-18 02:00 UTC
+- **总用时**: 约 15 分钟
+- **状态**: ✅ 成功（无比特流生成，仅 DCP）
 
 ### 📊 构建结果
 
-**时序收敛**：
-- WNS (Worst Negative Slack): 0.476 ns ✅
-- TNS (Total Negative Slack): 0.000 ns ✅
-- 工作频率: 100 MHz ✅
-- 状态: 所有时序约束都满足！
+**生成的文件**：
+- ✅ DCP: SH_CL_routed.dcp（用于 AWS AFI）
+- ✅ 报告: 综合和实现报告
+- ⚠️ 注意: 未生成比特流（AWS F2 流程不需要）
 
-**资源利用率**：
-- LUT: 2,397 / 1,303,680 (0.18%)
-- 寄存器: 1,061 / 2,607,360 (0.04%)
+**资源利用率**（预估）：
+- LUT: ~2,400 / 1,303,680 (0.18%)
+- 寄存器: ~1,100 / 2,607,360 (0.04%)
 - DSP: 3 / 2,688 (0.11%)
 - 结论: 资源使用非常低，设计高效！
 
-**生成的文件**：
-- 比特流: fpga_top.bit (82 MB)
-- DCP: SH_CL_routed.dcp (2.1 MB)
-- 报告: 已下载到 `build_results/reports/`
+**时序状态**：
+- 目标频率: 100 MHz
+- 状态: 布局布线完成，DCP 已生成
 
 ### 已解决的所有问题
 
@@ -153,38 +152,56 @@
 
 ### 🎯 下一步操作
 
-**查看报告**：
+**使用自动化脚本**（推荐）：
 ```bash
-cd chisel/synthesis/fpga/build_results
-cat reports/timing_impl.rpt
-cat reports/utilization_impl.rpt
+cd chisel/synthesis/fpga
+
+# 下载 DCP 文件
+./run_fpga_flow.sh aws-download-dcp
+
+# 创建 AFI
+./run_fpga_flow.sh aws-create-afi
+
+# 清理 F2 实例（节省成本）
+./run_fpga_flow.sh aws-cleanup
+
+# 查看状态
+./run_fpga_flow.sh status
 ```
 
-**（可选）创建 AWS AFI**：
+**或手动操作**：
 ```bash
-cd chisel/synthesis/fpga/aws-deployment
-./create_afi.sh
-```
+# 下载 DCP
+scp -i ~/.ssh/fpga-f2-key.pem \
+  ubuntu@98.94.97.22:~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp \
+  build/checkpoints/to_aws/
 
-**停止 F2 实例**（节省成本）：
-```bash
-aws ec2 terminate-instances --instance-ids i-00d976d528e721c43 --region us-east-1
-```
+# 创建 AFI
+cd aws-deployment && ./create_afi.sh
 
-**详细信息**：查看 `aws-deployment/BUILD_SUCCESS.md`
+# 停止实例
+aws ec2 terminate-instances --instance-ids i-0cebfaf55e595c109 --region us-east-1
+```
 
 ### 💰 实际时间和成本
 
 | 项目 | 时间 | 成本 | 状态 |
 |------|------|------|------|
-| 启动实例 | 10 分钟 | $0.17 | ✅ 已完成 |
-| 环境配置 | 15 分钟 | $0.25 | ✅ 已完成 |
-| 调试和修复 | 2 小时 | $2.00 | ✅ 已完成 |
-| 最终构建 | 6 分钟 | $0.10 | ✅ 已完成 |
-| 下载结果 | 5 分钟 | $0.08 | ✅ 已完成 |
-| **总计** | **~2.5 小时** | **~$2.60** | **✅ 完成** |
+| 启动实例 | 5 分钟 | $0.08 | ✅ 已完成 |
+| 上传项目 | 2 分钟 | $0.03 | ✅ 已完成 |
+| Vivado 构建 | 15 分钟 | $0.25 | ✅ 已完成 |
+| 监控和验证 | 5 分钟 | $0.08 | ✅ 已完成 |
+| **总计** | **~27 分钟** | **~$0.44** | **✅ 完成** |
 
-**节省**: 比预算节省约 50%！
+**节省**: 使用 Spot 实例和自动化流程，比预算节省约 85%！
+
+### 🚀 自动化流程优势
+
+- ✅ **一键部署**: `./run_fpga_flow.sh aws`
+- ✅ **动态 IP 管理**: 无需手动配置
+- ✅ **智能监控**: 实时进度和错误检测
+- ✅ **成本优化**: Spot 实例节省 70%
+- ✅ **快速构建**: 15 分钟完成（vs 2-4 小时预期）
 
 ## 📋 待办事项
 
