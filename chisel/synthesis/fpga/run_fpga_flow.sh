@@ -45,28 +45,35 @@ show_help() {
     echo "  deploy      - 部署到 FPGA (需要硬件)"
     echo "  test        - 运行 FPGA 测试"
     echo "  full        - 完整流程 (prepare -> build)"
-    echo "  aws         - AWS F1 完整流程"
+    echo "  aws         - AWS F2/F1 完整流程（自动化）"
+    echo "  aws-launch  - 启动 AWS F2 实例"
+    echo "  aws-upload  - 上传项目到 F2 实例"
+    echo "  aws-build   - 在 F2 上启动构建"
+    echo "  aws-monitor - 监控 F2 构建进度"
     echo "  clean       - 清理所有构建文件"
     echo "  status      - 查看当前状态"
     echo ""
     echo -e "${BLUE}目标:${NC}"
     echo "  local       - 本地 FPGA 开发 (默认)"
-    echo "  aws         - AWS F1 云端 FPGA"
+    echo "  aws         - AWS F2/F1 云端 FPGA"
     echo ""
     echo -e "${BLUE}示例:${NC}"
     echo "  $0 prepare              # 准备环境和生成 Verilog"
     echo "  $0 simulate             # 运行仿真"
     echo "  $0 full local           # 本地完整流程"
-    echo "  $0 aws                  # AWS F1 完整流程"
+    echo "  $0 aws                  # AWS 完整自动化流程"
     echo "  $0 status               # 查看状态"
     echo ""
-    echo -e "${BLUE}AWS F1 流程:${NC}"
-    echo "  1. $0 prepare           # 生成 Verilog"
-    echo "  2. $0 aws               # 自动执行 AWS 流程"
-    echo "     - 配置 AWS 环境"
-    echo "     - 运行 Vivado 综合"
-    echo "     - 创建 AFI 镜像"
-    echo "     - 部署和测试"
+    echo -e "${BLUE}AWS 自动化流程（推荐）:${NC}"
+    echo "  1. $0 aws-launch        # 启动 F2 Spot 实例（预装 Vivado）"
+    echo "  2. $0 prepare           # 生成 Verilog"
+    echo "  3. $0 aws-upload        # 上传项目到 F2"
+    echo "  4. $0 aws-build         # 启动 Vivado 构建"
+    echo "  5. $0 aws-monitor       # 监控构建进度"
+    echo "  6. 创建 AFI 并测试"
+    echo ""
+    echo -e "${BLUE}或使用一键命令:${NC}"
+    echo "  $0 aws                  # 自动执行上述所有步骤"
     echo ""
 }
 
@@ -350,31 +357,128 @@ clean_all() {
     echo -e "${GREEN}✓ 清理完成${NC}"
 }
 
-# AWS 完整流程
+# 启动 AWS F2 实例
+aws_launch_instance() {
+    echo -e "${BLUE}启动 AWS F2 实例...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f "launch_f2_vivado.sh" ]; then
+        echo -e "${RED}❌ 未找到 launch_f2_vivado.sh${NC}"
+        exit 1
+    fi
+    
+    bash launch_f2_vivado.sh
+    
+    echo -e "${GREEN}✓ F2 实例已启动${NC}"
+    echo -e "${YELLOW}实例信息已保存到 .f2_instance_info${NC}"
+}
+
+# 上传项目到 F2
+aws_upload_project() {
+    echo -e "${BLUE}上传项目到 F2 实例...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f ".f2_instance_info" ]; then
+        echo -e "${RED}❌ 未找到实例信息文件${NC}"
+        echo "请先运行: $0 aws-launch"
+        exit 1
+    fi
+    
+    bash upload_project.sh
+    
+    echo -e "${GREEN}✓ 项目已上传${NC}"
+}
+
+# 在 F2 上启动构建
+aws_start_build() {
+    echo -e "${BLUE}在 F2 实例上启动构建...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f ".f2_instance_info" ]; then
+        echo -e "${RED}❌ 未找到实例信息文件${NC}"
+        echo "请先运行: $0 aws-launch"
+        exit 1
+    fi
+    
+    bash start_build.sh
+    
+    echo -e "${GREEN}✓ 构建已启动${NC}"
+    echo -e "${YELLOW}预计时间: 2-4 小时${NC}"
+}
+
+# 监控 F2 构建
+aws_monitor_build() {
+    echo -e "${BLUE}监控 F2 构建进度...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f ".f2_instance_info" ]; then
+        echo -e "${RED}❌ 未找到实例信息文件${NC}"
+        echo "请先运行: $0 aws-launch"
+        exit 1
+    fi
+    
+    bash continuous_monitor.sh
+}
+
+# AWS 完整自动化流程
 aws_full_flow() {
     show_banner
-    echo -e "${CYAN}开始 AWS F1 完整验证流程...${NC}"
+    echo -e "${CYAN}开始 AWS F2/F1 完整自动化流程...${NC}"
     echo ""
     
     TARGET="aws"
     
+    # 步骤 1: 检查依赖
     check_dependencies
+    
+    # 步骤 2: 启动 F2 实例
+    echo -e "${CYAN}[步骤 1/6] 启动 F2 实例${NC}"
+    aws_launch_instance
+    echo ""
+    
+    # 步骤 3: 准备环境和生成 Verilog
+    echo -e "${CYAN}[步骤 2/6] 生成 Verilog${NC}"
     prepare_environment
     generate_verilog
-    run_simulation
-    synthesize_aws
-    create_afi
+    echo ""
+    
+    # 步骤 4: 上传项目
+    echo -e "${CYAN}[步骤 3/6] 上传项目到 F2${NC}"
+    aws_upload_project
+    echo ""
+    
+    # 步骤 5: 启动构建
+    echo -e "${CYAN}[步骤 4/6] 启动 Vivado 构建${NC}"
+    aws_start_build
+    echo ""
+    
+    # 步骤 6: 监控构建
+    echo -e "${CYAN}[步骤 5/6] 监控构建进度${NC}"
+    echo "按 Ctrl+C 可以退出监控，构建会继续在后台运行"
+    echo ""
+    sleep 3
+    aws_monitor_build
     
     echo ""
     echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║  AWS F1 流程完成！                                         ║${NC}"
+    echo -e "${GREEN}║  AWS 自动化流程完成！                                      ║${NC}"
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${BLUE}下一步:${NC}"
-    echo "  1. 等待 AFI 生成完成 (30-60 分钟)"
-    echo "  2. 检查状态: $0 status"
-    echo "  3. 部署测试: $0 deploy aws"
-    echo "  4. 运行测试: $0 test"
+    echo "  1. 等待构建完成（如果还在进行中）"
+    echo "  2. 创建 AFI: cd aws-deployment && ./create_afi.sh"
+    echo "  3. 等待 AFI 生成 (30-60 分钟)"
+    echo "  4. 部署测试: $0 deploy aws"
+    echo ""
+    echo -e "${BLUE}成本估算:${NC}"
+    echo "  F2 Spot 实例: ~$2-4 (2-4 小时)"
+    echo "  AFI 创建: 免费"
+    echo "  F1 测试: ~$0.3 (10-20 分钟)"
+    echo "  总计: ~$2.3-4.3"
     echo ""
 }
 
@@ -460,6 +564,22 @@ main() {
             ;;
         aws)
             aws_full_flow
+            ;;
+        aws-launch)
+            show_banner
+            aws_launch_instance
+            ;;
+        aws-upload)
+            show_banner
+            aws_upload_project
+            ;;
+        aws-build)
+            show_banner
+            aws_start_build
+            ;;
+        aws-monitor)
+            show_banner
+            aws_monitor_build
             ;;
         status)
             show_status
