@@ -27,6 +27,11 @@ echo "实例 IP: $INSTANCE_IP"
 echo "用户: $USER"
 echo ""
 
+# 获取脚本目录和项目根目录
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FPGA_DIR="$SCRIPT_DIR/.."
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
+
 # 创建临时打包目录
 TEMP_DIR=$(mktemp -d)
 PROJECT_DIR="$TEMP_DIR/fpga-project"
@@ -34,33 +39,61 @@ mkdir -p "$PROJECT_DIR"
 
 echo "📦 准备项目文件..."
 
-# 复制必要文件
-echo "  - 复制源码..."
-cp -r ../src "$PROJECT_DIR/"
-
+# 复制生成的 Verilog（必需）
 echo "  - 复制生成的 Verilog..."
 mkdir -p "$PROJECT_DIR/generated"
-# 从当前工作目录查找
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
-cp -r "$REPO_ROOT/chisel/generated/simple_edgeaisoc" "$PROJECT_DIR/generated/"
+if [ -d "$REPO_ROOT/chisel/generated/simple_edgeaisoc" ]; then
+    cp -r "$REPO_ROOT/chisel/generated/simple_edgeaisoc" "$PROJECT_DIR/generated/"
+    echo "    ✓ Verilog 文件已复制"
+else
+    echo "    ⚠️  警告: 未找到生成的 Verilog"
+    echo "    请先运行: cd $REPO_ROOT/chisel && sbt 'runMain riscv.ai.SimpleEdgeAiSoCMain'"
+fi
 
+# 复制约束文件
 echo "  - 复制约束文件..."
-cp -r ../constraints "$PROJECT_DIR/"
+if [ -d "$FPGA_DIR/constraints" ]; then
+    cp -r "$FPGA_DIR/constraints" "$PROJECT_DIR/"
+    echo "    ✓ 约束文件已复制"
+else
+    echo "    ⚠️  警告: 未找到约束文件目录"
+fi
 
+# 复制脚本
 echo "  - 复制脚本..."
-cp -r ../scripts "$PROJECT_DIR/"
+if [ -d "$FPGA_DIR/scripts" ]; then
+    cp -r "$FPGA_DIR/scripts" "$PROJECT_DIR/"
+    echo "    ✓ 脚本已复制"
+else
+    echo "    ⚠️  警告: 未找到脚本目录"
+fi
 
-echo "  - 复制测试文件..."
-cp -r ../testbench "$PROJECT_DIR/"
+# 复制源码（如果存在）
+if [ -d "$FPGA_DIR/src" ]; then
+    echo "  - 复制源码..."
+    cp -r "$FPGA_DIR/src" "$PROJECT_DIR/"
+    echo "    ✓ 源码已复制"
+fi
 
+# 复制测试文件（如果存在）
+if [ -d "$FPGA_DIR/testbench" ]; then
+    echo "  - 复制测试文件..."
+    cp -r "$FPGA_DIR/testbench" "$PROJECT_DIR/"
+    echo "    ✓ 测试文件已复制"
+fi
+
+# 复制文档（如果存在）
 echo "  - 复制文档..."
 mkdir -p "$PROJECT_DIR/docs"
-cp ../README.md "$PROJECT_DIR/"
-cp ../docs/BUILD_GUIDE.md "$PROJECT_DIR/docs/"
+[ -f "$FPGA_DIR/README.md" ] && cp "$FPGA_DIR/README.md" "$PROJECT_DIR/"
+[ -f "$FPGA_DIR/docs/BUILD_GUIDE.md" ] && cp "$FPGA_DIR/docs/BUILD_GUIDE.md" "$PROJECT_DIR/docs/" 2>/dev/null
 
-echo "  - 复制环境脚本..."
-cp setup_vivado_env.sh "$PROJECT_DIR/"
+# 复制环境脚本
+if [ -f "$SCRIPT_DIR/setup_vivado_env.sh" ]; then
+    echo "  - 复制环境脚本..."
+    cp "$SCRIPT_DIR/setup_vivado_env.sh" "$PROJECT_DIR/"
+    echo "    ✓ 环境脚本已复制"
+fi
 
 # 创建项目结构说明
 cat > "$PROJECT_DIR/README.txt" << 'EOF'

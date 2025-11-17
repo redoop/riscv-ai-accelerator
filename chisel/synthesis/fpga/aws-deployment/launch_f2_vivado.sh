@@ -102,7 +102,7 @@ SPOT_REQUEST_ID=$SPOT_REQUEST_ID
 PUBLIC_IP=$PUBLIC_IP
 KEY_NAME=$KEY_NAME
 REGION=$REGION
-TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+TIMESTAMP="$(date '+%Y-%m-%d %H:%M:%S')"
 EOF
 
 echo "✓ 实例信息已保存到: $INFO_FILE"
