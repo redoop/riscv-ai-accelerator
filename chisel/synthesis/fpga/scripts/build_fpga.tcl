@@ -68,19 +68,17 @@ puts "生成综合报告..."
 report_utilization -file $build_dir/reports/utilization_synth.rpt
 report_timing_summary -file $build_dir/reports/timing_synth.rpt
 
-# 运行实现（只到布局布线，不生成比特流）
-puts "开始实现（布局布线）..."
-launch_runs impl_1 -to_step route_design -jobs 8
-wait_on_run impl_1
+# 运行实现（直接使用 TCL 命令，不生成比特流）
+puts "开始实现（优化）..."
+opt_design -directive Explore
 
-# 检查实现结果
-if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {
-    puts "错误：实现失败"
-    exit 1
-}
+puts "开始布局..."
+place_design -directive Explore
 
-# 打开实现设计
-open_run impl_1
+puts "开始布线..."
+route_design -directive Explore
+
+puts "实现完成！"
 
 # 生成实现报告
 puts "生成实现报告..."
