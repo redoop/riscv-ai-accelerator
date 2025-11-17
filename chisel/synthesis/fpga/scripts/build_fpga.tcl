@@ -2,7 +2,7 @@
 
 # 设置项目参数
 set project_name "riscv_ai_accel"
-set top_module "fpga_top"
+set top_module "SimpleEdgeAiSoC"
 set part "xcvu9p-flgb2104-2-i"
 set build_dir "./build"
 
@@ -48,6 +48,10 @@ set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 
 # 禁用 write_bitstream 步骤（AWS 只需要 DCP）
 set_property STEPS.WRITE_BITSTREAM.IS_ENABLED false [get_runs impl_1]
+
+# AWS F1/F2: 放宽 DRC 检查（Shell-CL 接口不需要物理引脚约束）
+set_property SEVERITY {Warning} [get_drc_checks NSTD-1]
+set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 
 # 运行综合
 puts "开始综合..."
