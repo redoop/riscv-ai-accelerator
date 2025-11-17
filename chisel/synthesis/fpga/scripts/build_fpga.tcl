@@ -53,6 +53,9 @@ if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {
 # 打开综合设计
 open_run synth_1
 
+# 创建报告目录
+file mkdir $build_dir/reports
+
 # 生成综合报告
 puts "生成综合报告..."
 report_utilization -file $build_dir/reports/utilization_synth.rpt
