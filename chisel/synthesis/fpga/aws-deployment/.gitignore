@@ -1,3 +1,6 @@
 # 中间文件和输出
 output/
 *.tar
+
+# 实例信息（包含动态 IP）
+.f2_instance_info

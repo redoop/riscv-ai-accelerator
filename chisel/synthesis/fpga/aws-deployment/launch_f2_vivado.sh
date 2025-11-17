@@ -92,6 +92,22 @@ PUBLIC_IP=$(aws ec2 describe-instances \
     --query 'Reservations[0].Instances[0].PublicIpAddress' \
     --output text)
 
+# 保存实例信息到文件
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+INFO_FILE="$SCRIPT_DIR/.f2_instance_info"
+
+cat > "$INFO_FILE" << EOF
+INSTANCE_ID=$INSTANCE_ID
+SPOT_REQUEST_ID=$SPOT_REQUEST_ID
+PUBLIC_IP=$PUBLIC_IP
+KEY_NAME=$KEY_NAME
+REGION=$REGION
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+EOF
+
+echo "✓ 实例信息已保存到: $INFO_FILE"
+echo ""
+
 echo "╔════════════════════════════════════════════════════════════╗"
 echo "║         F2 实例启动成功（Vivado 预装）！                  ║"
 echo "╚════════════════════════════════════════════════════════════╝"

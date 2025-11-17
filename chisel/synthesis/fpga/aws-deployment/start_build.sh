@@ -1,8 +1,20 @@
 #!/bin/bash
 # 在 F2 实例上启动 Vivado 构建
 
-INSTANCE_IP="54.81.161.62"
-KEY_FILE="~/.ssh/fpga-f2-key.pem"
+# 加载实例信息
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+INFO_FILE="$SCRIPT_DIR/.f2_instance_info"
+
+if [ ! -f "$INFO_FILE" ]; then
+    echo "❌ 错误: 未找到实例信息文件"
+    echo "请先运行: ./launch_f2_vivado.sh"
+    exit 1
+fi
+
+source "$INFO_FILE"
+
+INSTANCE_IP="$PUBLIC_IP"
+KEY_FILE="~/.ssh/${KEY_NAME}.pem"
 USER="ubuntu"
 
 echo "=== 启动 FPGA 构建 ==="
