@@ -46,6 +46,9 @@ set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 
+# 禁用 write_bitstream 步骤（AWS 只需要 DCP）
+set_property STEPS.WRITE_BITSTREAM.IS_ENABLED false [get_runs impl_1]
+
 # 运行综合
 puts "开始综合..."
 launch_runs synth_1 -jobs 8
