@@ -50,6 +50,8 @@ show_help() {
     echo "  aws-upload  - 上传项目到 F2 实例"
     echo "  aws-build   - 在 F2 上启动构建"
     echo "  aws-monitor - 监控 F2 构建进度"
+    echo "  aws-download-dcp - 下载 DCP 文件到本地"
+    echo "  aws-cleanup - 清理所有 AWS FPGA 实例和资源"
     echo "  clean       - 清理所有构建文件"
     echo "  status      - 查看当前状态"
     echo ""
@@ -70,10 +72,16 @@ show_help() {
     echo "  3. $0 aws-upload        # 上传项目到 F2"
     echo "  4. $0 aws-build         # 启动 Vivado 构建"
     echo "  5. $0 aws-monitor       # 监控构建进度"
-    echo "  6. 创建 AFI 并测试"
+    echo "  6. $0 aws-download-dcp  # 下载 DCP 文件"
+    echo "  7. 创建 AFI 并测试"
+    echo "  8. $0 aws-cleanup       # 清理 AWS 资源（节省成本）"
     echo ""
     echo -e "${BLUE}或使用一键命令:${NC}"
     echo "  $0 aws                  # 自动执行上述所有步骤"
+    echo ""
+    echo -e "${BLUE}清理命令:${NC}"
+    echo "  $0 aws-cleanup          # 终止所有 F1/F2 实例和 Spot 请求"
+    echo "  $0 clean                # 清理本地构建文件"
     echo ""
 }
 
@@ -424,6 +432,98 @@ aws_monitor_build() {
     bash continuous_monitor.sh
 }
 
+# 下载 DCP 文件
+aws_download_dcp() {
+    echo -e "${BLUE}下载 DCP 文件到本地...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f ".f2_instance_info" ]; then
+        echo -e "${RED}❌ 未找到实例信息文件${NC}"
+        echo "请先运行: $0 aws-launch"
+        exit 1
+    fi
+    
+    # 加载实例信息
+    source .f2_instance_info
+    
+    # 创建本地目录
+    mkdir -p "$FPGA_DIR/build/checkpoints/to_aws"
+    
+    # 检查远程 DCP 文件是否存在
+    echo "检查远程 DCP 文件..."
+    if ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} \
+        "test -f ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp"; then
+        
+        echo "✓ 找到 DCP 文件"
+        
+        # 获取文件大小
+        REMOTE_SIZE=$(ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} \
+            "ls -lh ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp | awk '{print \$5}'")
+        
+        echo "文件大小: $REMOTE_SIZE"
+        echo ""
+        echo "开始下载..."
+        
+        # 下载文件
+        scp -i ~/.ssh/${KEY_NAME}.pem \
+            ubuntu@${PUBLIC_IP}:~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp \
+            "$FPGA_DIR/build/checkpoints/to_aws/"
+        
+        if [ $? -eq 0 ]; then
+            echo ""
+            echo -e "${GREEN}✓ DCP 文件下载成功${NC}"
+            echo "位置: $FPGA_DIR/build/checkpoints/to_aws/SH_CL_routed.dcp"
+            
+            # 显示本地文件信息
+            LOCAL_SIZE=$(ls -lh "$FPGA_DIR/build/checkpoints/to_aws/SH_CL_routed.dcp" | awk '{print $5}')
+            echo "本地文件大小: $LOCAL_SIZE"
+            
+            echo ""
+            echo -e "${BLUE}下一步:${NC}"
+            echo "  1. 创建 AFI: cd aws-deployment && ./create_afi.sh"
+            echo "  2. 清理 F2 实例: $0 aws-cleanup"
+        else
+            echo -e "${RED}❌ 下载失败${NC}"
+            exit 1
+        fi
+    else
+        echo -e "${RED}❌ 远程 DCP 文件不存在${NC}"
+        echo ""
+        echo "可能的原因:"
+        echo "  1. 构建尚未完成"
+        echo "  2. 构建失败"
+        echo "  3. 文件路径不正确"
+        echo ""
+        echo "检查构建状态:"
+        echo "  $0 aws-monitor"
+        echo ""
+        echo "或查看构建日志:"
+        echo "  ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP}"
+        echo "  tail -100 ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/logs/vivado_build.log"
+        exit 1
+    fi
+}
+
+# 清理 AWS FPGA 资源
+aws_cleanup() {
+    echo -e "${BLUE}清理 AWS FPGA 实例和资源...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    if [ ! -f "cleanup_fpga_instances.sh" ]; then
+        echo -e "${RED}❌ 未找到 cleanup_fpga_instances.sh${NC}"
+        exit 1
+    fi
+    
+    bash cleanup_fpga_instances.sh
+    
+    echo ""
+    echo -e "${GREEN}✓ AWS 资源清理完成${NC}"
+    echo -e "${YELLOW}提示: 本地实例信息文件 .f2_instance_info 已保留${NC}"
+    echo "      如需完全清理，请手动删除: rm .f2_instance_info"
+}
+
 # AWS 完整自动化流程
 aws_full_flow() {
     show_banner
@@ -580,6 +680,14 @@ main() {
         aws-monitor)
             show_banner
             aws_monitor_build
+            ;;
+        aws-download-dcp)
+            show_banner
+            aws_download_dcp
+            ;;
+        aws-cleanup)
+            show_banner
+            aws_cleanup
             ;;
         status)
             show_status
