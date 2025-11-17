@@ -4,7 +4,21 @@
 set -e
 
 REGION="us-east-1"
-DCP_FILE="../build_results/SH_CL_routed.dcp"
+# 尝试多个可能的 DCP 文件路径
+DCP_PATHS=(
+    "../build/checkpoints/to_aws/SH_CL_routed.dcp"
+    "../build_results/SH_CL_routed.dcp"
+    "./SH_CL_routed.dcp"
+)
+
+DCP_FILE=""
+for path in "${DCP_PATHS[@]}"; do
+    if [ -f "$path" ]; then
+        DCP_FILE="$path"
+        break
+    fi
+done
+
 OUTPUT_DIR="output"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 AFI_NAME="riscv-ai-${TIMESTAMP}"
@@ -18,12 +32,21 @@ echo "║         使用 AWS 官方格式创建 AFI                         ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-if [ ! -f "$DCP_FILE" ]; then
-    echo "❌ DCP 不存在"
+if [ -z "$DCP_FILE" ]; then
+    echo "❌ DCP 文件不存在"
+    echo ""
+    echo "已检查的路径:"
+    for path in "${DCP_PATHS[@]}"; do
+        echo "  - $path"
+    done
+    echo ""
+    echo "请先下载 DCP 文件:"
+    echo "  cd .. && ./run_fpga_flow.sh aws-download-dcp"
     exit 1
 fi
 
-echo "✓ DCP: $(du -h $DCP_FILE | cut -f1)"
+echo "✓ 找到 DCP: $DCP_FILE"
+echo "✓ 文件大小: $(du -h $DCP_FILE | cut -f1)"
 
 # 创建临时目录
 TEMP_DIR="$OUTPUT_DIR/afi_temp_${TIMESTAMP}"
@@ -35,8 +58,17 @@ echo ""
 # 创建 manifest - 文件名必须是 "manifest" (无扩展名)
 echo "📝 创建 manifest..."
 
-# 计算 hash
-DCP_HASH=$(md5 -q $TEMP_DIR/SH_CL_routed.dcp)
+# 计算 hash（兼容 macOS 和 Linux）
+if command -v md5sum &> /dev/null; then
+    # Linux
+    DCP_HASH=$(md5sum $TEMP_DIR/SH_CL_routed.dcp | awk '{print $1}')
+elif command -v md5 &> /dev/null; then
+    # macOS
+    DCP_HASH=$(md5 -q $TEMP_DIR/SH_CL_routed.dcp)
+else
+    echo "❌ 错误: 未找到 md5sum 或 md5 命令"
+    exit 1
+fi
 DATE_STR=$(date +%Y/%m/%d)
 
 # 创建 manifest (无扩展名，键值对格式，LF 换行)
