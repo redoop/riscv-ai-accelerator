@@ -14,10 +14,10 @@ create_project $project_name $build_dir -part $part -force
 puts "添加 RTL 源文件..."
 
 # 添加生成的 Verilog 文件
-add_files [glob ../../generated/simple_edgeaisoc/*.v]
+add_files [glob ../../generated/simple_edgeaisoc/*.sv]
 
 # 添加 FPGA 特定源文件
-add_files [glob ./src/*.v]
+# add_files [glob ./src/*.sv]
 
 # 添加约束文件
 puts "添加约束文件..."
@@ -88,20 +88,27 @@ if {$wns < 0} {
     puts "时序收敛成功！"
 }
 
-# 生成比特流
-puts "生成比特流..."
-launch_runs impl_1 -to_step write_bitstream -jobs 8
-wait_on_run impl_1
-
 # 生成 DCP 文件（用于 AWS AFI）
-puts "生成 DCP 文件..."
+# 注意：AWS F1/F2 不需要比特流，只需要 DCP 文件
+puts "生成 DCP 文件（用于 AWS AFI）..."
+
+# 创建输出目录
+file mkdir $build_dir/checkpoints
+file mkdir $build_dir/checkpoints/to_aws
+
+# 保存 DCP 检查点
 write_checkpoint -force $build_dir/checkpoints/to_aws/SH_CL_routed.dcp
 
 puts ""
 puts "=========================================="
 puts "构建完成！"
 puts "=========================================="
-puts "比特流：$build_dir/${project_name}.runs/impl_1/${top_module}.bit"
 puts "DCP 文件：$build_dir/checkpoints/to_aws/SH_CL_routed.dcp"
 puts "报告目录：$build_dir/reports/"
+puts ""
+puts "下一步："
+puts "1. 上传 DCP 到 S3"
+puts "2. 创建 AFI"
+puts "3. 等待 AFI 生成完成"
+puts "4. 加载 AFI 到 F1/F2 实例"
 puts ""
