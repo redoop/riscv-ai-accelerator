@@ -51,6 +51,7 @@ show_help() {
     echo "  aws-build   - 在 F2 上启动构建"
     echo "  aws-monitor - 监控 F2 构建进度"
     echo "  aws-download-dcp - 下载 DCP 文件到本地"
+    echo "  aws-create-afi - 创建 AWS AFI 镜像"
     echo "  aws-cleanup - 清理所有 AWS FPGA 实例和资源"
     echo "  clean       - 清理所有构建文件"
     echo "  status      - 查看当前状态"
@@ -73,7 +74,7 @@ show_help() {
     echo "  4. $0 aws-build         # 启动 Vivado 构建"
     echo "  5. $0 aws-monitor       # 监控构建进度"
     echo "  6. $0 aws-download-dcp  # 下载 DCP 文件"
-    echo "  7. 创建 AFI 并测试"
+    echo "  7. $0 aws-create-afi    # 创建 AFI 镜像"
     echo "  8. $0 aws-cleanup       # 清理 AWS 资源（节省成本）"
     echo ""
     echo -e "${BLUE}或使用一键命令:${NC}"
@@ -481,7 +482,7 @@ aws_download_dcp() {
             
             echo ""
             echo -e "${BLUE}下一步:${NC}"
-            echo "  1. 创建 AFI: cd aws-deployment && ./create_afi.sh"
+            echo "  1. 创建 AFI: $0 aws-create-afi"
             echo "  2. 清理 F2 实例: $0 aws-cleanup"
         else
             echo -e "${RED}❌ 下载失败${NC}"
@@ -505,6 +506,52 @@ aws_download_dcp() {
     fi
 }
 
+# 创建 AWS AFI
+aws_create_afi() {
+    echo -e "${BLUE}创建 AWS AFI 镜像...${NC}"
+    
+    cd "$FPGA_DIR/aws-deployment"
+    
+    # 检查 DCP 文件是否存在
+    if [ ! -f "../build/checkpoints/to_aws/SH_CL_routed.dcp" ]; then
+        echo -e "${RED}❌ DCP 文件不存在${NC}"
+        echo ""
+        echo "请先下载 DCP 文件:"
+        echo "  $0 aws-download-dcp"
+        echo ""
+        echo "或检查文件位置:"
+        echo "  ls -la $FPGA_DIR/build/checkpoints/to_aws/"
+        exit 1
+    fi
+    
+    # 检查 create_afi.sh 脚本
+    if [ ! -f "create_afi.sh" ]; then
+        echo -e "${RED}❌ 未找到 create_afi.sh${NC}"
+        exit 1
+    fi
+    
+    # 显示 DCP 文件信息
+    DCP_SIZE=$(ls -lh "../build/checkpoints/to_aws/SH_CL_routed.dcp" | awk '{print $5}')
+    echo "DCP 文件大小: $DCP_SIZE"
+    echo ""
+    
+    # 执行 AFI 创建
+    bash create_afi.sh
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓ AFI 创建流程完成${NC}"
+        echo ""
+        echo -e "${BLUE}下一步:${NC}"
+        echo "  1. 等待 AFI 生成完成（30-60 分钟）"
+        echo "  2. 检查状态: $0 status"
+        echo "  3. 清理 F2 实例: $0 aws-cleanup"
+    else
+        echo -e "${RED}❌ AFI 创建失败${NC}"
+        exit 1
+    fi
+}
+
 # 清理 AWS FPGA 资源
 aws_cleanup() {
     echo -e "${BLUE}清理 AWS FPGA 实例和资源...${NC}"
@@ -516,12 +563,40 @@ aws_cleanup() {
         exit 1
     fi
     
+    # 执行实例清理
     bash cleanup_fpga_instances.sh
     
     echo ""
     echo -e "${GREEN}✓ AWS 资源清理完成${NC}"
-    echo -e "${YELLOW}提示: 本地实例信息文件 .f2_instance_info 已保留${NC}"
-    echo "      如需完全清理，请手动删除: rm .f2_instance_info"
+    
+    # 询问是否删除本地实例信息文件
+    if [ -f ".f2_instance_info" ]; then
+        echo ""
+        echo -e "${YELLOW}发现本地实例信息文件 .f2_instance_info${NC}"
+        read -p "是否删除此文件？(y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm .f2_instance_info
+            echo -e "${GREEN}✓ 实例信息文件已删除${NC}"
+        else
+            echo -e "${YELLOW}⊘ 保留实例信息文件${NC}"
+            echo "  如需手动删除: rm $FPGA_DIR/aws-deployment/.f2_instance_info"
+        fi
+    fi
+    
+    # 清理临时输出目录
+    if [ -d "output" ]; then
+        echo ""
+        echo -e "${YELLOW}发现临时输出目录 output/${NC}"
+        read -p "是否清理临时文件？(y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -rf output/afi_temp_*
+            echo -e "${GREEN}✓ 临时文件已清理${NC}"
+        else
+            echo -e "${YELLOW}⊘ 保留临时文件${NC}"
+        fi
+    fi
 }
 
 # AWS 完整自动化流程
@@ -569,10 +644,11 @@ aws_full_flow() {
     echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${BLUE}下一步:${NC}"
-    echo "  1. 等待构建完成（如果还在进行中）"
-    echo "  2. 创建 AFI: cd aws-deployment && ./create_afi.sh"
-    echo "  3. 等待 AFI 生成 (30-60 分钟)"
-    echo "  4. 部署测试: $0 deploy aws"
+    echo "  1. 下载 DCP: $0 aws-download-dcp"
+    echo "  2. 创建 AFI: $0 aws-create-afi"
+    echo "  3. 清理实例: $0 aws-cleanup"
+    echo "  4. 等待 AFI 生成 (30-60 分钟)"
+    echo "  5. 部署测试: $0 deploy aws"
     echo ""
     echo -e "${BLUE}成本估算:${NC}"
     echo "  F2 Spot 实例: ~$2-4 (2-4 小时)"
@@ -684,6 +760,10 @@ main() {
         aws-download-dcp)
             show_banner
             aws_download_dcp
+            ;;
+        aws-create-afi)
+            show_banner
+            aws_create_afi
             ;;
         aws-cleanup)
             show_banner
