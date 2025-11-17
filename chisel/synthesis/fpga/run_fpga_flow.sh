@@ -451,25 +451,59 @@ aws_download_dcp() {
     # 创建本地目录
     mkdir -p "$FPGA_DIR/build/checkpoints/to_aws"
     
-    # 检查远程 DCP 文件是否存在
+    # 检查远程 DCP 文件是否存在（尝试多个可能的路径）
     echo "检查远程 DCP 文件..."
-    if ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} \
-        "test -f ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp"; then
-        
-        echo "✓ 找到 DCP 文件"
-        
-        # 获取文件大小
-        REMOTE_SIZE=$(ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} \
-            "ls -lh ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp | awk '{print \$5}'")
-        
-        echo "文件大小: $REMOTE_SIZE"
+    
+    # 可能的路径列表
+    REMOTE_PATHS=(
+        "~/fpga-project/build/checkpoints/to_aws/SH_CL_routed.dcp"
+        "~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp"
+        "~/fpga-project/scripts/../build/checkpoints/to_aws/SH_CL_routed.dcp"
+    )
+    
+    FOUND_PATH=""
+    for path in "${REMOTE_PATHS[@]}"; do
+        if ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} "test -f $path" 2>/dev/null; then
+            FOUND_PATH="$path"
+            echo "✓ 找到 DCP 文件: $path"
+            break
+        fi
+    done
+    
+    if [ -z "$FOUND_PATH" ]; then
+        echo -e "${RED}❌ 远程 DCP 文件不存在${NC}"
         echo ""
-        echo "开始下载..."
-        
-        # 下载文件
-        scp -i ~/.ssh/${KEY_NAME}.pem \
-            ubuntu@${PUBLIC_IP}:~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp \
-            "$FPGA_DIR/build/checkpoints/to_aws/"
+        echo "已检查的路径:"
+        for path in "${REMOTE_PATHS[@]}"; do
+            echo "  - $path"
+        done
+        echo ""
+        echo "可能的原因:"
+        echo "  1. 构建尚未完成"
+        echo "  2. 构建失败"
+        echo "  3. 文件路径不正确"
+        echo ""
+        echo "检查构建状态:"
+        echo "  $0 aws-monitor"
+        echo ""
+        echo "或手动查找文件:"
+        echo "  ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP}"
+        echo "  find ~ -name 'SH_CL_routed.dcp' 2>/dev/null"
+        exit 1
+    fi
+    
+    # 获取文件大小
+    REMOTE_SIZE=$(ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP} \
+        "ls -lh $FOUND_PATH | awk '{print \$5}'")
+    
+    echo "文件大小: $REMOTE_SIZE"
+    echo ""
+    echo "开始下载..."
+    
+    # 下载文件
+    scp -i ~/.ssh/${KEY_NAME}.pem \
+        ubuntu@${PUBLIC_IP}:$FOUND_PATH \
+        "$FPGA_DIR/build/checkpoints/to_aws/"
         
         if [ $? -eq 0 ]; then
             echo ""
@@ -488,22 +522,6 @@ aws_download_dcp() {
             echo -e "${RED}❌ 下载失败${NC}"
             exit 1
         fi
-    else
-        echo -e "${RED}❌ 远程 DCP 文件不存在${NC}"
-        echo ""
-        echo "可能的原因:"
-        echo "  1. 构建尚未完成"
-        echo "  2. 构建失败"
-        echo "  3. 文件路径不正确"
-        echo ""
-        echo "检查构建状态:"
-        echo "  $0 aws-monitor"
-        echo ""
-        echo "或查看构建日志:"
-        echo "  ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP}"
-        echo "  tail -100 ~/riscv-ai-accelerator/chisel/synthesis/fpga/build/logs/vivado_build.log"
-        exit 1
-    fi
 }
 
 # 创建 AWS AFI
