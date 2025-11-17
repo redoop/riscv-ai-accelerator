@@ -6,6 +6,13 @@ set top_module "fpga_top"
 set part "xcvu9p-flgb2104-2-i"
 set build_dir "./build"
 
+# 创建必要的目录
+puts "创建项目目录..."
+file mkdir $build_dir
+file mkdir $build_dir/reports
+file mkdir $build_dir/checkpoints
+file mkdir $build_dir/checkpoints/to_aws
+
 # 创建项目
 puts "创建 Vivado 项目..."
 create_project $project_name $build_dir -part $part -force
@@ -53,9 +60,6 @@ if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {
 # 打开综合设计
 open_run synth_1
 
-# 创建报告目录
-file mkdir $build_dir/reports
-
 # 生成综合报告
 puts "生成综合报告..."
 report_utilization -file $build_dir/reports/utilization_synth.rpt
@@ -94,10 +98,6 @@ if {$wns < 0} {
 # 生成 DCP 文件（用于 AWS AFI）
 # 注意：AWS F1/F2 不需要比特流，只需要 DCP 文件
 puts "生成 DCP 文件（用于 AWS AFI）..."
-
-# 创建输出目录
-file mkdir $build_dir/checkpoints
-file mkdir $build_dir/checkpoints/to_aws
 
 # 保存 DCP 检查点
 write_checkpoint -force $build_dir/checkpoints/to_aws/SH_CL_routed.dcp
