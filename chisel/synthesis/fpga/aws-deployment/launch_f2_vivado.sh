@@ -3,20 +3,20 @@
 
 set -e
 
-echo "=== 启动 F2 实例（Vivado 2025.1 预装）==="
+echo "=== 启动 F2 实例（Vivado ML 2024.1 预装）==="
 echo ""
 
 # 配置参数
 INSTANCE_TYPE="f2.6xlarge"
 KEY_NAME="fpga-f2-key"
 REGION="us-east-1"
-AMI_ID="ami-0b359c50bdba2aac0"  # Vivado 2025.1 预装
+AMI_ID="ami-0cab7155a229fac40"  # Vivado ML 2024.1 Developer AMI
 SPOT_PRICE="1.00"
 SECURITY_GROUP="sg-03d27449f82b54360"
 AVAILABILITY_ZONE="us-east-1b"
 
 echo "配置信息:"
-echo "  AMI: $AMI_ID (Vivado 2025.1 预装)"
+echo "  AMI: $AMI_ID (Vivado ML 2024.1 Developer AMI)"
 echo "  实例类型: $INSTANCE_TYPE"
 echo "  Spot 价格: $SPOT_PRICE/小时"
 echo "  可用区: $AVAILABILITY_ZONE"
@@ -109,14 +109,14 @@ echo "✓ 实例信息已保存到: $INFO_FILE"
 echo ""
 
 echo "╔════════════════════════════════════════════════════════════╗"
-echo "║         F2 实例启动成功（Vivado 预装）！                  ║"
+echo "║         F2 实例启动成功（Vivado ML 2024.1）！             ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 echo "实例信息:"
 echo "  实例 ID: $INSTANCE_ID"
 echo "  Spot 请求 ID: $SPOT_REQUEST_ID"
 echo "  公网 IP: $PUBLIC_IP"
-echo "  AMI: Vivado 2025.1 (预装)"
+echo "  AMI: Vivado ML 2024.1 Developer AMI (ami-0cab7155a229fac40)"
 echo ""
 echo "连接命令:"
 echo "  ssh -i ~/.ssh/${KEY_NAME}.pem ubuntu@${PUBLIC_IP}"

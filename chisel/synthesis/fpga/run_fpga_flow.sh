@@ -46,10 +46,10 @@ show_help() {
     echo "  test        - 运行 FPGA 测试"
     echo "  full        - 完整流程 (prepare -> build)"
     echo "  aws         - AWS F2/F1 完整流程（自动化）"
-    echo "  aws-launch  - 启动 AWS F2 实例"
-    echo "  aws-upload  - 上传项目到 F2 实例"
-    echo "  aws-build   - 在 F2 上启动构建"
-    echo "  aws-monitor - 监控 F2 构建进度"
+    echo "  aws-launch [f1|f2]  - 启动 AWS FPGA 实例（默认 F1）"
+    echo "  aws-upload  - 上传项目到 FPGA 实例"
+    echo "  aws-build   - 在 FPGA 实例上启动构建"
+    echo "  aws-monitor - 监控构建进度"
     echo "  aws-download-dcp - 下载 DCP 文件到本地"
     echo "  aws-create-afi - 创建 AWS AFI 镜像"
     echo "  aws-cleanup - 清理所有 AWS FPGA 实例和资源"
@@ -67,15 +67,18 @@ show_help() {
     echo "  $0 aws                  # AWS 完整自动化流程"
     echo "  $0 status               # 查看状态"
     echo ""
-    echo -e "${BLUE}AWS 自动化流程（推荐）:${NC}"
-    echo "  1. $0 aws-launch        # 启动 F2 Spot 实例（预装 Vivado）"
+    echo -e "${BLUE}AWS 自动化流程（推荐使用 F1）:${NC}"
+    echo "  1. $0 aws-launch f1     # 启动 F1 实例（推荐，支持 AFI）"
     echo "  2. $0 prepare           # 生成 Verilog"
-    echo "  3. $0 aws-upload        # 上传项目到 F2"
+    echo "  3. $0 aws-upload        # 上传项目"
     echo "  4. $0 aws-build         # 启动 Vivado 构建"
     echo "  5. $0 aws-monitor       # 监控构建进度"
     echo "  6. $0 aws-download-dcp  # 下载 DCP 文件"
     echo "  7. $0 aws-create-afi    # 创建 AFI 镜像"
     echo "  8. $0 aws-cleanup       # 清理 AWS 资源（节省成本）"
+    echo ""
+    echo -e "${YELLOW}F2 实例（不推荐，不支持 AFI）:${NC}"
+    echo "  1. $0 aws-launch f2     # 启动 F2 实例（仅用于开发）"
     echo ""
     echo -e "${BLUE}或使用一键命令:${NC}"
     echo "  $0 aws                  # 自动执行上述所有步骤"
@@ -314,45 +317,24 @@ show_status() {
         echo -e "${RED}✗${NC} Verilog 未生成"
     fi
     
-    # 综合状态
+    # DCP 状态
     if [ -f "$FPGA_DIR/build/checkpoints/to_aws/SH_CL_routed.dcp" ]; then
-        echo -e "${GREEN}✓${NC} Vivado 综合已完成"
+        local dcp_size=$(du -h "$FPGA_DIR/build/checkpoints/to_aws/SH_CL_routed.dcp" 2>/dev/null | cut -f1)
+        echo -e "${GREEN}✓${NC} DCP 已生成 ($dcp_size)"
     else
-        echo -e "${YELLOW}○${NC} Vivado 综合未完成"
-    fi
-    
-    # AFI 状态
-    if [ -f "$FPGA_DIR/build/afi_info.txt" ]; then
-        local afi_id=$(grep "AFI ID" "$FPGA_DIR/build/afi_info.txt" | awk '{print $3}')
-        echo -e "${GREEN}✓${NC} AFI 已创建: $afi_id"
-        
-        # 检查 AFI 状态
-        if command -v aws &> /dev/null && [ -n "$afi_id" ]; then
-            local status=$(aws ec2 describe-fpga-images --fpga-image-ids "$afi_id" --query 'FpgaImages[0].State.Code' --output text 2>/dev/null)
-            if [ -n "$status" ]; then
-                echo "  状态: $status"
-            fi
-        fi
-    else
-        echo -e "${YELLOW}○${NC} AFI 未创建"
-    fi
-    
-    # 测试结果
-    if [ -d "$FPGA_DIR/test_results" ] && [ "$(ls -A $FPGA_DIR/test_results)" ]; then
-        echo -e "${GREEN}✓${NC} 测试结果可用"
-        echo "  位置: $FPGA_DIR/test_results/"
-    else
-        echo -e "${YELLOW}○${NC} 无测试结果"
+        echo -e "${YELLOW}○${NC} DCP 未生成"
     fi
     
     echo ""
-    echo -e "${BLUE}文件位置:${NC}"
-    echo "  Verilog:  $CHISEL_DIR/generated/simple_edgeaisoc/"
-    echo "  构建:     $FPGA_DIR/build/"
-    echo "  脚本:     $FPGA_DIR/scripts/"
-    echo "  文档:     $FPGA_DIR/docs/"
-    echo ""
+    
+    # 调用 AFI 状态检查脚本
+    if [ -f "$FPGA_DIR/aws-deployment/check_afi_status.sh" ]; then
+        bash "$FPGA_DIR/aws-deployment/check_afi_status.sh"
+    else
+        echo -e "${YELLOW}⚠${NC} AFI 状态检查脚本未找到"
+    fi
 }
+
 
 # 清理
 clean_all() {
@@ -366,21 +348,76 @@ clean_all() {
     echo -e "${GREEN}✓ 清理完成${NC}"
 }
 
-# 启动 AWS F2 实例
+# 启动 AWS FPGA 实例
 aws_launch_instance() {
-    echo -e "${BLUE}启动 AWS F2 实例...${NC}"
+    # 获取实例类型参数（从全局 $2 或函数参数）
+    local instance_type="${TARGET}"
+    if [ "$instance_type" == "aws" ] || [ "$instance_type" == "local" ]; then
+        instance_type="auto"
+    fi
+    
+    echo -e "${BLUE}启动 AWS FPGA 实例...${NC}"
+    echo ""
     
     cd "$FPGA_DIR/aws-deployment"
     
-    if [ ! -f "launch_f2_vivado.sh" ]; then
-        echo -e "${RED}❌ 未找到 launch_f2_vivado.sh${NC}"
+    case "$instance_type" in
+        f1)
+            echo -e "${GREEN}✓ 选择 F1 实例（推荐）${NC}"
+            echo ""
+            if [ -f "launch_fpga_instance.sh" ]; then
+                # 使用交互式脚本，但传递选项 1（F1 Spot）
+                echo "1" | bash launch_fpga_instance.sh
+            elif [ -f "launch_f1_vivado.sh" ]; then
+                bash launch_f1_vivado.sh
+            else
+                echo -e "${RED}❌ 未找到 F1 启动脚本${NC}"
+                exit 1
+            fi
+            ;;
+        f2)
+            echo -e "${YELLOW}⚠️  选择 F2 实例（不支持 AFI）${NC}"
+            echo ""
+            echo "警告: F2 实例使用 xcvu47p 设备，无法创建 AFI！"
+            echo "仅用于本地开发和测试。"
+            echo ""
+            read -p "确定要继续吗？(y/N): " confirm
+            if [[ ! $confirm =~ ^[Yy]$ ]]; then
+                echo "已取消"
+                exit 0
+            fi
+            
+            if [ -f "launch_f2_vivado.sh" ]; then
+                bash launch_f2_vivado.sh
+            else
+                echo -e "${RED}❌ 未找到 F2 启动脚本${NC}"
+                exit 1
+            fi
+            ;;
+        auto|*)
+            # 自动选择或交互式选择
+            echo -e "${BLUE}使用交互式选择...${NC}"
+            echo ""
+            if [ -f "launch_fpga_instance.sh" ]; then
+                bash launch_fpga_instance.sh
+            elif [ -f "launch_f1_vivado.sh" ]; then
+                echo -e "${GREEN}使用 F1 实例（推荐）${NC}"
+                bash launch_f1_vivado.sh
+            else
+                echo -e "${RED}❌ 未找到启动脚本${NC}"
+                exit 1
+            fi
+            ;;
+    esac
+    
+    if [ $? -eq 0 ]; then
+        echo ""
+        echo -e "${GREEN}✓ FPGA 实例已启动${NC}"
+    else
+        echo ""
+        echo -e "${RED}❌ FPGA 实例启动失败${NC}"
         exit 1
     fi
-    
-    bash launch_f2_vivado.sh
-    
-    echo -e "${GREEN}✓ F2 实例已启动${NC}"
-    echo -e "${YELLOW}实例信息已保存到 .f2_instance_info${NC}"
 }
 
 # 上传项目到 F2
@@ -761,6 +798,8 @@ main() {
             ;;
         aws-launch)
             show_banner
+            # 设置 TARGET 为第二个参数（f1 或 f2）
+            TARGET="${2:-auto}"
             aws_launch_instance
             ;;
         aws-upload)

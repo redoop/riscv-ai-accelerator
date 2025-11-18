@@ -22,7 +22,9 @@ done
 OUTPUT_DIR="output"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 AFI_NAME="riscv-ai-${TIMESTAMP}"
-S3_BUCKET="fpga-afi-${TIMESTAMP}"
+# 使用固定的 S3 bucket，在其下创建子目录
+S3_BUCKET="riscv-fpga-afi"
+S3_PREFIX="builds/${TIMESTAMP}"
 
 # 创建输出目录
 mkdir -p "$OUTPUT_DIR"
@@ -55,53 +57,86 @@ cp $DCP_FILE $TEMP_DIR/
 echo "✓ 临时目录: $TEMP_DIR"
 echo ""
 
-# 创建 manifest - 文件名必须是 "manifest" (无扩展名)
-echo "📝 创建 manifest..."
+# 创建 manifest.txt - 文件名必须是 "manifest.txt"
+echo "📝 创建 manifest.txt..."
 
-# 计算 hash（兼容 macOS 和 Linux）
-if command -v md5sum &> /dev/null; then
+# 计算 SHA256 hash（兼容 macOS 和 Linux）
+if command -v sha256sum &> /dev/null; then
     # Linux
-    DCP_HASH=$(md5sum $TEMP_DIR/SH_CL_routed.dcp | awk '{print $1}')
-elif command -v md5 &> /dev/null; then
+    DCP_HASH=$(sha256sum $TEMP_DIR/SH_CL_routed.dcp | awk '{print $1}')
+elif command -v shasum &> /dev/null; then
     # macOS
-    DCP_HASH=$(md5 -q $TEMP_DIR/SH_CL_routed.dcp)
+    DCP_HASH=$(shasum -a 256 $TEMP_DIR/SH_CL_routed.dcp | awk '{print $1}')
 else
-    echo "❌ 错误: 未找到 md5sum 或 md5 命令"
+    echo "❌ 错误: 未找到 sha256sum 或 shasum 命令"
     exit 1
 fi
-DATE_STR=$(date +%Y/%m/%d)
 
-# 创建 manifest (无扩展名，键值对格式，LF 换行)
-cat > $TEMP_DIR/manifest << EOF
+# 获取日期（格式：YY_MM_DD-HHMMSS）
+DATE_STR=$(date +%y_%m_%d-%H%M%S)
+
+# 获取 shell version（从 AWS FPGA 仓库）
+SHELL_VERSION="0x04261818"
+if [ -f "../aws-fpga/hdk/common/shell_stable/shell_version.txt" ]; then
+    SHELL_VERSION=$(cat ../aws-fpga/hdk/common/shell_stable/shell_version.txt | tr -d '\n\r')
+fi
+
+# 获取 HDK version
+HDK_VERSION="1.4.23"
+if [ -f "../aws-fpga/release_version.txt" ]; then
+    HDK_VERSION=$(cat ../aws-fpga/release_version.txt | tr -d '\n\r')
+fi
+
+# 创建 manifest.txt（键值对格式，LF 换行）
+cat > $TEMP_DIR/manifest.txt << 'MANIFEST_EOF'
 manifest_format_version=2
 pci_vendor_id=0x1D0F
 pci_device_id=0xF000
-subsystem_id=0x1D51
-subsystem_vendor_id=0xFEDD
+pci_subsystem_id=0x1D51
+pci_subsystem_vendor_id=0xFEDD
+MANIFEST_EOF
+
+# 追加动态内容
+cat >> $TEMP_DIR/manifest.txt << MANIFEST_EOF
 dcp_hash=${DCP_HASH}
-shell_version=0x04261818
-dcp_file_name=SH_CL_routed.dcp
-hdk_version=1.4.23
+shell_version=${SHELL_VERSION}
+dcp_file_name=${TIMESTAMP}.SH_CL_routed.dcp
+hdk_version=${HDK_VERSION}
+tool_version=v2024.1
 date=${DATE_STR}
-clock_main_a0=250
-clock_extra_b0=125
-clock_extra_c0=375
-EOF
+clock_recipe_a=A1
+clock_recipe_b=B0
+clock_recipe_c=C0
+clock_recipe_hbm=H0
+MANIFEST_EOF
 
 # 确保 LF 换行符（移除可能的 CRLF）
-sed -i '' -e $'s/\r$//' $TEMP_DIR/manifest 2>/dev/null || sed -i -e $'s/\r$//' $TEMP_DIR/manifest
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    sed -i '' -e 's/\r$//' $TEMP_DIR/manifest.txt
+else
+    sed -i -e 's/\r$//' $TEMP_DIR/manifest.txt
+fi
+
+# 创建 to_aws 目录结构（AWS 要求）
+echo "📦 创建 AWS 标准目录结构..."
+TO_AWS_DIR="$TEMP_DIR/to_aws"
+mkdir -p $TO_AWS_DIR
+
+# 移动文件到 to_aws 目录，使用 AWS 标准命名
+mv $TEMP_DIR/SH_CL_routed.dcp $TO_AWS_DIR/${TIMESTAMP}.SH_CL_routed.dcp
+mv $TEMP_DIR/manifest.txt $TO_AWS_DIR/${TIMESTAMP}.manifest.txt
 
 echo "Manifest 内容:"
-cat $TEMP_DIR/manifest
+cat $TO_AWS_DIR/${TIMESTAMP}.manifest.txt
 echo ""
 echo "文件信息:"
-file $TEMP_DIR/manifest
+file $TO_AWS_DIR/${TIMESTAMP}.manifest.txt 2>/dev/null || echo "manifest.txt: ASCII text"
 echo ""
 
-# 创建 tar (manifest 必须在根目录)
+# 创建 tar（打包 to_aws 目录）
 echo "📦 创建 tar..."
 TAR_FILE="$(pwd)/$OUTPUT_DIR/${AFI_NAME}.tar"
-(cd $TEMP_DIR && tar -cvf "$TAR_FILE" SH_CL_routed.dcp manifest)
+(cd $TEMP_DIR && tar -cvf "$TAR_FILE" to_aws/)
 echo ""
 echo "✓ Tar: $(du -h $TAR_FILE | cut -f1)"
 
@@ -111,9 +146,9 @@ echo "验证 tar 内容:"
 tar -tvf $TAR_FILE
 echo ""
 
-# 提取并验证 manifest
-echo "从 tar 中提取 manifest 验证:"
-tar -xOf $TAR_FILE manifest | head -5
+# 提取并验证 manifest.txt
+echo "从 tar 中提取 manifest.txt 验证:"
+tar -xOf $TAR_FILE to_aws/${TIMESTAMP}.manifest.txt
 echo ""
 
 # 清理临时目录
@@ -121,20 +156,23 @@ rm -rf $TEMP_DIR
 echo "✓ 临时目录已清理"
 echo ""
 
-# 创建 S3 bucket
-echo "📦 创建 S3 bucket..."
-if aws s3 mb s3://$S3_BUCKET --region $REGION 2>/dev/null; then
-    echo "✓ Bucket: $S3_BUCKET"
+# 确保 S3 bucket 存在
+echo "📦 检查 S3 bucket..."
+if ! aws s3 ls s3://$S3_BUCKET --region $REGION 2>/dev/null; then
+    echo "创建 S3 bucket: $S3_BUCKET"
+    aws s3 mb s3://$S3_BUCKET --region $REGION
+    echo "✓ Bucket 已创建"
 else
-    echo "✓ Bucket 已存在"
+    echo "✓ Bucket 已存在: $S3_BUCKET"
 fi
 
-# 上传
+# 上传到子目录
 echo ""
 echo "📤 上传到 S3..."
-S3_KEY="dcp/${AFI_NAME}.tar"
-aws s3 cp $TAR_FILE s3://$S3_BUCKET/$S3_KEY
-echo "✓ 上传完成"
+S3_DCP_KEY="${S3_PREFIX}/dcp/${AFI_NAME}.tar"
+S3_LOGS_KEY="${S3_PREFIX}/logs"
+aws s3 cp $TAR_FILE s3://$S3_BUCKET/$S3_DCP_KEY
+echo "✓ 上传完成: s3://$S3_BUCKET/$S3_DCP_KEY"
 echo ""
 
 # 创建 AFI
@@ -143,8 +181,8 @@ AFI_ID=$(aws ec2 create-fpga-image \
     --region $REGION \
     --name $AFI_NAME \
     --description "RISC-V AI Accelerator FPGA Image" \
-    --input-storage-location Bucket=$S3_BUCKET,Key=$S3_KEY \
-    --logs-storage-location Bucket=$S3_BUCKET,Key=logs \
+    --input-storage-location Bucket=$S3_BUCKET,Key=$S3_DCP_KEY \
+    --logs-storage-location Bucket=$S3_BUCKET,Key=$S3_LOGS_KEY \
     --query 'FpgaImageId' \
     --output text 2>&1)
 
@@ -176,11 +214,15 @@ AFI 信息
 时间: $(date)
 AFI ID: $AFI_ID
 AGFI ID: $AGFI_ID
-S3 Bucket: $S3_BUCKET
-S3 Key: $S3_KEY
+S3 Bucket: s3://$S3_BUCKET
+S3 DCP: s3://$S3_BUCKET/$S3_DCP_KEY
+S3 Logs: s3://$S3_BUCKET/$S3_LOGS_KEY
 
 检查状态:
   aws ec2 describe-fpga-images --fpga-image-ids $AFI_ID --region $REGION
+
+查看日志:
+  aws s3 ls s3://$S3_BUCKET/$S3_LOGS_KEY/ --recursive --region $REGION
 
 加载到 F1:
   sudo fpga-load-local-image -S 0 -I $AGFI_ID
@@ -211,12 +253,12 @@ if [ "$STATUS" == "failed" ]; then
     echo "❌ AFI 立即失败"
     echo ""
     echo "查看详细日志:"
-    echo "  aws s3 ls s3://$S3_BUCKET/logs/ --recursive --region $REGION"
-    echo "  aws s3 cp s3://$S3_BUCKET/logs/afi-${AFI_ID}/State - --region $REGION"
+    echo "  aws s3 ls s3://$S3_BUCKET/$S3_LOGS_KEY/ --recursive --region $REGION"
     echo ""
     echo "尝试下载并检查 tar 包:"
-    echo "  aws s3 cp s3://$S3_BUCKET/$S3_KEY /tmp/test.tar --region $REGION"
-    echo "  tar -xOf /tmp/test.tar manifest.txt"
+    echo "  aws s3 cp s3://$S3_BUCKET/$S3_DCP_KEY /tmp/test.tar --region $REGION"
+    echo "  tar -tf /tmp/test.tar"
+    echo "  tar -xOf /tmp/test.tar to_aws/*.manifest.txt"
     exit 1
 fi
 
@@ -266,7 +308,10 @@ while true; do
     elif [ "$STATUS" == "failed" ]; then
         echo ""
         echo "❌ AFI 创建失败"
-        echo "日志: s3://$S3_BUCKET/logs"
+        echo "日志: s3://$S3_BUCKET/$S3_LOGS_KEY"
+        echo ""
+        echo "查看详细错误:"
+        echo "  aws s3 ls s3://$S3_BUCKET/$S3_LOGS_KEY/ --recursive --region $REGION"
         exit 1
     fi
     
