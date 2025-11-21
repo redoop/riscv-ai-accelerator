@@ -1,6 +1,6 @@
 # 时序约束文件 - RISC-V AI 加速器
 
-# 主时钟约束
+# 主时钟约束 - 100 MHz
 create_clock -period 10.000 -name sys_clk [get_ports clock]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets clock]
 

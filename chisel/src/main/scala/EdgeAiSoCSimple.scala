@@ -438,7 +438,7 @@ class SimpleBitNetAccel extends Module {
 // Import RealUART from peripherals package
 import riscv.ai.peripherals.RealUART
 
-class SimpleUARTWrapper(clockFreq: Int = 50000000, baudRate: Int = 115200) extends Module {
+class SimpleUARTWrapper(clockFreq: Int = 100000000, baudRate: Int = 115200) extends Module {
   val io = IO(new Bundle {
     val reg = new SimpleRegIO()
     val tx = Output(Bool())
@@ -492,7 +492,7 @@ class SimpleGPIO extends Module {
 // Import TFTLCD from peripherals package
 import riscv.ai.peripherals.TFTLCD
 
-class SimpleLCDWrapper(clockFreq: Int = 50000000, spiFreq: Int = 10000000) extends Module {
+class SimpleLCDWrapper(clockFreq: Int = 100000000, spiFreq: Int = 10000000) extends Module {
   val io = IO(new Bundle {
     val reg = new SimpleRegIO()
     val lcd_spi_clk = Output(Bool())
@@ -651,7 +651,7 @@ class SimplePicoRV32 extends BlackBox with HasBlackBoxResource {
 // Simple EdgeAiSoC - Top Level
 // ============================================================================
 
-class SimpleEdgeAiSoC(clockFreq: Int = 50000000, baudRate: Int = 115200) extends Module {
+class SimpleEdgeAiSoC(clockFreq: Int = 100000000, baudRate: Int = 115200) extends Module {
   val io = IO(new Bundle {
     val uart_tx = Output(Bool())
     val uart_rx = Input(Bool())

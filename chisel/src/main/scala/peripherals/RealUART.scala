@@ -33,9 +33,9 @@ import chisel3.util._
  * 0x0C: BAUD_DIV  - 波特率分频 (R/W)
  */
 class RealUART(
-  clockFreq: Int = 50000000,  // 50MHz 时钟
-  baudRate: Int = 115200,      // 115200 波特率
-  fifoDepth: Int = 16          // FIFO 深度
+  clockFreq: Int = 100000000,  // 100MHz 时钟
+  baudRate: Int = 115200,       // 115200 波特率
+  fifoDepth: Int = 16           // FIFO 深度
 ) extends Module {
   val io = IO(new Bundle {
     // 寄存器接口

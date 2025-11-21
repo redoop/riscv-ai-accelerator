@@ -704,7 +704,7 @@ module RealUART(
   always @(posedge clock) begin
     if (reset) begin
       control <= 32'h0;
-      baudDiv <= 32'h1B2;
+      baudDiv <= 32'h364;
       baudCounter <= 32'h0;
       txState <= 2'h0;
       txBitCounter <= 4'h0;
@@ -915,11 +915,11 @@ module TFTLCD(
       end
       else
         control <= io_wdata;
-      if (|spiCounter)
+      if (|(spiCounter[7:2]))
         spiCounter <= 8'h0;
       else
         spiCounter <= spiCounter + 8'h1;
-      spiClkReg <= (|spiCounter) ^ spiClkReg;
+      spiClkReg <= (|(spiCounter[7:2])) ^ spiClkReg;
       if (state) begin
         automatic logic _GEN_7;
         _GEN_7 = state & _GEN_2 & (&spiBitCounter);

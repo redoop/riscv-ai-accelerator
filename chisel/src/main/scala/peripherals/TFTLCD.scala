@@ -29,8 +29,8 @@ import chisel3.util._
  *       bit 1: RESET
  */
 class TFTLCD(
-  clockFreq: Int = 50000000,  // 50MHz 时钟
-  spiFreq: Int = 10000000      // 10MHz SPI 时钟
+  clockFreq: Int = 100000000,  // 100MHz 时钟
+  spiFreq: Int = 10000000       // 10MHz SPI 时钟
 ) extends Module {
   val io = IO(new Bundle {
     // 寄存器接口
