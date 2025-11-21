@@ -1,1 +1,0 @@
-../launch_f1_vivado.sh

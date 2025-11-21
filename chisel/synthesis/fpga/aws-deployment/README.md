@@ -1,6 +1,6 @@
 # AWS FPGA 部署包
 
-本目录包含在 AWS F1 实例上部署 RISC-V AI 加速器所需的所有脚本和文档。
+本目录包含在 AWS F2 实例上部署 RISC-V AI 加速器所需的所有脚本和文档。
 
 ## 📁 目录内容
 
@@ -19,6 +19,7 @@ aws-deployment/
 1. **AWS 账户**：已配置 AWS CLI 和访问密钥
 2. **SSH 密钥**：用于连接 F2 实例
 3. **本地环境**：已安装 git 和 AWS CLI
+4. **注意**：AWS F1 实例已退役，本项目使用 F2 实例进行 FPGA 开发
 
 ### 自动化部署流程（推荐）
 
@@ -142,7 +143,7 @@ cd ../scripts
 
 这是最重要的文档，包含：
 
-- **方案概述**：验证目标、AWS F1 优势、资源需求
+- **方案概述**：验证目标、AWS F2 优势、资源需求
 - **实施方案**：开发流程、目录结构
 - **技术方案**：时钟、复位、IO 映射、调试方案
 - **实施步骤**：详细的操作步骤
@@ -342,23 +343,16 @@ source ~/.fpga_config  # 加载环境变量
 
 **我们使用 Spot 实例，节省约 70% 成本！**
 
-### F1 实例费用（测试用）
-
-| 实例类型 | 价格（美东） | 推荐用途 |
-|---------|------------|---------|
-| f1.2xlarge | $1.65/小时 | 开发测试 |
-| f1.4xlarge | $3.30/小时 | 性能测试 |
-
 ### 一次完整验证周期
 
 | 阶段 | 实例类型 | 时间 | Spot 成本 |
 |------|---------|------|----------|
 | Vivado 构建 | F2.6xlarge | 2-4 小时 | $2.00-$4.00 |
 | AFI 创建 | 无需实例 | 30-60 分钟 | $0 |
-| 测试验证 | F1.2xlarge | 10-20 分钟 | $0.28-$0.55 |
-| **总计** | - | **3-5 小时** | **$2.28-$4.55** |
+| 测试验证 | F2.6xlarge | 10-20 分钟 | $0.17-$0.33 |
+| **总计** | - | **3-5 小时** | **$2.17-$4.33** |
 
-**使用 Spot 实例比按需实例节省 ~$5！**
+**使用 Spot 实例比按需实例节省 ~70% 成本！**
 
 ### 存储费用
 
@@ -382,13 +376,13 @@ source ~/.fpga_config  # 加载环境变量
 ### 权限要求
 
 确保 AWS 账户有以下权限：
-- EC2 F1 实例访问
+- EC2 F2 实例访问
 - S3 bucket 创建和上传
 - FPGA 镜像创建（ec2:CreateFpgaImage）
 
 ### 配额限制
 
-检查 F1 实例配额：
+检查 F2 实例配额：
 ```bash
 aws service-quotas get-service-quota \
   --service-code ec2 \
@@ -399,7 +393,7 @@ aws service-quotas get-service-quota \
 
 ### 区域选择
 
-推荐使用以下区域（F1 实例可用）：
+推荐使用以下区域（F2 实例可用）：
 - us-east-1（美国东部）
 - us-west-2（美国西部）
 - eu-west-1（欧洲）
@@ -560,9 +554,10 @@ aws iam list-attached-user-policies --user-name <your-username>
 
 ### 外部资源
 
-- [AWS F1 官方文档](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/fpga-getting-started.html)
+- [AWS F2 官方文档](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/fpga-getting-started.html)
 - [AWS FPGA GitHub](https://github.com/aws/aws-fpga)
 - [AWS FPGA 论坛](https://forums.aws.amazon.com/forum.jspa?forumID=243)
+- **注意**：AWS F1 实例已于 2024 年退役，请使用 F2 实例
 
 ### 命令速查
 
@@ -590,11 +585,11 @@ ec2-metadata --availability-zone
 
 部署前检查：
 - [ ] AWS 账户已配置
-- [ ] F1 实例已启动
+- [ ] F2 实例已启动
 - [ ] 项目文件已上传
 - [ ] AWS CLI 已安装并配置
 - [ ] 有足够的 S3 存储空间
-- [ ] 检查了 F1 实例配额
+- [ ] 检查了 F2 实例配额
 
 部署后验证：
 - [ ] AFI 状态为 "available"

@@ -35,8 +35,9 @@ export PATH="/tools/Xilinx/2025.1/Vivado/bin:$PATH"
 mkdir -p ../build/logs
 
 # 启动构建（使用 nohup 后台运行）
-echo "启动 Vivado 构建..."
-nohup vivado -mode batch -source build_fpga_f2.tcl > ../build/logs/vivado_build.log 2>&1 &
+# 注意：使用 build_fpga.tcl（xcvu9p）以兼容 AWS AFI 服务
+echo "启动 Vivado 构建（使用 xcvu9p 设备以兼容 AFI）..."
+nohup vivado -mode batch -source build_fpga.tcl > ../build/logs/vivado_build.log 2>&1 &
 
 BUILD_PID=$!
 echo "构建进程 PID: $BUILD_PID"

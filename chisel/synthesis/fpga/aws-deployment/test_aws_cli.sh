@@ -112,8 +112,10 @@ fi
 
 echo ""
 
-# 检查 F1 配额
-echo "=== 检查 F1 实例配额 ==="
+# 检查 F2 配额
+echo "=== 检查 F2 实例配额 ==="
+echo "注意: AWS F1 实例已于 2024 年退役，现在使用 F2 实例"
+echo ""
 if command -v jq &> /dev/null; then
     QUOTA=$(aws service-quotas get-service-quota \
         --service-code ec2 \
@@ -122,15 +124,15 @@ if command -v jq &> /dev/null; then
     
     if [ -n "$QUOTA" ] && [ "$QUOTA" != "null" ]; then
         if [ "$QUOTA" == "0" ] || [ "$QUOTA" == "0.0" ]; then
-            echo "❌ F1 实例配额为 0"
+            echo "❌ F2 实例配额为 0"
             echo ""
-            echo "需要申请 F1 配额:"
+            echo "需要申请 F2 配额:"
             echo "  https://console.aws.amazon.com/servicequotas/home/services/ec2/quotas/L-85EED4F7"
         else
-            echo "✓ F1 实例配额: $QUOTA"
+            echo "✓ F2 实例配额: $QUOTA"
         fi
     else
-        echo "⚠️  无法查询 F1 配额"
+        echo "⚠️  无法查询 F2 配额"
     fi
 else
     echo "⚠️  jq 未安装，跳过配额检查"
@@ -158,29 +160,27 @@ fi
 
 echo ""
 
-# 检查 F1 实例类型可用性
-echo "=== 检查 F1 实例类型可用性 ==="
-echo "查询 f1.2xlarge 在各可用区的可用性..."
-F1_ZONES=$(aws ec2 describe-instance-type-offerings \
+# 检查 F2 实例类型可用性
+echo "=== 检查 F2 实例类型可用性 ==="
+echo "查询 f2.6xlarge 在各可用区的可用性..."
+F2_ZONES=$(aws ec2 describe-instance-type-offerings \
     --location-type availability-zone \
-    --filters Name=instance-type,Values=f1.2xlarge \
+    --filters Name=instance-type,Values=f2.6xlarge \
     --region us-east-1 \
     --query 'InstanceTypeOfferings[*].Location' \
     --output text 2>/dev/null)
 
-if [ -n "$F1_ZONES" ]; then
-    echo "✓ F1 实例在以下可用区可用:"
-    for zone in $F1_ZONES; do
+if [ -n "$F2_ZONES" ]; then
+    echo "✓ F2 实例在以下可用区可用:"
+    for zone in $F2_ZONES; do
         echo "  - $zone"
     done
 else
-    echo "⚠️  无法查询 F1 实例可用性"
+    echo "⚠️  无法查询 F2 实例可用性"
 fi
 
 echo ""
 echo "=== 测试完成 ==="
 echo ""
-echo "如果所有检查都通过，可以尝试启动 F1 实例:"
-echo "  ./launch_f1_ondemand.sh"
-echo "  或"
-echo "  ./launch_f1_vivado.sh"
+echo "如果所有检查都通过，可以尝试启动 F2 实例:"
+echo "  ./launch_f2_vivado.sh"

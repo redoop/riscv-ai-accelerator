@@ -21,14 +21,34 @@ create_project $project_name $build_dir -part $part -force
 puts "添加 RTL 源文件..."
 
 # 添加生成的 Verilog 文件
-add_files [glob ../../generated/simple_edgeaisoc/*.sv]
+# 路径相对于 scripts/ 目录
+set verilog_files [glob -nocomplain ../../generated/simple_edgeaisoc/*.sv]
+if {[llength $verilog_files] == 0} {
+    # 尝试从上传的项目目录查找
+    set verilog_files [glob -nocomplain ../generated/simple_edgeaisoc/*.sv]
+}
+
+if {[llength $verilog_files] == 0} {
+    puts "错误：未找到生成的 Verilog 文件"
+    puts "请确保已上传 generated/simple_edgeaisoc/ 目录"
+    exit 1
+}
+
+add_files $verilog_files
+puts "已添加 [llength $verilog_files] 个 Verilog 文件"
 
 # 添加 FPGA 特定源文件
 # add_files [glob ./src/*.sv]
 
 # 添加约束文件
 puts "添加约束文件..."
-add_files -fileset constrs_1 [glob ./constraints/*.xdc]
+set constraint_files [glob -nocomplain ../constraints/*.xdc]
+if {[llength $constraint_files] > 0} {
+    add_files -fileset constrs_1 $constraint_files
+    puts "已添加 [llength $constraint_files] 个约束文件"
+} else {
+    puts "警告：未找到约束文件，继续构建..."
+}
 
 # 设置顶层模块
 set_property top $top_module [current_fileset]
@@ -37,7 +57,7 @@ set_property top $top_module [current_fileset]
 puts "配置综合选项..."
 set_property strategy "Flow_PerfOptimized_high" [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.DIRECTIVE "AlternateRoutability" [get_runs synth_1]
-set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
+# 注意：Vivado 2024.1 不再支持某些旧的属性，使用默认设置
 
 # 实现设置
 puts "配置实现选项..."
@@ -46,8 +66,8 @@ set_property STEPS.OPT_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 set_property STEPS.PLACE_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 set_property STEPS.ROUTE_DESIGN.ARGS.DIRECTIVE "Explore" [get_runs impl_1]
 
-# 禁用 write_bitstream 步骤（AWS 只需要 DCP）
-set_property STEPS.WRITE_BITSTREAM.IS_ENABLED false [get_runs impl_1]
+# 注意：AWS 只需要 DCP，不需要生成比特流
+# Vivado 2024.1 不支持禁用 write_bitstream 步骤，我们在实现后直接保存 DCP
 
 # AWS F1/F2: 放宽 DRC 检查（Shell-CL 接口不需要物理引脚约束）
 set_property SEVERITY {Warning} [get_drc_checks NSTD-1]

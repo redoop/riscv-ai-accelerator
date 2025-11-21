@@ -13,7 +13,7 @@ echo "1. 检查 FPGA Developer AMI 1.18.0 (Rocky Linux)..."
 AMI_ROCKY="ami-0cb1b6ae2ff99f8bf"
 RESULT_ROCKY=$(aws ec2 run-instances --dry-run \
     --image-id $AMI_ROCKY \
-    --instance-type f1.2xlarge \
+    --instance-type f2.6xlarge \
     --key-name fpga-dev-key \
     --region $REGION 2>&1 || true)
 
@@ -35,7 +35,7 @@ echo "2. 检查 FPGA Developer AMI 1.17.0 (Ubuntu)..."
 AMI_UBUNTU="ami-01198b89d80ebfdd2"
 RESULT_UBUNTU=$(aws ec2 run-instances --dry-run \
     --image-id $AMI_UBUNTU \
-    --instance-type f1.2xlarge \
+    --instance-type f2.6xlarge \
     --key-name fpga-dev-key \
     --region $REGION 2>&1 || true)
 
@@ -62,8 +62,8 @@ if [ -n "$SUBSCRIBED_AMI" ]; then
     echo "  AMI ID: $SUBSCRIBED_AMI"
     echo "  名称: $SUBSCRIBED_NAME"
     echo ""
-    echo "可以继续启动 F1 实例:"
-    echo "  ./launch_f1_instance.sh"
+    echo "可以继续启动 F2 实例:"
+    echo "  ./launch_f2_vivado.sh"
     echo ""
     
     # 保存到配置文件

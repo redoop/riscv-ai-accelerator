@@ -26,7 +26,7 @@ TARGET=${2:-"local"}  # local 或 aws
 show_banner() {
     echo -e "${CYAN}"
     echo "╔════════════════════════════════════════════════════════════╗"
-    echo "║   RISC-V AI 加速器 - FPGA 验证流程                        ║"
+    echo "║   RISC-V AI 加速器 - FPGA 验证流程 (AWS F2)              ║"
     echo "║   PicoRV32 + CompactAccel + BitNetAccel                   ║"
     echo "╚════════════════════════════════════════════════════════════╝"
     echo -e "${NC}"
@@ -45,30 +45,30 @@ show_help() {
     echo "  deploy      - 部署到 FPGA (需要硬件)"
     echo "  test        - 运行 FPGA 测试"
     echo "  full        - 完整流程 (prepare -> build)"
-    echo "  aws         - AWS F2/F1 完整流程（自动化）"
-    echo "  aws-launch [f1|f2]  - 启动 AWS FPGA 实例（默认 F1）"
+    echo "  aws         - AWS F2 完整流程（自动化）"
+    echo "  aws-launch  - 启动 AWS F2 FPGA 实例"
     echo "  aws-upload  - 上传项目到 FPGA 实例"
     echo "  aws-build   - 在 FPGA 实例上启动构建"
     echo "  aws-monitor - 监控构建进度"
     echo "  aws-download-dcp - 下载 DCP 文件到本地"
     echo "  aws-create-afi - 创建 AWS AFI 镜像"
-    echo "  aws-cleanup - 清理所有 AWS FPGA 实例和资源"
+    echo "  aws-cleanup - 清理所有 AWS F2 实例和资源"
     echo "  clean       - 清理所有构建文件"
     echo "  status      - 查看当前状态"
     echo ""
     echo -e "${BLUE}目标:${NC}"
     echo "  local       - 本地 FPGA 开发 (默认)"
-    echo "  aws         - AWS F2/F1 云端 FPGA"
+    echo "  aws         - AWS F2 云端 FPGA"
     echo ""
     echo -e "${BLUE}示例:${NC}"
     echo "  $0 prepare              # 准备环境和生成 Verilog"
     echo "  $0 simulate             # 运行仿真"
     echo "  $0 full local           # 本地完整流程"
-    echo "  $0 aws                  # AWS 完整自动化流程"
+    echo "  $0 aws                  # AWS F2 完整自动化流程"
     echo "  $0 status               # 查看状态"
     echo ""
-    echo -e "${BLUE}AWS 自动化流程（推荐使用 F1）:${NC}"
-    echo "  1. $0 aws-launch f1     # 启动 F1 实例（推荐，支持 AFI）"
+    echo -e "${BLUE}AWS F2 自动化流程:${NC}"
+    echo "  1. $0 aws-launch        # 启动 F2 实例"
     echo "  2. $0 prepare           # 生成 Verilog"
     echo "  3. $0 aws-upload        # 上传项目"
     echo "  4. $0 aws-build         # 启动 Vivado 构建"
@@ -77,14 +77,11 @@ show_help() {
     echo "  7. $0 aws-create-afi    # 创建 AFI 镜像"
     echo "  8. $0 aws-cleanup       # 清理 AWS 资源（节省成本）"
     echo ""
-    echo -e "${YELLOW}F2 实例（不推荐，不支持 AFI）:${NC}"
-    echo "  1. $0 aws-launch f2     # 启动 F2 实例（仅用于开发）"
-    echo ""
     echo -e "${BLUE}或使用一键命令:${NC}"
     echo "  $0 aws                  # 自动执行上述所有步骤"
     echo ""
     echo -e "${BLUE}清理命令:${NC}"
-    echo "  $0 aws-cleanup          # 终止所有 F1/F2 实例和 Spot 请求"
+    echo "  $0 aws-cleanup          # 终止所有 F2 实例和 Spot 请求"
     echo "  $0 clean                # 清理本地构建文件"
     echo ""
 }
@@ -348,74 +345,29 @@ clean_all() {
     echo -e "${GREEN}✓ 清理完成${NC}"
 }
 
-# 启动 AWS FPGA 实例
+# 启动 AWS F2 实例
 aws_launch_instance() {
-    # 获取实例类型参数（从全局 $2 或函数参数）
-    local instance_type="${TARGET}"
-    if [ "$instance_type" == "aws" ] || [ "$instance_type" == "local" ]; then
-        instance_type="auto"
-    fi
-    
-    echo -e "${BLUE}启动 AWS FPGA 实例...${NC}"
+    echo -e "${BLUE}启动 AWS F2 实例...${NC}"
     echo ""
     
     cd "$FPGA_DIR/aws-deployment"
     
-    case "$instance_type" in
-        f1)
-            echo -e "${GREEN}✓ 选择 F1 实例（推荐）${NC}"
-            echo ""
-            if [ -f "launch_fpga_instance.sh" ]; then
-                # 使用交互式脚本，但传递选项 1（F1 Spot）
-                echo "1" | bash launch_fpga_instance.sh
-            elif [ -f "launch_f1_vivado.sh" ]; then
-                bash launch_f1_vivado.sh
-            else
-                echo -e "${RED}❌ 未找到 F1 启动脚本${NC}"
-                exit 1
-            fi
-            ;;
-        f2)
-            echo -e "${YELLOW}⚠️  选择 F2 实例（不支持 AFI）${NC}"
-            echo ""
-            echo "警告: F2 实例使用 xcvu47p 设备，无法创建 AFI！"
-            echo "仅用于本地开发和测试。"
-            echo ""
-            read -p "确定要继续吗？(y/N): " confirm
-            if [[ ! $confirm =~ ^[Yy]$ ]]; then
-                echo "已取消"
-                exit 0
-            fi
-            
-            if [ -f "launch_f2_vivado.sh" ]; then
-                bash launch_f2_vivado.sh
-            else
-                echo -e "${RED}❌ 未找到 F2 启动脚本${NC}"
-                exit 1
-            fi
-            ;;
-        auto|*)
-            # 自动选择或交互式选择
-            echo -e "${BLUE}使用交互式选择...${NC}"
-            echo ""
-            if [ -f "launch_fpga_instance.sh" ]; then
-                bash launch_fpga_instance.sh
-            elif [ -f "launch_f1_vivado.sh" ]; then
-                echo -e "${GREEN}使用 F1 实例（推荐）${NC}"
-                bash launch_f1_vivado.sh
-            else
-                echo -e "${RED}❌ 未找到启动脚本${NC}"
-                exit 1
-            fi
-            ;;
-    esac
+    # 默认使用 F2 实例
+    if [ -f "launch_f2_vivado.sh" ]; then
+        bash launch_f2_vivado.sh
+    elif [ -f "launch_fpga_instance.sh" ]; then
+        bash launch_fpga_instance.sh
+    else
+        echo -e "${RED}❌ 未找到 F2 启动脚本${NC}"
+        exit 1
+    fi
     
     if [ $? -eq 0 ]; then
         echo ""
-        echo -e "${GREEN}✓ FPGA 实例已启动${NC}"
+        echo -e "${GREEN}✓ F2 实例已启动${NC}"
     else
         echo ""
-        echo -e "${RED}❌ FPGA 实例启动失败${NC}"
+        echo -e "${RED}❌ F2 实例启动失败${NC}"
         exit 1
     fi
 }
@@ -493,6 +445,7 @@ aws_download_dcp() {
     
     # 可能的路径列表
     REMOTE_PATHS=(
+        "~/fpga-project/scripts/build/checkpoints/to_aws/SH_CL_routed.dcp"
         "~/fpga-project/build/checkpoints/to_aws/SH_CL_routed.dcp"
         "~/riscv-ai-accelerator/chisel/synthesis/fpga/build/checkpoints/to_aws/SH_CL_routed.dcp"
         "~/fpga-project/scripts/../build/checkpoints/to_aws/SH_CL_routed.dcp"
@@ -657,7 +610,7 @@ aws_cleanup() {
 # AWS 完整自动化流程
 aws_full_flow() {
     show_banner
-    echo -e "${CYAN}开始 AWS F2/F1 完整自动化流程...${NC}"
+    echo -e "${CYAN}开始 AWS F2 完整自动化流程...${NC}"
     echo ""
     
     TARGET="aws"
@@ -708,8 +661,7 @@ aws_full_flow() {
     echo -e "${BLUE}成本估算:${NC}"
     echo "  F2 Spot 实例: ~$2-4 (2-4 小时)"
     echo "  AFI 创建: 免费"
-    echo "  F1 测试: ~$0.3 (10-20 分钟)"
-    echo "  总计: ~$2.3-4.3"
+    echo "  总计: ~$2-4"
     echo ""
 }
 
@@ -798,8 +750,6 @@ main() {
             ;;
         aws-launch)
             show_banner
-            # 设置 TARGET 为第二个参数（f1 或 f2）
-            TARGET="${2:-auto}"
             aws_launch_instance
             ;;
         aws-upload)

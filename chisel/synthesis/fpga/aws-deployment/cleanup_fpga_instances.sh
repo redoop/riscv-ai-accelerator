@@ -1,5 +1,5 @@
 #!/bin/bash
-# 清理所有 AWS F1/F2 FPGA 实例和相关资源
+# 清理所有 AWS F2 FPGA 实例和相关资源
 
 set -e
 
@@ -29,20 +29,20 @@ ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 echo "AWS 账户: $ACCOUNT_ID"
 echo ""
 
-# 1. 查找所有 F1/F2 实例
+# 1. 查找所有 F2 实例
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "1. 查找 F1/F2 实例..."
+echo "1. 查找 F2 实例..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 INSTANCE_IDS=$(aws ec2 describe-instances \
     --region $REGION \
-    --filters "Name=instance-type,Values=f1.*,f2.*" \
+    --filters "Name=instance-type,Values=f2.*" \
               "Name=instance-state-name,Values=running,pending,stopped,stopping" \
     --query 'Reservations[*].Instances[*].InstanceId' \
     --output text)
 
 if [ -z "$INSTANCE_IDS" ]; then
-    echo "✓ 没有找到运行中的 F1/F2 实例"
+    echo "✓ 没有找到运行中的 F2 实例"
 else
     echo "找到以下实例:"
     aws ec2 describe-instances \
@@ -118,7 +118,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 REMAINING_INSTANCES=$(aws ec2 describe-instances \
     --region $REGION \
-    --filters "Name=instance-type,Values=f1.*,f2.*" \
+    --filters "Name=instance-type,Values=f2.*" \
               "Name=instance-state-name,Values=running,pending" \
     --query 'Reservations[*].Instances[*].InstanceId' \
     --output text)
@@ -130,7 +130,7 @@ REMAINING_SPOTS=$(aws ec2 describe-spot-instance-requests \
     --output text)
 
 if [ -z "$REMAINING_INSTANCES" ] && [ -z "$REMAINING_SPOTS" ]; then
-    echo "✅ 清理完成！没有剩余的 F1/F2 实例或 Spot 请求"
+    echo "✅ 清理完成！没有剩余的 F2 实例或 Spot 请求"
 else
     echo "⚠️ 仍有资源存在:"
     [ -n "$REMAINING_INSTANCES" ] && echo "  实例: $REMAINING_INSTANCES"
@@ -148,7 +148,7 @@ AWS FPGA 实例清理报告
 账户: $ACCOUNT_ID
 
 已清理:
-  - F1/F2 实例: $(echo $INSTANCE_IDS | wc -w) 个
+  - F2 实例: $(echo $INSTANCE_IDS | wc -w) 个
   - Spot 请求: $(echo $SPOT_IDS | wc -w) 个
 
 保留资源:

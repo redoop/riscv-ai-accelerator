@@ -8,8 +8,9 @@ echo "AWS FPGA 环境配置"
 echo "=========================================="
 
 # 检查是否在 AWS 实例上
-if ! curl -s http://169.254.169.254/latest/meta-data/instance-type | grep -q "f1"; then
-    echo "警告：当前不在 F1 实例上，某些功能可能不可用"
+INSTANCE_TYPE=$(curl -s http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null || echo "unknown")
+if [[ ! "$INSTANCE_TYPE" =~ ^f2\. ]]; then
+    echo "警告：当前不在 F2 实例上，某些功能可能不可用"
 fi
 
 # 克隆 AWS FPGA 仓库（如果不存在）

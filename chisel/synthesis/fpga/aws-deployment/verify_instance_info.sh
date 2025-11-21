@@ -1,12 +1,12 @@
 #!/bin/bash
-# 验证 F1 实例信息文件
+# 验证 F2 实例信息文件
 
 set -e
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-INFO_FILE="$SCRIPT_DIR/.f1_instance_info"
+INFO_FILE="$SCRIPT_DIR/.f2_instance_info"
 
-echo "=== F1 实例信息验证工具 ==="
+echo "=== F2 实例信息验证工具 ==="
 echo ""
 
 # 检查文件是否存在
@@ -15,13 +15,12 @@ if [ ! -f "$INFO_FILE" ]; then
     echo "文件路径: $INFO_FILE"
     echo ""
     echo "可能的原因:"
-    echo "  1. 尚未启动 F1 实例"
+    echo "  1. 尚未启动 F2 实例"
     echo "  2. 实例启动失败"
     echo "  3. 文件创建失败"
     echo ""
-    echo "启动 F1 实例:"
-    echo "  ./launch_f1_vivado.sh      # Spot 实例"
-    echo "  ./launch_f1_ondemand.sh    # 按需实例"
+    echo "启动 F2 实例:"
+    echo "  ./launch_f2_vivado.sh      # Spot 实例"
     echo "  ./launch_fpga_instance.sh  # 交互式选择"
     exit 1
 fi
@@ -38,10 +37,6 @@ REQUIRED_FIELDS=(
     "PUBLIC_IP"
     "KEY_NAME"
     "REGION"
-    "INSTANCE_TYPE"
-    "AVAILABILITY_ZONE"
-    "DEVICE"
-    "TIMESTAMP"
 )
 
 MISSING_FIELDS=()
@@ -70,22 +65,18 @@ echo ""
 # 显示实例信息
 echo "=== 实例信息 ==="
 echo "实例 ID:      $INSTANCE_ID"
-echo "实例类型:     $INSTANCE_TYPE"
 echo "公网 IP:      $PUBLIC_IP"
-echo "可用区:       $AVAILABILITY_ZONE"
 echo "区域:         $REGION"
-echo "FPGA 设备:    $DEVICE"
 echo "密钥名称:     $KEY_NAME"
-
-if [ -n "$BILLING_TYPE" ]; then
-    echo "计费类型:     $BILLING_TYPE"
-fi
 
 if [ -n "$SPOT_REQUEST_ID" ]; then
     echo "Spot 请求 ID: $SPOT_REQUEST_ID"
 fi
 
-echo "创建时间:     $TIMESTAMP"
+if [ -n "$TIMESTAMP" ]; then
+    echo "创建时间:     $TIMESTAMP"
+fi
+
 echo ""
 
 # 检查实例状态

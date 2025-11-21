@@ -1,1 +1,0 @@
-../create_afi.sh
