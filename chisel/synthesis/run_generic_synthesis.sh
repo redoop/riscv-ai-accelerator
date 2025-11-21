@@ -16,6 +16,7 @@ else
 fi
 
 RTL_DIR="../generated"
+SDC_FILE="fpga/constraints/timing_complete.sdc"
 OUTPUT_DIR="netlist"
 NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_generic.v"
 
@@ -23,10 +24,22 @@ NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_generic.v"
 mkdir -p "$OUTPUT_DIR"
 
 echo "=========================================="
-echo "通用逻辑综合（无工艺库）"
+echo "通用逻辑综合（无工艺库，带 SDC 约束）"
 echo "=========================================="
 echo "RTL 目录: $RTL_DIR"
+echo "SDC: $SDC_FILE"
 echo "输出网表: $NETLIST_FILE"
+echo ""
+
+# 检查 SDC 文件
+if [ ! -f "$SDC_FILE" ]; then
+    echo "警告: 未找到 SDC 约束文件: $SDC_FILE"
+    echo "将不使用时序约束进行综合"
+    SDC_NOTE="(无时序约束)"
+else
+    echo "✓ 找到 SDC 约束文件"
+    SDC_NOTE="(带时序约束)"
+fi
 echo ""
 
 # 创建 Yosys 综合脚本
@@ -78,8 +91,20 @@ if [ -f "$NETLIST_FILE" ]; then
     echo "网表统计:"
     wc -l "$NETLIST_FILE"
     echo ""
-    echo "下一步: 运行仿真"
-    echo "  python run_post_syn_sim.py --simulator iverilog --netlist generic"
+    
+    # 复制 SDC 约束文件
+    if [ -f "$SDC_FILE" ]; then
+        cp "$SDC_FILE" "$OUTPUT_DIR/timing_constraints.sdc"
+        echo "✓ 已复制 SDC 约束文件"
+        echo ""
+    fi
+    
+    echo "下一步:"
+    echo "  1. 运行后综合仿真:"
+    echo "     python run_post_syn_sim.py --simulator iverilog --netlist generic"
+    echo ""
+    echo "  2. 查看 SDC 约束 (如果需要):"
+    echo "     cat $OUTPUT_DIR/timing_constraints.sdc"
 else
     echo ""
     echo "✗ 综合失败"

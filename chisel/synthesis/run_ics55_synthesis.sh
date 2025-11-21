@@ -14,6 +14,7 @@ PDK_ROOT="$SCRIPT_DIR/pdk/icsprout55-pdk"
 LIBERTY_FILE="$PDK_ROOT/IP/STD_cell/ics55_LLSC_H7C_V1p10C100/ics55_LLSC_H7CL/liberty/ics55_LLSC_H7CL_typ_tt_1p2_25_nldm.lib"
 VERILOG_MODEL="$PDK_ROOT/IP/STD_cell/ics55_LLSC_H7C_V1p10C100/ics55_LLSC_H7CL/verilog/ics55_LLSC_H7CL.v"
 RTL_FILE="../generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv"
+SDC_FILE="fpga/constraints/timing_complete.sdc"
 OUTPUT_DIR="netlist"
 NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_ics55.v"
 
@@ -47,14 +48,27 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 echo "=========================================="
-echo "ICS55 PDK 逻辑综合"
+echo "ICS55 PDK 逻辑综合 (带 SDC 约束)"
 echo "=========================================="
 echo "PDK: ICS55"
 echo "Liberty: $LIBERTY_FILE"
 echo "Verilog: $VERILOG_MODEL"
 echo "RTL: $RTL_FILE"
+echo "SDC: $SDC_FILE"
 echo "输出: $NETLIST_FILE"
 echo ""
+
+# 检查 SDC 文件
+if [ ! -f "$SDC_FILE" ]; then
+    echo "警告: 未找到 SDC 约束文件: $SDC_FILE"
+    echo "将不使用时序约束进行综合"
+    SDC_CONSTRAINT=""
+else
+    echo "✓ 找到 SDC 约束文件"
+    # 注意: Yosys 的 abc 命令支持 -constr 参数读取 SDC
+    # 但功能有限，主要用于时序驱动的优化
+    SDC_CONSTRAINT="-constr $SDC_FILE"
+fi
 
 # 创建 Yosys 综合脚本
 cat > /tmp/ics55_synth.ys << EOF
@@ -81,9 +95,9 @@ opt
 techmap
 opt
 
-# 映射到 ICS55 标准单元
+# 映射到 ICS55 标准单元（带时序约束）
 dfflibmap -liberty $LIBERTY_FILE
-abc -liberty $LIBERTY_FILE
+abc -liberty $LIBERTY_FILE $SDC_CONSTRAINT -D 10000
 
 # 清理
 clean
@@ -94,7 +108,12 @@ tee -o $OUTPUT_DIR/synthesis_stats_ics55.txt stat -liberty $LIBERTY_FILE
 # 输出网表
 write_verilog -noattr -noexpr $NETLIST_FILE
 
+# 如果有 SDC 文件，复制到输出目录
 EOF
+
+if [ -f "$SDC_FILE" ]; then
+    echo "cp $SDC_FILE $OUTPUT_DIR/timing_constraints.sdc" >> /tmp/ics55_synth.ys
+fi
 
 echo "运行 Yosys 综合..."
 $YOSYS_BIN /tmp/ics55_synth.ys 2>&1 | tee "$OUTPUT_DIR/synthesis_ics55.log"
@@ -111,10 +130,20 @@ if [ -f "$NETLIST_FILE" ]; then
     # 复制 Verilog 模型到 netlist 目录以便仿真
     cp "$VERILOG_MODEL" "$OUTPUT_DIR/ics55_LLSC_H7CL.v"
     echo "✓ 已复制标准单元 Verilog 模型"
+    
+    # 复制 SDC 约束文件
+    if [ -f "$SDC_FILE" ]; then
+        cp "$SDC_FILE" "$OUTPUT_DIR/timing_constraints.sdc"
+        echo "✓ 已复制 SDC 约束文件"
+    fi
     echo ""
     
-    echo "下一步: 运行仿真"
-    echo "  python run_post_syn_sim.py --simulator iverilog --netlist ics55"
+    echo "下一步:"
+    echo "  1. 运行后综合仿真:"
+    echo "     python run_post_syn_sim.py --simulator iverilog --netlist ics55"
+    echo ""
+    echo "  2. 运行静态时序分析 (需要 OpenSTA):"
+    echo "     sta -f $OUTPUT_DIR/timing_constraints.sdc $NETLIST_FILE"
 else
     echo ""
     echo "✗ 综合失败，请查看日志: $OUTPUT_DIR/synthesis_ics55.log"

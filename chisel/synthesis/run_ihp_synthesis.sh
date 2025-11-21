@@ -13,6 +13,7 @@ PDK_ROOT="$SCRIPT_DIR/pdk/IHP-Open-PDK/ihp-sg13g2"
 LIBERTY_FILE="$PDK_ROOT/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib"
 VERILOG_MODEL="$PDK_ROOT/libs.ref/sg13g2_stdcell/verilog/sg13g2_stdcell.v"
 RTL_FILE="../generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv"
+SDC_FILE="fpga/constraints/timing_complete.sdc"
 OUTPUT_DIR="netlist"
 NETLIST_FILE="$OUTPUT_DIR/SimpleEdgeAiSoC_ihp.v"
 
@@ -39,14 +40,25 @@ fi
 mkdir -p "$OUTPUT_DIR"
 
 echo "=========================================="
-echo "IHP SG13G2 PDK 逻辑综合"
+echo "IHP SG13G2 PDK 逻辑综合 (带 SDC 约束)"
 echo "=========================================="
 echo "PDK: IHP SG13G2 (130nm)"
 echo "Liberty: $LIBERTY_FILE"
 echo "Verilog: $VERILOG_MODEL"
 echo "RTL: $RTL_FILE"
+echo "SDC: $SDC_FILE"
 echo "输出: $NETLIST_FILE"
 echo ""
+
+# 检查 SDC 文件
+if [ ! -f "$SDC_FILE" ]; then
+    echo "警告: 未找到 SDC 约束文件: $SDC_FILE"
+    echo "将不使用时序约束进行综合"
+    SDC_CONSTRAINT=""
+else
+    echo "✓ 找到 SDC 约束文件"
+    SDC_CONSTRAINT="-constr $SDC_FILE"
+fi
 
 # 创建 Yosys 综合脚本
 cat > /tmp/ihp_synth.ys << EOF
@@ -73,9 +85,9 @@ opt
 techmap
 opt
 
-# 映射到 IHP SG13G2 标准单元
+# 映射到 IHP SG13G2 标准单元（带时序约束）
 dfflibmap -liberty $LIBERTY_FILE
-abc -liberty $LIBERTY_FILE
+abc -liberty $LIBERTY_FILE $SDC_CONSTRAINT -D 10000
 
 # 清理
 clean
@@ -103,10 +115,20 @@ if [ -f "$NETLIST_FILE" ]; then
     # 复制 Verilog 模型到 netlist 目录以便仿真
     cp "$VERILOG_MODEL" "$OUTPUT_DIR/sg13g2_stdcell.v"
     echo "✓ 已复制标准单元 Verilog 模型"
+    
+    # 复制 SDC 约束文件
+    if [ -f "$SDC_FILE" ]; then
+        cp "$SDC_FILE" "$OUTPUT_DIR/timing_constraints.sdc"
+        echo "✓ 已复制 SDC 约束文件"
+    fi
     echo ""
     
-    echo "下一步: 运行仿真"
-    echo "  python run_post_syn_sim.py --simulator iverilog --netlist ihp"
+    echo "下一步:"
+    echo "  1. 运行后综合仿真:"
+    echo "     python run_post_syn_sim.py --simulator iverilog --netlist ihp"
+    echo ""
+    echo "  2. 运行静态时序分析 (需要 OpenSTA):"
+    echo "     sta -f $OUTPUT_DIR/timing_constraints.sdc $NETLIST_FILE"
 else
     echo ""
     echo "✗ 综合失败，请查看日志: $OUTPUT_DIR/synthesis.log"
