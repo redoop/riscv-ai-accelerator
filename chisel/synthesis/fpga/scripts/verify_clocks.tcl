@@ -16,7 +16,7 @@ puts "\n\[1/7\] 检查主时钟..."
 set main_clk [get_clocks -quiet sys_clk]
 if {[llength $main_clk] == 0} {
     puts "ERROR: 主时钟 sys_clk 未定义!"
-    puts "请检查约束文件中是否有: create_clock -period 20.000 -name sys_clk \[get_ports clock\]"
+    puts "请检查约束文件中是否有: create_clock -period 10.000 -name sys_clk \[get_ports clock\]"
     exit 1
 } else {
     set period [get_property PERIOD $main_clk]
@@ -25,8 +25,8 @@ if {[llength $main_clk] == 0} {
     puts "  周期: $period ns"
     puts "  频率: [format %.2f $freq] MHz"
     
-    if {abs($period - 20.0) > 0.1} {
-        puts "WARNING: 主时钟周期应该是 20 ns (50 MHz)，当前是 $period ns"
+    if {abs($period - 10.0) > 0.1} {
+        puts "WARNING: 主时钟周期应该是 10 ns (100 MHz)，当前是 $period ns"
     }
 }
 
@@ -45,9 +45,9 @@ if {[llength $spi_clk] == 0} {
     puts "  周期: $period ns"
     puts "  频率: [format %.2f $freq] MHz"
     
-    set expected_period 120.0
+    set expected_period 100.0
     if {abs($period - $expected_period) > 10.0} {
-        puts "WARNING: SPI 时钟周期应该约为 $expected_period ns，当前是 $period ns"
+        puts "WARNING: SPI 时钟周期应该约为 $expected_period ns (10 MHz)，当前是 $period ns"
     }
 }
 
