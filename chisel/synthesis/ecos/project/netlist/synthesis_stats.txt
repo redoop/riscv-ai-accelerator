@@ -1,0 +1,147 @@
+
+14. Printing statistics.
+
+=== asic_top ===
+
+        +----------Local Count, excluding submodules.
+        |        +-Local Area, excluding submodules.
+        |        | 
+    78822        - wires
+   105963        - wire bits
+     1542        - public wires
+    28537        - public wire bits
+       88        - ports
+       88        - port bits
+   103160 3.01E+05 cells
+       68        -   $_DLATCH_P_
+       12    20.16   AND2X0P5H7L
+        1     1.68   AND2X0P7H7L
+      188   315.84   AND2X1H7L
+       13    21.84   AND2X1P4H7L
+       21    41.16   AND3X0P5H7L
+       34    66.64   AND3X1H7L
+       91   178.36   AND3X1P4H7L
+       36    80.64   AND4X0P5H7L
+        6    15.12   AO211X0P7H7L
+        4    10.08   AO211X1H7L
+       13    32.76   AO211X1P4H7L
+       38    85.12   AO21X1H7L
+       49   150.92   AO221X0P5H7L
+     1065   3578.4   AO222X0P5H7L
+      134   337.68   AO22X0P7H7L
+       26    65.52   AO31X0P5H7L
+        6    15.12   AOA211X0P5H7L
+        1     2.52   AOA211X0P7H7L
+        8    20.16   AOA211X1H7L
+       73   183.96   AOA211X1P4H7L
+      678  1328.88   AOAI211X0P5H7L
+      262   513.52   AOI211X0P5H7L
+        1     1.96   AOI211X1H7L
+       19    42.56   AOI21BX0P5H7L
+     3878   5429.2   AOI21X0P5H7L
+      627  1580.04   AOI221X0P5H7L
+     1747  5380.76   AOI222X0P5H7L
+     3484  6828.64   AOI22X0P5H7L
+        1     1.96   AOI22X0P7H7L
+      286   560.56   AOI2BB1X0P5H7L
+       17    42.84   AOI2BB2X0P5H7L
+        1     2.52   AOI2BB2X0P7H7L
+       43    96.32   AOI2XB1X0P5H7L
+      652  1277.92   AOI31X0P5H7L
+      109   244.16   AOI32X0P5H7L
+        5     12.6   AOI33X0P5H7L
+     1525     1708   BUFX0P5H7L
+      211   236.32   BUFX0P7H7L
+     5054  5660.48   BUFX1H7L
+     4089  4579.68   BUFX1P4H7L
+        1      1.4   BUFX2P5H7L
+      577    807.8   BUFX3H7L
+    25553 1.57E+05   DFFQX1H7L
+        3    23.52   DFFRQX2H7L
+      465    390.6   INVX0P5H7L
+        6     5.04   INVX0P7H7L
+        1     0.84   INVX1H7L
+        5      4.2   INVX1P4H7L
+    10291  28814.8   MUX2X0P5H7L
+     2905  18708.2   MUX4X1P4H7L
+       25       77   MUXI2X0P5H7L
+     2510     3514   NAND2BX0P5H7L
+        3      4.2   NAND2BX1P4H7L
+    11066 1.24E+04   NAND2X0P5H7L
+        3     3.36   NAND2X0P7H7L
+        5      5.6   NAND2X1H7L
+      335    375.2   NAND2X1P4H7L
+        3     7.56   NAND3BBX0P5H7L
+       34    66.64   NAND3BX0P5H7L
+        1     1.96   NAND3BX0P7H7L
+     1128   1579.2   NAND3X0P5H7L
+        1      1.4   NAND3X0P7H7L
+       16     22.4   NAND3X1P4H7L
+       11     30.8   NAND4BBX0P5H7L
+       37    82.88   NAND4BX0P5H7L
+      106   207.76   NAND4X0P5H7L
+      248    347.2   NOR2BX1H7L
+      407    569.8   NOR2BX1P4H7L
+     3391  3797.92   NOR2X0P5H7L
+        6     6.72   NOR2X0P7H7L
+       93   104.16   NOR2X1H7L
+       48    53.76   NOR2X1P4H7L
+       38    74.48   NOR3BX0P5H7L
+        1     1.96   NOR3BX0P7H7L
+        1     1.96   NOR3BX1H7L
+      410      574   NOR3X0P5H7L
+       21     29.4   NOR3X1H7L
+        9     12.6   NOR3X1P4H7L
+        5       14   NOR4BBX0P5H7L
+       47   105.28   NOR4BX0P5H7L
+       96   188.16   NOR4X0P5H7L
+        2     5.04   OA211X0P5H7L
+        6    15.12   OA211X0P7H7L
+        1     2.52   OA211X1H7L
+        7    17.64   OA211X1P4H7L
+       39    87.36   OA21X0P7H7L
+       22     61.6   OA221X0P5H7L
+       17    57.12   OA222X1H7L
+       25       63   OA22X0P5H7L
+        1     2.52   OA22X1P4H7L
+       38    85.12   OA31X1H7L
+     1046  1757.28   OAI211X0P7H7L
+      107   179.76   OAI211X1H7L
+     2288  3843.84   OAI211X1P4H7L
+        8    17.92   OAI21BX0P5H7L
+    12468  17455.2   OAI21X0P5H7L
+        1      1.4   OAI21X0P7H7L
+       69   173.88   OAI221X0P5H7L
+       87   267.96   OAI222X0P5H7L
+      203   397.88   OAI22X0P5H7L
+        1     1.96   OAI22X0P7H7L
+      224   439.04   OAI2BB1X0P5H7L
+        1     1.96   OAI2BB1X1P4H7L
+       28    70.56   OAI2BB2X0P5H7L
+        1     2.52   OAI2BB2X1P4H7L
+       56   125.44   OAI2XB1X0P5H7L
+      142   278.32   OAI31X0P5H7L
+        1     1.96   OAI31X0P7H7L
+        1     1.96   OAI31X1H7L
+       26    58.24   OAI32X0P5H7L
+       19     53.2   OAO211X0P5H7L
+      241   539.84   OAOI211X0P5H7L
+       66     92.4   OR2X0P5H7L
+        2      2.8   OR2X0P7H7L
+      259    362.6   OR2X1P4H7L
+       29    56.84   OR3X1H7L
+       23    51.52   OR4X1P4H7L
+       86        -   P65_1233_PBMUX
+        1        -   P65_1233_PWE
+      551   1542.8   XNOR2X0P5H7L
+       90    529.2   XNOR3X0P7H7L
+      353    988.4   XOR2X0P5H7L
+       36   211.68   XOR3X0P5H7L
+
+   Area for cell type $_DLATCH_P_ is unknown!
+   Area for cell type \P65_1233_PWE is unknown!
+   Area for cell type \P65_1233_PBMUX is unknown!
+
+   Chip area for module '\asic_top': 301076.160000
+     of which used for sequential elements: 157430.000000 (52.29%)
+

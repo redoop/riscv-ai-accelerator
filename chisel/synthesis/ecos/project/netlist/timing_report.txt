@@ -1,0 +1,19 @@
+OpenSTA 2.6.0 aa598a2f14 Copyright (c) 2024, Parallax Software, Inc.
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>
+
+This is free software, and you are free to change and redistribute it
+under certain conditions; type `show_copying' for details. 
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show_warranty'.
+Warning: project/netlist/asic_top_ics55.v line 532132, module $_DLATCH_P_ not found. Creating black box for \u_SimpleEdgeAiSoC.riscv.mem_la_wdata_reg[0] .
+Warning: project/netlist/asic_top_ics55.v line 657475, module P65_1233_PBMUX not found. Creating black box for u_io_pad0.
+Warning: project/netlist/asic_top_ics55.v line 658593, module P65_1233_PWE not found. Creating black box for u_sys_clk_pad.
+No paths found.
+No paths found.
+tns 0.00
+wns 0.00
+No paths found.
+
+==========================================
+时序分析完成
+==========================================
+[?2004h[0;31msta[0m [/opt/github/riscv-ai-accelerator/chisel/synthesis/ecos] 

@@ -107,7 +107,7 @@ module ip1_SimpleAddressDecoder(
 endmodule
 
 // VCS coverage exclude_file
-module ip1_matrix_64x32(
+module matrix_64x32(
   input  [5:0]  R0_addr,
   input         R0_en,
                 R0_clk,
@@ -235,34 +235,34 @@ module ip1_SimpleCompactAccel(
       state <= _GEN_16[state];
     end
   end // always @(posedge)
-  ip1_matrix_64x32 matrixA_ext (
+  matrix_64x32 matrixA_ext (
     .R0_addr (_GEN_1 + {2'h0, k}),
     .R0_en   (_GEN_3),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_matrixA_ext_R0_data),
     .W0_addr (io_reg_addr[7:2]),
     .W0_en   (_GEN_10 & (|(io_reg_addr[11:8])) & io_reg_addr[11:0] < 12'h200),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (io_reg_wdata)
   );
-  ip1_matrix_64x32 matrixB_ext (
+  matrix_64x32 matrixB_ext (
     .R0_addr ({k[2:0], 3'h0} + _GEN_2),
     .R0_en   (_GEN_3),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_matrixB_ext_R0_data),
     .W0_addr (io_reg_addr[7:2]),
     .W0_en   (_GEN_10 & io_reg_addr[11:0] > 12'h2FF & io_reg_addr[11:0] < 12'h400),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (io_reg_wdata)
   );
-  ip1_matrix_64x32 matrixC_ext (
+  matrix_64x32 matrixC_ext (
     .R0_addr (io_reg_addr[7:2]),
     .R0_en   (_GEN_12 & _GEN_11),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_matrixC_ext_R0_data),
     .W0_addr (_GEN_1 + _GEN_2),
     .W0_en   (~_GEN & _GEN_0 & ~_GEN_5),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (_newAccum_T)
   );
   assign io_reg_rdata =
@@ -281,7 +281,7 @@ module ip1_SimpleCompactAccel(
 endmodule
 
 // VCS coverage exclude_file
-module ip1_activation_256x32(
+module activation_256x32(
   input  [7:0]  R0_addr,
   input         R0_en,
                 R0_clk,
@@ -306,7 +306,7 @@ module ip1_activation_256x32(
 endmodule
 
 // VCS coverage exclude_file
-module ip1_weight_256x2(
+module weight_256x2(
   input  [7:0] R0_addr,
   input        R0_en,
                R0_clk,
@@ -331,7 +331,7 @@ module ip1_weight_256x2(
 endmodule
 
 // VCS coverage exclude_file
-module ip1_result_256x32(
+module result_256x32(
   input  [7:0]  R0_addr,
   input         R0_en,
                 R0_clk,
@@ -511,32 +511,32 @@ module ip1_SimpleBitNetAccel(
       state <= _GEN_19[state];
     end
   end // always @(posedge)
-  ip1_activation_256x32 activation_ext (
+  activation_256x32 activation_ext (
     .R0_addr (_idx_T_4[9:2]),
     .R0_en   (_GEN_13 & _GEN_11),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_activation_ext_R0_data),
     .R1_addr (_GEN_1 + k),
     .R1_en   (_GEN_2),
-    .R1_clk  (clock),
+    .ip1_R1_clk  (clock),
     .R1_data (_activation_ext_R1_data),
     .W0_addr (_idx_T[9:2]),
     .W0_en   (_GEN_9 & _GEN_11),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (io_reg_wdata)
   );
-  ip1_weight_256x2 weight_ext (
+  weight_256x2 weight_ext (
     .R0_addr ({k[3:0], 4'h0} + j),
     .R0_en   (_GEN_2),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_weight_ext_R0_data),
     .R1_addr (_idx_T_6[9:2]),
     .R1_en   (_GEN_13 & _GEN_12),
-    .R1_clk  (clock),
+    .ip1_R1_clk  (clock),
     .R1_data (_weight_ext_R1_data),
     .W0_addr (_idx_T_2[9:2]),
     .W0_en   (_GEN_9 & _GEN_12),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data
       (io_reg_wdata == 32'h0
          ? 2'h0
@@ -544,14 +544,14 @@ module ip1_SimpleBitNetAccel(
              ? 2'h1
              : 2'h2)
   );
-  ip1_result_256x32 result_ext (
+  result_256x32 result_ext (
     .R0_addr (_idx_T_8[9:2]),
     .R0_en   (_GEN_13 & _GEN_14),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (_result_ext_R0_data),
     .W0_addr (_GEN_1 + j),
     .W0_en   (~_GEN & _GEN_0 & ~_GEN_5),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (_GEN_3 ? _newAccum_T : _GEN_4 ? _newAccum_T_3 : accumulator)
   );
   assign io_reg_rdata =
@@ -586,7 +586,7 @@ module ip1_SimpleBitNetAccel(
 endmodule
 
 // VCS coverage exclude_file
-module ip1_ram_16x8(
+module ram_16x8(
   input  [3:0] R0_addr,
   input        R0_en,
                R0_clk,
@@ -639,14 +639,14 @@ module ip1_Queue16_UInt8(
         maybe_full <= do_enq;
     end
   end // always @(posedge)
-  ip1_ram_16x8 ram_ext (
+  ram_16x8 ram_ext (
     .R0_addr (deq_ptr_value),
     .R0_en   (1'h1),
-    .R0_clk  (clock),
+    .ip1_R0_clk  (clock),
     .R0_data (io_deq_bits),
     .W0_addr (enq_ptr_value),
     .W0_en   (do_enq),
-    .W0_clk  (clock),
+    .ip1_W0_clk  (clock),
     .W0_data (io_enq_bits)
   );
   assign io_enq_ready = ~full;
@@ -1346,7 +1346,7 @@ module picorv32 #(
 	output reg [31:0] mem_la_wdata,
 	output reg [ 3:0] mem_la_wstrb,
 
-	// Pico Co-Processor Interface (PCPI)
+	// Pico Co-ip1_Processor Interface (PCPI)
 	output reg        pcpi_valid,
 	output reg [31:0] pcpi_insn,
 	output     [31:0] pcpi_rs1,
@@ -2613,7 +2613,7 @@ module picorv32 #(
 	wire [5:0] cpuregs_raddr1 = ENABLE_REGS_DUALPORT ? decoded_rs1 : decoded_rs;
 	wire [5:0] cpuregs_raddr2 = ENABLE_REGS_DUALPORT ? decoded_rs2 : 0;
 
-	`PICORV32_REGS cpuregs (
+	`ip1_PICORV32_REGS cpuregs (
 		.clk(clk),
 		.wen(resetn && cpuregs_write && latched_rd),
 		.waddr(cpuregs_waddr),
@@ -3808,7 +3808,7 @@ module picorv32_axi #(
 	output        mem_axi_rready,
 	input  [31:0] mem_axi_rdata,
 
-	// Pico Co-Processor Interface (PCPI)
+	// Pico Co-ip1_Processor Interface (PCPI)
 	output        pcpi_valid,
 	output [31:0] pcpi_insn,
 	output [31:0] pcpi_rs1,
@@ -4094,7 +4094,7 @@ module picorv32_wb #(
 	input wbm_ack_i,
 	output reg wbm_cyc_o,
 
-	// Pico Co-Processor Interface (PCPI)
+	// Pico Co-ip1_Processor Interface (PCPI)
 	output        pcpi_valid,
 	output [31:0] pcpi_insn,
 	output [31:0] pcpi_rs1,

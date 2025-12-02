@@ -1,0 +1,18 @@
+// 简单的 RISC-V 机器码
+// 地址 0x80000000 开始
+
+// _start:
+100002b7  // lui  x5, 0x10000      # x5 = GPIO 基地址
+aaaab337  // lui  x6, 0xaaaab
+aaa30313  // addi x6, x6, -1366    # x6 = 0xaaaaaaaa
+0062a023  // sw   x6, 0(x5)        # 写 GPIO
+3e800393  // li   x7, 1000         # 延迟计数
+fff38393  // addi x7, x7, -1
+fe0392e3  // bnez x7, -8
+55555337  // lui  x6, 0x55555
+55530313  // addi x6, x6, 1365     # x6 = 0x55555555
+0062a023  // sw   x6, 0(x5)
+3e800393  // li   x7, 1000
+fff38393  // addi x7, x7, -1
+fe0392e3  // bnez x7, -8
+fddff06f  // j    _start           # 无限循环
