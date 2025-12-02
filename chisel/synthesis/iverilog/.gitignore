@@ -1,0 +1,26 @@
+# VCS 仿真生成的文件
+*.log
+*.fsdb
+*.vpd
+*.vcd
+simv
+simv.daidir/
+csrc/
+verdiLog/
+DVEfiles/
+ucli.key
+novas.*
+*.key
+
+# macOS 文件
+.DS_Store
+
+# 临时文件
+*.tmp
+*.bak
+*~
+
+# 编译输出
+*.o
+*.so
+*.a
