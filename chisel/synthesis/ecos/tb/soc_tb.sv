@@ -13,15 +13,22 @@ module soc_tb ();
   wire old_ip_uart_tx_pad;
 
   logic r_osc_clk_25m, r_ext_rst_n;
-  logic [2:0] r_ip_sel;
+  reg [2:0] r_ip_sel;
+  wire [2:0] ip_sel_pads;
+  wire unused_pad13, unused_pad14, unused_pad15;
+  
+  assign ip_sel_pads = r_ip_sel;
+  assign unused_pad13 = 1'b0;
+  assign unused_pad14 = 1'b0;
+  assign unused_pad15 = 1'b0;
 
   assign osc_clk_25m_i_pad            = r_osc_clk_25m;
   assign ext_rst_n_i_pad              = r_ext_rst_n;
 
   asic_top u_asic_top (
-      .ip_sel_pad0       (r_ip_sel[0]),
-      .ip_sel_pad1       (r_ip_sel[1]),
-      .ip_sel_pad2       (r_ip_sel[2]),
+      .ip_sel_pad0       (ip_sel_pads[0]),
+      .ip_sel_pad1       (ip_sel_pads[1]),
+      .ip_sel_pad2       (ip_sel_pads[2]),
       .sys_clk_i_pad     (osc_clk_25m_i_pad),
       .sys_clk_o_pad     (),
       .rst_n_pad         (ext_rst_n_i_pad),
@@ -38,9 +45,9 @@ module soc_tb ();
       .io_pad10          (),
       .io_pad11          (old_ip_spi_flash_mosi_pad),
       .io_pad12          (old_ip_spi_flash_miso_pad),
-      .io_pad13          (1'b0),
-      .io_pad14          (1'b0),
-      .io_pad15          (1'b0),
+      .io_pad13          (unused_pad13),
+      .io_pad14          (unused_pad14),
+      .io_pad15          (unused_pad15),
       .io_pad16          (),
       .io_pad17          (),
       .io_pad18          (),
@@ -154,8 +161,8 @@ module soc_tb ();
         else if ($test$plusargs("ip_sel05")) r_ip_sel = 3'd5;
 
         if ($test$plusargs("dump_all")) begin
-          $fsdbDumpfile("soc_tb.fsdb");
-          $fsdbDumpvars(0, soc_tb, "+all");
+          $dumpfile("soc_tb_netlist.vcd");
+          $dumpvars(0, soc_tb);
         end
 
         if      ($test$plusargs("asm-flash"))       #1000000    $finish;

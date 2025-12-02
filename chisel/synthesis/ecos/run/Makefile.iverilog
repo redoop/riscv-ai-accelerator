@@ -1,0 +1,276 @@
+# Makefile for Icarus Verilog Simulation
+# Open-source alternative to VCS
+# Supports both RTL and post-synthesis netlist simulation
+
+DESIGN := soc_tb
+
+# Simulation mode: rtl or netlist
+SIM_MODE ?= rtl
+
+# Icarus Verilog settings
+IVERILOG := iverilog
+VVP := vvp
+GTKWAVE := gtkwave
+
+# Output files
+COMPILE_OUT := $(DESIGN)_$(SIM_MODE).vvp
+WAVE_FILE := $(DESIGN)_$(SIM_MODE).vcd
+
+# PDK paths (ICS55)
+# From run/ directory: ../pdk/icsprout55-pdk
+PDK_ROOT := ../pdk/icsprout55-pdk
+PDK_VERILOG := $(PDK_ROOT)/IP/STD_cell/ics55_LLSC_H7C_V1p10C100/ics55_LLSC_H7CL/verilog/ics55_LLSC_H7CL.v
+
+# Netlist paths (for post-synthesis simulation)
+# Updated to match run_synthesis.sh output directory: ../project/netlist/
+NETLIST_DIR := ../project/netlist
+NETLIST_FILE := $(NETLIST_DIR)/asic_top_ics55.v
+
+# Chisel generated RTL path (copied to project/verilog by run_synthesis.sh)
+CHISEL_RTL := ../project/verilog/SimpleEdgeAiSoC.sv
+
+# Compiler flags
+IVERILOG_FLAGS := -g2005-sv \
+                  -Wall \
+                  -Wno-timescale \
+                  -DIVERILOG \
+                  -DRANDOMIZE_REG_INIT
+
+# Add PDK behavioral flag for netlist simulation
+ifeq ($(SIM_MODE),netlist)
+IVERILOG_FLAGS += -DPDK_BEHAV -DPOST_SYNTHESIS
+else
+IVERILOG_FLAGS += -DPDK_BEHAV
+endif
+
+# Include directories
+INC_DIRS := -I../top \
+            -I../utils \
+            -I../tb \
+            -I../tb/include \
+            -I../../../generated/simple_edgeaisoc
+
+# File lists
+ifeq ($(SIM_MODE),netlist)
+# Netlist simulation: use netlist + PDK + ASIC testbench
+RTL_FILES := $(NETLIST_FILE) $(PDK_VERILOG) ../lib/icsIOA_N55_3P3.v ../lib/yosys_cells.v
+TB_FILES := ../tb/soc_tb.sv ../tb/tty.v ../tb/N25Qxxx.v
+else
+# RTL simulation: use original RTL files
+RTL_FILES := $(shell cat ../filelist/asic_top.f ../filelist/ip.f ../filelist/lib.f ../filelist/soc.f 2>/dev/null | grep -v "^#" | grep -v "^$")
+TB_FILES := $(shell cat ../filelist/asic_tblist.f 2>/dev/null | grep -v "^#" | grep -v "^$")
+endif
+
+# Default target
+.PHONY: all
+all: compile
+
+# Compile
+.PHONY: compile comp
+compile comp:
+	@echo "=========================================="
+	@echo "Compiling with Icarus Verilog ($(SIM_MODE) mode)..."
+	@echo "=========================================="
+	@if [ "$(SIM_MODE)" = "netlist" ]; then \
+		echo "Netlist file: $(NETLIST_FILE)"; \
+		echo "PDK file: $(PDK_VERILOG)"; \
+		if [ ! -f "$(NETLIST_FILE)" ]; then \
+			echo "Error: Netlist file not found!"; \
+			exit 1; \
+		fi; \
+		if [ ! -f "$(PDK_VERILOG)" ]; then \
+			echo "Error: PDK Verilog file not found!"; \
+			echo "Please check PDK installation at: $(PDK_ROOT)"; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "RTL files: $(words $(RTL_FILES)) files"
+	@echo "TB files: $(words $(TB_FILES)) files"
+	@echo ""
+	$(IVERILOG) $(IVERILOG_FLAGS) $(INC_DIRS) \
+		-o $(COMPILE_OUT) \
+		-s $(DESIGN) \
+		$(RTL_FILES) $(TB_FILES) 2>&1 | tee compile_$(SIM_MODE).log
+	@echo ""
+	@if [ -f $(COMPILE_OUT) ]; then \
+		echo "✓ Compilation successful!"; \
+		echo "Output: $(COMPILE_OUT)"; \
+	else \
+		echo "✗ Compilation failed!"; \
+		echo "Check compile_$(SIM_MODE).log for details"; \
+		exit 1; \
+	fi
+
+# Simulate
+.PHONY: simulate sim
+simulate sim: compile
+	@echo ""
+	@echo "=========================================="
+	@echo "Running simulation ($(SIM_MODE) mode)..."
+	@echo "=========================================="
+	$(VVP) $(COMPILE_OUT) 2>&1 | tee sim_$(SIM_MODE).log
+	@echo ""
+	@if [ -f $(WAVE_FILE) ]; then \
+		echo "✓ Simulation completed!"; \
+		echo "Waveform: $(WAVE_FILE)"; \
+	else \
+		echo "⚠ Simulation completed but no waveform generated"; \
+	fi
+
+# View waveform
+.PHONY: wave view
+wave view:
+	@if [ -f $(WAVE_FILE) ]; then \
+		echo "Opening waveform with GTKWave..."; \
+		$(GTKWAVE) $(WAVE_FILE) &; \
+	else \
+		echo "Error: Waveform file $(WAVE_FILE) not found!"; \
+		echo "Run 'make sim SIM_MODE=$(SIM_MODE)' first"; \
+		exit 1; \
+	fi
+
+# Run all (compile + simulate)
+.PHONY: run
+run: sim
+
+# Netlist simulation shortcuts
+.PHONY: netlist netlist-sim
+netlist netlist-sim:
+	@$(MAKE) -f Makefile.iverilog sim SIM_MODE=netlist
+
+.PHONY: netlist-compile
+netlist-compile:
+	@$(MAKE) -f Makefile.iverilog compile SIM_MODE=netlist
+
+.PHONY: netlist-wave
+netlist-wave:
+	@$(MAKE) -f Makefile.iverilog wave SIM_MODE=netlist
+
+# RTL simulation shortcuts
+.PHONY: rtl rtl-sim
+rtl rtl-sim:
+	@$(MAKE) -f Makefile.iverilog sim SIM_MODE=rtl
+
+.PHONY: rtl-compile
+rtl-compile:
+	@$(MAKE) -f Makefile.iverilog compile SIM_MODE=rtl
+
+.PHONY: rtl-wave
+rtl-wave:
+	@$(MAKE) -f Makefile.iverilog wave SIM_MODE=rtl
+
+# Clean
+.PHONY: clean
+clean:
+	@echo "Cleaning up..."
+	rm -f *.vvp *.vcd
+	rm -f *.log
+	rm -f *.fsdb *.vpd
+	rm -rf csrc simv.daidir DVEfiles verdiLog
+	@echo "✓ Clean complete"
+
+# Help
+.PHONY: help
+help:
+	@echo "Icarus Verilog Simulation Makefile"
+	@echo ""
+	@echo "Simulation Modes:"
+	@echo "  SIM_MODE=rtl      - RTL simulation (default)"
+	@echo "  SIM_MODE=netlist  - Post-synthesis netlist simulation with ICS55 PDK"
+	@echo ""
+	@echo "Targets:"
+	@echo "  make compile [SIM_MODE=rtl|netlist]  - Compile the design"
+	@echo "  make simulate [SIM_MODE=rtl|netlist] - Compile and simulate"
+	@echo "  make wave [SIM_MODE=rtl|netlist]     - View waveform with GTKWave"
+	@echo "  make run [SIM_MODE=rtl|netlist]      - Compile and simulate"
+	@echo "  make clean                           - Clean generated files"
+	@echo ""
+	@echo "Shortcuts:"
+	@echo "  make netlist       - Run netlist simulation"
+	@echo "  make netlist-sim   - Run netlist simulation"
+	@echo "  make netlist-wave  - View netlist waveform"
+	@echo "  make rtl           - Run RTL simulation"
+	@echo "  make rtl-sim       - Run RTL simulation"
+	@echo "  make rtl-wave      - View RTL waveform"
+	@echo ""
+	@echo "Examples:"
+	@echo "  make compile SIM_MODE=netlist  # Compile netlist"
+	@echo "  make netlist                   # Run netlist simulation"
+	@echo "  make netlist-wave              # View netlist waveform"
+	@echo "  make sim SIM_MODE=rtl          # Run RTL simulation"
+	@echo ""
+	@echo "PDK Configuration:"
+	@echo "  PDK: ICS55 (icsprout55-pdk)"
+	@echo "  Location: $(PDK_ROOT)"
+	@echo "  Verilog: $(PDK_VERILOG)"
+	@echo ""
+	@echo "Netlist Configuration:"
+	@echo "  Netlist: $(NETLIST_FILE)"
+
+# Show configuration
+.PHONY: config
+config:
+	@echo "Configuration:"
+	@echo "  Design: $(DESIGN)"
+	@echo "  Simulation mode: $(SIM_MODE)"
+	@echo "  Compiler: $(IVERILOG)"
+	@echo "  Simulator: $(VVP)"
+	@echo "  Wave viewer: $(GTKWAVE)"
+	@echo "  Output: $(COMPILE_OUT)"
+	@echo "  Waveform: $(WAVE_FILE)"
+	@echo ""
+	@echo "PDK Configuration:"
+	@echo "  PDK Root: $(PDK_ROOT)"
+	@echo "  PDK Verilog: $(PDK_VERILOG)"
+	@echo ""
+	@echo "Netlist Configuration:"
+	@echo "  Netlist file: $(NETLIST_FILE)"
+	@echo ""
+	@echo "Include directories:"
+	@for dir in $(INC_DIRS); do echo "  $$dir"; done
+	@echo ""
+	@echo "RTL files: $(words $(RTL_FILES))"
+	@echo "TB files: $(words $(TB_FILES))"
+
+.PHONY: list-files
+list-files:
+	@echo "Simulation Mode: $(SIM_MODE)"
+	@echo ""
+	@echo "RTL Files:"
+	@for file in $(RTL_FILES); do echo "  $$file"; done
+	@echo ""
+	@echo "Testbench Files:"
+	@for file in $(TB_FILES); do echo "  $$file"; done
+
+# Check PDK installation
+.PHONY: check-pdk
+check-pdk:
+	@echo "Checking PDK installation..."
+	@if [ -d "$(PDK_ROOT)" ]; then \
+		echo "✓ PDK root found: $(PDK_ROOT)"; \
+	else \
+		echo "✗ PDK root not found: $(PDK_ROOT)"; \
+		exit 1; \
+	fi
+	@if [ -f "$(PDK_VERILOG)" ]; then \
+		echo "✓ PDK Verilog found: $(PDK_VERILOG)"; \
+		wc -l "$(PDK_VERILOG)"; \
+	else \
+		echo "✗ PDK Verilog not found: $(PDK_VERILOG)"; \
+		exit 1; \
+	fi
+
+# Check netlist file
+.PHONY: check-netlist
+check-netlist:
+	@echo "Checking netlist file..."
+	@if [ -f "$(NETLIST_FILE)" ]; then \
+		echo "✓ Netlist found: $(NETLIST_FILE)"; \
+		wc -l "$(NETLIST_FILE)"; \
+		echo ""; \
+		echo "Module name:"; \
+		grep "^module" "$(NETLIST_FILE)" | head -1; \
+	else \
+		echo "✗ Netlist not found: $(NETLIST_FILE)"; \
+		exit 1; \
+	fi

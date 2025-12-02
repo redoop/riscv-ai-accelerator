@@ -62,13 +62,19 @@ object SimpleEdgeAiSoCMain extends App {
   try {
     ChiselStage.emitSystemVerilogFile(
       new SimpleEdgeAiSoC(),
-      firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+      firtoolOpts = GeneratorConfig.getFirtoolOpts,
       args = Array("--target-dir", "generated/simple_edgeaisoc")
     )
     
     // 后处理
     println("\n📝 Post-processing generated files...")
-    PostProcessVerilog.cleanupVerilogFile("generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv")
+    val mainFile = "generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv"
+    PostProcessVerilog.cleanupVerilogFile(mainFile)
+    
+    // 添加模块前缀
+    if (GeneratorConfig.ENABLE_PREFIX) {
+      PostProcessVerilog.addModulePrefix(mainFile, GeneratorConfig.MODULE_PREFIX)
+    }
     
     println("\n" + "=" * 70)
     println("✅ Simple EdgeAiSoC Verilog generation complete!")

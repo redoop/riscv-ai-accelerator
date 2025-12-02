@@ -27,7 +27,7 @@ object VerilogGenerator extends App {
         case module: chisel3.Module =>
           ChiselStage.emitSystemVerilogFile(
             module,
-            firtoolOpts = Array("-disable-all-randomization", "-strip-debug-info"),
+            firtoolOpts = GeneratorConfig.getFirtoolOpts,
             args = Array("--target-dir", targetDir)
           )
         case _ =>
