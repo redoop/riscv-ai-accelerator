@@ -38,7 +38,34 @@ iverilog/
 
 ## 🔧 使用方法
 
-### 使用 VCS (Synopsys)
+### 方法 1: 使用 Icarus Verilog (开源) ⭐ 推荐
+
+如果没有 VCS，使用开源的 Icarus Verilog：
+
+```bash
+cd run
+
+# 使用 Icarus Verilog Makefile
+make -f Makefile.iverilog compile  # 编译
+make -f Makefile.iverilog sim      # 仿真
+make -f Makefile.iverilog wave     # 查看波形
+make -f Makefile.iverilog clean    # 清理
+```
+
+### 方法 2: 使用项目主脚本 ⭐⭐ 最推荐
+
+使用项目提供的完整仿真脚本：
+
+```bash
+cd chisel/synthesis
+
+# 运行后综合仿真
+python run_post_syn_sim.py --simulator iverilog --netlist ics55
+```
+
+### 方法 3: 使用 VCS (Synopsys)
+
+如果有 VCS 商业许可：
 
 ```bash
 cd run
@@ -56,31 +83,28 @@ make wave
 make clean
 ```
 
-### 使用 Icarus Verilog (开源)
-
-如果要使用 Icarus Verilog 进行仿真，请使用项目根目录的脚本：
-
-```bash
-cd chisel/synthesis
-
-# 运行后综合仿真
-python run_post_syn_sim.py --simulator iverilog --netlist ics55
-```
-
 ## 📝 注意事项
 
 1. **工具要求**：
-   - VCS: Synopsys VCS 仿真器（商业软件）
-   - Verdi: Synopsys Verdi 波形查看器（商业软件）
-   - 或使用开源的 Icarus Verilog + GTKWave
+   - **VCS**: Synopsys VCS 仿真器（商业软件，需要许可证）
+   - **Verdi**: Synopsys Verdi 波形查看器（商业软件）
+   - **Icarus Verilog**: 开源仿真器（免费，推荐）✅
+   - **GTKWave**: 开源波形查看器（免费）✅
 
-2. **文件路径**：
-   - Makefile 中的某些路径可能需要根据实际环境调整
+2. **VCS 错误处理**：
+   如果看到 `make: vcs: No such file or directory` 错误：
+   - 使用 `make -f Makefile.iverilog` 代替
+   - 或使用项目主仿真脚本
+   - 详见 [IVERILOG_USAGE.md](IVERILOG_USAGE.md)
+
+3. **文件路径**：
+   - 原始 Makefile 中的某些路径可能需要调整
+   - `Makefile.iverilog` 已修复路径问题
    - 特别是 `SIM_INC` 中的绝对路径
 
-3. **仿真选项**：
-   - 当前配置为 VCS 全功能仿真
-   - 包含时序检查和 SVA 断言
+4. **仿真选项**：
+   - VCS: 全功能仿真，包含时序检查和 SVA 断言
+   - Icarus Verilog: 功能仿真，部分 SystemVerilog 支持
 
 ## 🔄 与项目集成
 
