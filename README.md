@@ -74,11 +74,32 @@ Complete ASIC synthesis flow with ICS55 55nm PDK:
 - ✅ **Netlist Simulation**: Icarus Verilog environment ready
 - ✅ **Documentation**: Complete synthesis guides and reports
 
-**Development Time**: 1 day (~12 hours) + Clock verification + ASIC synthesis + Storage expansion  
+### 🎓 ysyxSoC Integration (2025-12-03)
+
+Complete integration with ysyxSoC platform:
+- ✅ **AI Accelerator Module**: ysyx_26000001_with_ai.v (complete SoC wrapper)
+- ✅ **Platform Integration**: Full ysyxSoCFull.v integration
+- ✅ **Test Programs**: AI accelerator and system tests
+- ✅ **Build Scripts**: Automated synthesis and simulation
+- ✅ **Verilator Support**: Complete simulation environment
+- ✅ **Documentation**: Integration guides and test results
+- ✅ **Repository**: Separate ysyxSoC repo with all integration files
+
+### 📚 Documentation Organization (2025-12-03)
+
+Complete documentation restructuring:
+- ✅ **Organized Structure**: 9 categorized subdirectories
+- ✅ **30+ Documents**: All docs properly archived
+- ✅ **Archive Index**: Easy navigation with ARCHIVE_INDEX.md
+- ✅ **Categories**: Physical design, synthesis, testing, releases, storage, etc.
+- ✅ **Clean Root**: Root directory decluttered
+
+**Development Time**: 1 day (~12 hours) + Clock verification + ASIC synthesis + Storage expansion + ysyxSoC integration  
 **Total Code**: ~4,100 lines (Chisel + C + Python)  
 **Binary Size**: 24.1 KB (5 programs)  
 **Netlist**: 623,516 lines (ICS55 55nm)  
-**Storage**: 24 MB (16 MB Flash + 8 MB PSRAM)
+**Storage**: 24 MB (16 MB Flash + 8 MB PSRAM)  
+**Documentation**: 30+ organized documents
 
 ## 🏗️ Architecture
 
@@ -235,6 +256,25 @@ vivado -mode batch -source scripts/verify_clocks.tcl
 
 See [Clock Verification Guide](chisel/synthesis/fpga/docs/CLOCK_VERIFICATION_GUIDE.md) for details.
 
+### ysyxSoC Integration
+
+```bash
+# Generate ysyxSoC integration module
+cd chisel
+sbt "runMain riscv.ai.SimpleEdgeAiSoCMain"
+
+# Build and test with ysyxSoC platform
+cd synthesis/ysyxSoc
+bash ../run_ysyxsoc_synthesis.sh
+
+# Run Verilator simulation
+cd ecos/ysyxSoC/ready-to-run/D-stage
+./build_sim_with_ai.sh
+./run_test.sh
+```
+
+See [ysyxSoC Integration Guide](YSYXSOC_AI_INTEGRATION.md) for details.
+
 ### FPGA Verification (AWS F1)
 
 ```bash
@@ -310,6 +350,7 @@ Mature international open-source toolchain:
 | **📕 Quick Start** | Quick start guide | [chisel/QUICKSTART.md](chisel/QUICKSTART.md) |
 | **📗 Testing Guide** | Complete testing documentation | [chisel/TESTING.md](chisel/TESTING.md) |
 | **📘 Hardware Test** | Hardware test results | [chisel/HARDWARE_TEST.md](chisel/HARDWARE_TEST.md) |
+| **📚 Archive Index** | Organized documentation index | [chisel/docs/ARCHIVE_INDEX.md](chisel/docs/ARCHIVE_INDEX.md) |
 
 ### Software Documentation (v0.2)
 
@@ -370,6 +411,20 @@ sbt "testOnly riscv.ai.ClockVerificationTest"         # Chisel tests only
 cd chisel/synthesis/fpga
 ./run_fpga_flow.sh help    # View all options
 ./run_fpga_flow.sh status  # Check current status
+```
+
+### ysyxSoC Integration
+
+| Document | Description | Link |
+|----------|-------------|------|
+| **🎓 Integration Guide** | Complete ysyxSoC integration | [YSYXSOC_AI_INTEGRATION.md](YSYXSOC_AI_INTEGRATION.md) |
+| **🔧 Synthesis Guide** | ysyxSoC synthesis documentation | [chisel/synthesis/README_YSYXSOC_SYNTHESIS.md](chisel/synthesis/README_YSYXSOC_SYNTHESIS.md) |
+| **📊 Synthesis Results** | ysyxSoC synthesis results | [chisel/synthesis/YSYXSOC_SYNTHESIS_RESULTS.md](chisel/synthesis/YSYXSOC_SYNTHESIS_RESULTS.md) |
+
+**Quick Commands:**
+```bash
+cd chisel/synthesis/ysyxSoc
+bash ../run_ysyxsoc_synthesis.sh  # Build and test
 ```
 
 ## 🎓 Project Structure
@@ -440,7 +495,15 @@ riscv-ai-accelerator/
     │       └── *.map                  # Memory maps
     │
     ├── docs/                          # Additional documentation
-    │   └── DEV_PLAN_V0.2.md           # v0.2 development plan
+    │   ├── ARCHIVE_INDEX.md           # Documentation navigation index
+    │   ├── physical_design/           # Physical design docs
+    │   ├── synthesis/                 # Synthesis reports
+    │   ├── testing/                   # Test reports
+    │   ├── releases/                  # Release notes
+    │   ├── storage/                   # Storage expansion docs
+    │   ├── development/               # Development plans
+    │   ├── planning/                  # Planning documents
+    │   └── verilog/                   # Verilog file lists
     │
     ├── generated/                     # Generated Verilog files
     │   └── simple_edgeaisoc/          # Generated SoC Verilog
@@ -450,6 +513,7 @@ riscv-ai-accelerator/
     │   ├── run_ics55_synthesis.sh     # ICS55 synthesis
     │   ├── run_ihp_synthesis.sh       # IHP synthesis
     │   ├── run_post_syn_sim.py        # Post-synthesis simulation
+    │   ├── run_ysyxsoc_synthesis.sh   # ysyxSoC synthesis
     │   │
     │   ├── ecos/                      # ECOS ASIC synthesis (v0.2)
     │   │   ├── README.md              # ECOS synthesis guide
@@ -462,6 +526,10 @@ riscv-ai-accelerator/
     │   │   │   ├── Makefile           # Netlist simulation
     │   │   │   └── README_NETLIST_SIM.md
     │   │   └── sdc/                   # Timing constraints
+    │   │
+    │   ├── ysyxSoc/                   # ysyxSoC integration
+    │   │   ├── all_verilog/           # Complete Verilog files
+    │   │   └── ysyxSoCFull.v          # Integrated SoC
     │   │
     │   ├── waves/                     # Waveform tools
     │   │   ├── README.md              # Wave viewer guide
