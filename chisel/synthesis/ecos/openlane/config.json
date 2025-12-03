@@ -1,0 +1,23 @@
+{
+  "DESIGN_NAME": "asic_top",
+  "VERILOG_FILES": "dir::../project/netlist/asic_top_ics55.v",
+  "CLOCK_PORT": "sys_clk_i_pad",
+  "CLOCK_PERIOD": 40.0,
+  
+  "FP_CORE_UTIL": 30,
+  "FP_ASPECT_RATIO": 1,
+  "FP_PDN_VPITCH": 25,
+  "FP_PDN_HPITCH": 25,
+  
+  "PL_TARGET_DENSITY": 0.35,
+  "PL_TIME_DRIVEN": 1,
+  
+  "ROUTING_CORES": 4,
+  
+  "pdk::sky130A": {
+    "FP_CORE_UTIL": 25,
+    "scl::sky130_fd_sc_hd": {
+      "CLOCK_PERIOD": 40.0
+    }
+  }
+}
