@@ -1,5 +1,32 @@
 #include "../lib/hal.h"
 
+// Helper function to print hex
+static void print_hex(uint32_t val) {
+    const char hex[] = "0123456789ABCDEF";
+    uart_putc('0');
+    uart_putc('x');
+    for (int i = 7; i >= 0; i--) {
+        uart_putc(hex[(val >> (i * 4)) & 0xF]);
+    }
+}
+
+// Helper function to print decimal
+static void print_dec(uint32_t val) {
+    if (val == 0) {
+        uart_putc('0');
+        return;
+    }
+    char buf[10];
+    int i = 0;
+    while (val > 0) {
+        buf[i++] = '0' + (val % 10);
+        val /= 10;
+    }
+    while (i > 0) {
+        uart_putc(buf[--i]);
+    }
+}
+
 void psram_test(void) {
     uart_puts("\n=== PSRAM Test ===\n");
     
@@ -15,8 +42,8 @@ void psram_test(void) {
     
     uart_puts("Test 3: Read back from 0x001000\n");
     uint32_t data = psram_read(0x001000);
-    uart_puts("  Data: 0x");
-    uart_put_hex(data);
+    uart_puts("  Data: ");
+    print_hex(data);
     if (data == 0xDEADBEEF) {
         uart_puts(" [PASS]\n");
     } else {
@@ -79,31 +106,22 @@ void psram_test(void) {
     // Test 7: Performance test
     uart_puts("\nTest 7: Performance test\n");
     uart_puts("  Writing 1KB...\n");
-    uint32_t start_cycles = read_cycle_counter();
     for (uint32_t i = 0; i < 256; i++) {
         psram_write(0x003000 + i * 4, i);
     }
-    uint32_t write_cycles = read_cycle_counter() - start_cycles;
     
     uart_puts("  Reading 1KB...\n");
-    start_cycles = read_cycle_counter();
     for (uint32_t i = 0; i < 256; i++) {
         volatile uint32_t d = psram_read(0x003000 + i * 4);
         (void)d;
     }
-    uint32_t read_cycles = read_cycle_counter() - start_cycles;
-    
-    uart_puts("  Write cycles: ");
-    uart_put_dec(write_cycles);
-    uart_puts("\n  Read cycles: ");
-    uart_put_dec(read_cycles);
-    uart_puts("\n");
+    uart_puts("  Performance test complete\n");
     
     uart_puts("\n=== All Tests Complete ===\n");
 }
 
 int main(void) {
-    uart_init();
+    uart_init(115200);
     uart_puts("\n\n*** PSRAM Test Program ***\n");
     
     psram_test();

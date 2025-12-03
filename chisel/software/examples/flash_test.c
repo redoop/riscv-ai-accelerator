@@ -61,10 +61,10 @@ int main(void) {
     
     // Display on LCD
     lcd_clear(COLOR_BLACK);
-    lcd_draw_text(10, 10, "Flash Test", COLOR_GREEN);
-    lcd_draw_text(10, 30, "Read: OK", COLOR_WHITE);
-    lcd_draw_text(10, 50, "Write: OK", COLOR_WHITE);
-    lcd_draw_text(10, 70, "Erase: OK", COLOR_WHITE);
+    lcd_draw_string(10, 10, "Flash Test", COLOR_GREEN, COLOR_BLACK);
+    lcd_draw_string(10, 30, "Read: OK", COLOR_WHITE, COLOR_BLACK);
+    lcd_draw_string(10, 50, "Write: OK", COLOR_WHITE, COLOR_BLACK);
+    lcd_draw_string(10, 70, "Erase: OK", COLOR_WHITE, COLOR_BLACK);
     
     uart_puts("\n=== All Tests Complete ===\n");
     

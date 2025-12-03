@@ -10,10 +10,10 @@ Discarded input sections
  .text          0x0000000000000000        0x0 build/lib/start.o
  .data          0x0000000000000000        0x0 build/lib/start.o
  .bss           0x0000000000000000        0x0 build/lib/start.o
- .text          0x0000000000000000        0x0 /tmp/ccyXFnQW.o
- .data          0x0000000000000000        0x0 /tmp/ccyXFnQW.o
- .bss           0x0000000000000000        0x0 /tmp/ccyXFnQW.o
- .comment       0x0000000000000000       0x10 /tmp/ccyXFnQW.o
+ .text          0x0000000000000000        0x0 /tmp/ccn1kYQJ.o
+ .data          0x0000000000000000        0x0 /tmp/ccn1kYQJ.o
+ .bss           0x0000000000000000        0x0 /tmp/ccn1kYQJ.o
+ .comment       0x0000000000000000       0x10 /tmp/ccn1kYQJ.o
  .text          0x0000000000000000        0x0 build/lib/hal.o
  .data          0x0000000000000000        0x0 build/lib/hal.o
  .bss           0x0000000000000000        0x0 build/lib/hal.o
@@ -35,6 +35,34 @@ Discarded input sections
                 0x0000000000000000       0x24 build/lib/hal.o
  .text.delay_us
                 0x0000000000000000       0x34 build/lib/hal.o
+ .text.flash_init
+                0x0000000000000000        0x4 build/lib/hal.o
+ .text.flash_read
+                0x0000000000000000       0x44 build/lib/hal.o
+ .text.flash_write_enable
+                0x0000000000000000       0x34 build/lib/hal.o
+ .text.flash_write
+                0x0000000000000000       0x64 build/lib/hal.o
+ .text.flash_erase_sector
+                0x0000000000000000       0x60 build/lib/hal.o
+ .text.flash_busy
+                0x0000000000000000       0x14 build/lib/hal.o
+ .text.psram_init
+                0x0000000000000000       0x10 build/lib/hal.o
+ .text.psram_read
+                0x0000000000000000       0x38 build/lib/hal.o
+ .text.psram_write
+                0x0000000000000000       0x38 build/lib/hal.o
+ .text.psram_read_block
+                0x0000000000000000       0x78 build/lib/hal.o
+ .text.psram_write_block
+                0x0000000000000000       0x7c build/lib/hal.o
+ .text.psram_enable_qpi
+                0x0000000000000000       0x28 build/lib/hal.o
+ .text.psram_disable_qpi
+                0x0000000000000000       0x28 build/lib/hal.o
+ .text.psram_is_qpi_mode
+                0x0000000000000000       0x10 build/lib/hal.o
  .comment       0x0000000000000000       0x10 build/lib/hal.o
  .text          0x0000000000000000        0x0 build/lib/graphics.o
  .data          0x0000000000000000        0x0 build/lib/graphics.o
@@ -64,7 +92,7 @@ RAM              0x0000000000010000 0x000000000fff0000 xrw
 Linker script and memory map
 
 LOAD build/lib/start.o
-LOAD /tmp/ccyXFnQW.o
+LOAD /tmp/ccn1kYQJ.o
 LOAD build/lib/hal.o
 LOAD build/lib/graphics.o
 LOAD build/lib/font_8x8.o
@@ -79,7 +107,7 @@ LOAD /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32/libgcc.a
                 0x0000000000010030                trap_handler
  *(.text*)
  .text.startup.main
-                0x0000000000010034      0x128 /tmp/ccyXFnQW.o
+                0x0000000000010034      0x128 /tmp/ccn1kYQJ.o
                 0x0000000000010034                main
  .text.uart_init
                 0x000000000001015c       0x34 build/lib/hal.o
@@ -131,7 +159,7 @@ LOAD /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32/libgcc.a
                 0x0000000000010a40                __modsi3
  *(.rodata*)
  .rodata.main.str1.4
-                0x0000000000010a70       0x31 /tmp/ccyXFnQW.o
+                0x0000000000010a70       0x31 /tmp/ccn1kYQJ.o
  *fill*         0x0000000000010aa1        0x3 
  .rodata.font_8x8
                 0x0000000000010aa4      0x400 build/lib/font_8x8.o
@@ -164,7 +192,7 @@ OUTPUT(build/hello_lcd.elf elf32-littleriscv)
  .riscv.attributes
                 0x0000000000000000       0x1a build/lib/start.o
  .riscv.attributes
-                0x000000000000001a       0x1c /tmp/ccyXFnQW.o
+                0x000000000000001a       0x1c /tmp/ccn1kYQJ.o
  .riscv.attributes
                 0x0000000000000036       0x1c build/lib/hal.o
  .riscv.attributes
@@ -176,75 +204,75 @@ OUTPUT(build/hello_lcd.elf elf32-littleriscv)
  .riscv.attributes
                 0x00000000000000a4       0x1a /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
 
-.debug_line     0x0000000000000000     0x20b0
+.debug_line     0x0000000000000000     0x2be9
  .debug_line    0x0000000000000000       0x70 build/lib/start.o
- .debug_line    0x0000000000000070      0x130 /tmp/ccyXFnQW.o
- .debug_line    0x00000000000001a0     0x100b build/lib/hal.o
- .debug_line    0x00000000000011ab      0xcd1 build/lib/graphics.o
- .debug_line    0x0000000000001e7c       0x46 build/lib/font_8x8.o
- .debug_line    0x0000000000001ec2       0x8c /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
- .debug_line    0x0000000000001f4e      0x162 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
+ .debug_line    0x0000000000000070      0x130 /tmp/ccn1kYQJ.o
+ .debug_line    0x00000000000001a0     0x1b44 build/lib/hal.o
+ .debug_line    0x0000000000001ce4      0xcd1 build/lib/graphics.o
+ .debug_line    0x00000000000029b5       0x46 build/lib/font_8x8.o
+ .debug_line    0x00000000000029fb       0x8c /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_line    0x0000000000002a87      0x162 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
 
-.debug_info     0x0000000000000000     0x15db
+.debug_info     0x0000000000000000     0x1ad5
  .debug_info    0x0000000000000000       0x26 build/lib/start.o
- .debug_info    0x0000000000000026      0x2ab /tmp/ccyXFnQW.o
- .debug_info    0x00000000000002d1      0x8bf build/lib/hal.o
- .debug_info    0x0000000000000b90      0x971 build/lib/graphics.o
- .debug_info    0x0000000000001501       0x8e build/lib/font_8x8.o
- .debug_info    0x000000000000158f       0x26 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
- .debug_info    0x00000000000015b5       0x26 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
+ .debug_info    0x0000000000000026      0x2ab /tmp/ccn1kYQJ.o
+ .debug_info    0x00000000000002d1      0xdb9 build/lib/hal.o
+ .debug_info    0x000000000000108a      0x971 build/lib/graphics.o
+ .debug_info    0x00000000000019fb       0x8e build/lib/font_8x8.o
+ .debug_info    0x0000000000001a89       0x26 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_info    0x0000000000001aaf       0x26 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
 
-.debug_abbrev   0x0000000000000000      0x636
+.debug_abbrev   0x0000000000000000      0x76a
  .debug_abbrev  0x0000000000000000       0x14 build/lib/start.o
- .debug_abbrev  0x0000000000000014       0xa8 /tmp/ccyXFnQW.o
- .debug_abbrev  0x00000000000000bc      0x268 build/lib/hal.o
- .debug_abbrev  0x0000000000000324      0x27a build/lib/graphics.o
- .debug_abbrev  0x000000000000059e       0x70 build/lib/font_8x8.o
- .debug_abbrev  0x000000000000060e       0x14 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
- .debug_abbrev  0x0000000000000622       0x14 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
+ .debug_abbrev  0x0000000000000014       0xa8 /tmp/ccn1kYQJ.o
+ .debug_abbrev  0x00000000000000bc      0x39c build/lib/hal.o
+ .debug_abbrev  0x0000000000000458      0x27a build/lib/graphics.o
+ .debug_abbrev  0x00000000000006d2       0x70 build/lib/font_8x8.o
+ .debug_abbrev  0x0000000000000742       0x14 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_abbrev  0x0000000000000756       0x14 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
 
-.debug_aranges  0x0000000000000000      0x198
+.debug_aranges  0x0000000000000000      0x208
  .debug_aranges
                 0x0000000000000000       0x20 build/lib/start.o
  .debug_aranges
-                0x0000000000000020       0x20 /tmp/ccyXFnQW.o
+                0x0000000000000020       0x20 /tmp/ccn1kYQJ.o
  .debug_aranges
-                0x0000000000000040       0xa8 build/lib/hal.o
+                0x0000000000000040      0x118 build/lib/hal.o
  .debug_aranges
-                0x00000000000000e8       0x58 build/lib/graphics.o
+                0x0000000000000158       0x58 build/lib/graphics.o
  .debug_aranges
-                0x0000000000000140       0x18 build/lib/font_8x8.o
+                0x00000000000001b0       0x18 build/lib/font_8x8.o
  .debug_aranges
-                0x0000000000000158       0x20 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+                0x00000000000001c8       0x20 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
  .debug_aranges
-                0x0000000000000178       0x20 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
+                0x00000000000001e8       0x20 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
 
-.debug_str      0x0000000000000000      0x41f
+.debug_str      0x0000000000000000      0x53e
  .debug_str     0x0000000000000000       0x4b build/lib/start.o
- .debug_str     0x000000000000004b      0x117 /tmp/ccyXFnQW.o
+ .debug_str     0x000000000000004b      0x117 /tmp/ccn1kYQJ.o
                                         0x161 (size before relaxing)
- .debug_str     0x0000000000000162      0x145 build/lib/hal.o
-                                        0x268 (size before relaxing)
- .debug_str     0x00000000000002a7       0xa2 build/lib/graphics.o
+ .debug_str     0x0000000000000162      0x264 build/lib/hal.o
+                                        0x387 (size before relaxing)
+ .debug_str     0x00000000000003c6       0xa2 build/lib/graphics.o
                                         0x1de (size before relaxing)
- .debug_str     0x0000000000000349        0xf build/lib/font_8x8.o
+ .debug_str     0x0000000000000468        0xf build/lib/font_8x8.o
                                          0xe8 (size before relaxing)
- .debug_str     0x0000000000000358       0x9e /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
+ .debug_str     0x0000000000000477       0x9e /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(muldi3.o)
                                          0xac (size before relaxing)
- .debug_str     0x00000000000003f6       0x29 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
+ .debug_str     0x0000000000000515       0x29 /usr/lib/gcc/riscv64-unknown-elf/10.2.0/rv32i/ilp32//libgcc.a(div.o)
                                          0xa9 (size before relaxing)
 
-.debug_loc      0x0000000000000000     0x1030
- .debug_loc     0x0000000000000000       0x2a /tmp/ccyXFnQW.o
- .debug_loc     0x000000000000002a      0x4ca build/lib/hal.o
- .debug_loc     0x00000000000004f4      0xb3c build/lib/graphics.o
+.debug_loc      0x0000000000000000     0x120c
+ .debug_loc     0x0000000000000000       0x2a /tmp/ccn1kYQJ.o
+ .debug_loc     0x000000000000002a      0x6a6 build/lib/hal.o
+ .debug_loc     0x00000000000006d0      0xb3c build/lib/graphics.o
 
-.debug_ranges   0x0000000000000000      0x3e8
- .debug_ranges  0x0000000000000000       0x10 /tmp/ccyXFnQW.o
- .debug_ranges  0x0000000000000010      0x258 build/lib/hal.o
- .debug_ranges  0x0000000000000268      0x180 build/lib/graphics.o
+.debug_ranges   0x0000000000000000      0x530
+ .debug_ranges  0x0000000000000000       0x10 /tmp/ccn1kYQJ.o
+ .debug_ranges  0x0000000000000010      0x3a0 build/lib/hal.o
+ .debug_ranges  0x00000000000003b0      0x180 build/lib/graphics.o
 
-.debug_frame    0x0000000000000000      0x404
- .debug_frame   0x0000000000000000       0x2c /tmp/ccyXFnQW.o
- .debug_frame   0x000000000000002c      0x18c build/lib/hal.o
- .debug_frame   0x00000000000001b8      0x24c build/lib/graphics.o
+.debug_frame    0x0000000000000000      0x4e4
+ .debug_frame   0x0000000000000000       0x2c /tmp/ccn1kYQJ.o
+ .debug_frame   0x000000000000002c      0x26c build/lib/hal.o
+ .debug_frame   0x0000000000000298      0x24c build/lib/graphics.o

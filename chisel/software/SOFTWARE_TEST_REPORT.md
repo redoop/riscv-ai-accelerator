@@ -1,7 +1,7 @@
 # SimpleEdgeAiSoC 软件测试报告
 
 ## 测试时间
-2025年 12月 03日 星期三 13:20:55 CST
+2025年 12月 03日 星期三 16:32:23 CST
 
 ## 测试环境
 - 工具链: riscv64-unknown-elf-gcc
@@ -15,10 +15,10 @@
 - ✅ **ai_demo**: 4856 字节
 - ✅ **benchmark**: 5388 字节
 - ✅ **system_monitor**: 5152 字节
-- ✅ **bootloader**: 5960 字节
+- ❌ **bootloader**: 编译失败
 
 ### 上传模拟测试
-- 通过: 5/5
+- 通过: 4/4
 - 成功率: 100%
 
 ### 功能模块测试
@@ -31,8 +31,8 @@
 - ✅ **Bootloader**: 程序上传和管理系统
 
 ### 测试覆盖率
-- 编译测试: 100% (5/5)
-- 上传测试: 100% (5/5)
+- 编译测试: 80% (4/5)
+- 上传测试: 100% (4/4)
 - 功能测试: 100% (5/5)
 
 ### 生成的文件
@@ -48,9 +48,6 @@
 - `build/system_monitor.bin`
 - `build/system_monitor.elf`
 - `build/system_monitor.map`
-- `build/bootloader.bin`
-- `build/bootloader.elf`
-- `build/bootloader.map`
 
 ## 结论
-所有测试通过 ✅
+部分测试失败 ⚠️
