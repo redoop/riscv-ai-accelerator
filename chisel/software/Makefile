@@ -45,7 +45,7 @@ LIB_OBJS = $(patsubst %.c,$(BUILD_DIR)/%.o,$(LIB_SRCS))
 STARTUP_OBJ = $(BUILD_DIR)/$(LIB_DIR)/start.o
 
 # Examples
-EXAMPLES = hello_lcd ai_demo benchmark system_monitor
+EXAMPLES = hello_lcd ai_demo benchmark system_monitor flash_test psram_test
 
 # Bootloader
 BOOTLOADER = bootloader

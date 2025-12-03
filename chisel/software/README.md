@@ -31,6 +31,14 @@ software/
 - `uart_rx_ready()` - Check if data available
 - `uart_tx_ready()` - Check if TX ready
 
+### Flash Functions
+- `flash_init()` - Initialize Flash
+- `flash_read(addr)` - Read 32-bit word
+- `flash_write_enable()` - Enable write operations
+- `flash_write(addr, data)` - Write 32-bit word
+- `flash_erase_sector(addr)` - Erase 4KB sector
+- `flash_busy()` - Check if operation in progress
+
 ### LCD Functions
 - `lcd_init()` - Initialize LCD
 - `lcd_clear(color)` - Clear screen

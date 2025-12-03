@@ -1,20 +1,52 @@
+// SPIFlash.scala - SPI Flash Controller (W25Q128)
+// Flash/PSRAM Extension - Phase 1 Day 1
+// Target: 16MB SPI Flash support
+
 package riscv.ai.peripherals
 
 import chisel3._
 import chisel3.util._
 
-class SPIFlash extends Module {
+/**
+ * SPI Flash 控制器 (W25Q128 兼容)
+ * 
+ * 特性：
+ * - 容量：16MB (128Mbit)
+ * - 接口：标准 SPI (最高 25MHz)
+ * - 页大小：256 字节
+ * - 扇区大小：4KB
+ * 
+ * 寄存器映射：
+ * 0x00: CMD    - 命令寄存器 (W)
+ * 0x04: ADDR   - 地址寄存器 (R/W) [23:0]
+ * 0x08: DATA   - 数据寄存器 (R/W)
+ * 0x0C: CTRL   - 控制寄存器 (R/W)
+ *       bit 0: START - 启动操作
+ *       bit 1: BUSY  - 忙标志 (R)
+ *       bit 2: DONE  - 完成标志 (R)
+ * 0x10: STATUS - Flash 状态寄存器 (R)
+ * 
+ * 支持的命令：
+ * 0x03: READ          - 标准读取
+ * 0x0B: FAST_READ     - 快速读取
+ * 0x02: PAGE_PROGRAM  - 页编程
+ * 0x20: SECTOR_ERASE  - 扇区擦除 (4KB)
+ * 0x06: WRITE_ENABLE  - 写使能
+ * 0x05: READ_STATUS   - 读状态
+ */
+class SPIFlash(
+  clockFreq: Int = 100000000,  // 100MHz 系统时钟
+  spiFreq: Int = 25000000       // 25MHz SPI 时钟
+) extends Module {
   val io = IO(new Bundle {
     // 寄存器接口
-    val reg = new Bundle {
-      val valid = Input(Bool())
-      val wen = Input(Bool())
-      val ren = Input(Bool())
-      val addr = Input(UInt(32.W))
-      val wdata = Input(UInt(32.W))
-      val rdata = Output(UInt(32.W))
-      val ready = Output(Bool())
-    }
+    val addr = Input(UInt(32.W))
+    val wdata = Input(UInt(32.W))
+    val rdata = Output(UInt(32.W))
+    val wen = Input(Bool())
+    val ren = Input(Bool())
+    val valid = Input(Bool())
+    val ready = Output(Bool())
     
     // SPI 物理接口
     val spi_clk = Output(Bool())
@@ -23,168 +55,219 @@ class SPIFlash extends Module {
     val spi_cs = Output(Bool())
   })
   
-  // 寄存器
-  val cmdReg = RegInit(0.U(8.W))      // 0x00: 命令
-  val addrReg = RegInit(0.U(24.W))    // 0x04: 地址
-  val dataReg = RegInit(0.U(32.W))    // 0x08: 数据
-  val ctrlReg = RegInit(0.U(32.W))    // 0x0C: 控制 (bit 0: start, bit 1: busy, bit 2: done)
-  val statusReg = RegInit(0.U(32.W))  // 0x10: 状态
+  // ============================================================================
+  // 寄存器定义
+  // ============================================================================
   
-  // SPI 命令定义
-  val CMD_READ = 0x03.U
-  val CMD_FAST_READ = 0x0B.U
-  val CMD_PAGE_PROGRAM = 0x02.U
-  val CMD_SECTOR_ERASE = 0x20.U
+  val cmdReg = RegInit(0.U(8.W))
+  val addrReg = RegInit(0.U(24.W))
+  val dataReg = RegInit(0.U(32.W))
+  val statusReg = RegInit(0.U(32.W))
   
+  // 控制位 - 分开定义
+  val busyReg = RegInit(false.B)
+  val doneReg = RegInit(false.B)
+  val startReq = WireDefault(false.B)
+  
+  // ============================================================================
+  // SPI 时钟生成 (100MHz → 25MHz)
+  // ============================================================================
+  
+  val spiDivider = (clockFreq / spiFreq / 2).U
+  val spiCounter = RegInit(0.U(8.W))
+  val spiClkReg = RegInit(false.B)
+  
+  when(busyReg && spiCounter >= spiDivider - 1.U) {
+    spiCounter := 0.U
+    spiClkReg := !spiClkReg
+  }.elsewhen(busyReg) {
+    spiCounter := spiCounter + 1.U
+  }.otherwise {
+    spiCounter := 0.U
+    spiClkReg := false.B
+  }
+  
+  // ============================================================================
   // 状态机
+  // ============================================================================
+  
   val sIdle :: sCommand :: sAddress :: sDummy :: sData :: sDone :: Nil = Enum(6)
   val state = RegInit(sIdle)
   
-  // SPI 时钟分频 (100MHz -> 25MHz, 分频系数 4)
-  val clkDiv = RegInit(0.U(2.W))
-  val spiClk = RegInit(false.B)
-  val clkEn = Wire(Bool())
-  
-  when(clkDiv === 1.U) {
-    clkDiv := 0.U
-    spiClk := ~spiClk
-    clkEn := spiClk  // 在下降沿采样
-  }.otherwise {
-    clkDiv := clkDiv + 1.U
-    clkEn := false.B
-  }
-  
-  // 位计数器和字节计数器
-  val bitCnt = RegInit(0.U(6.W))
-  val byteCnt = RegInit(0.U(3.W))
-  
-  // 移位寄存器
+  val bitCounter = RegInit(0.U(8.W))
+  val byteCounter = RegInit(0.U(8.W))
   val shiftReg = RegInit(0.U(32.W))
-  val dataOut = RegInit(0.U(32.W))
   
-  // 默认输出
-  io.reg.ready := true.B
-  io.reg.rdata := 0.U
-  io.spi_cs := (state =/= sIdle)
-  io.spi_clk := spiClk
-  io.spi_mosi := shiftReg(31)
+  val csReg = RegInit(true.B)  // CS 高电平（未选中）
+  val mosiReg = RegInit(false.B)
   
-  // 状态机
+  // SPI 时钟边沿检测
+  val spiClkLast = RegNext(spiClkReg)
+  val spiPosEdge = spiClkReg && !spiClkLast
+  val spiNegEdge = !spiClkReg && spiClkLast
+  
+  // ============================================================================
+  // 状态机逻辑
+  // ============================================================================
+  
   switch(state) {
     is(sIdle) {
-      when(ctrlReg(0)) {  // start bit
+      csReg := true.B
+      busyReg := false.B
+      
+      when(startReq) {
         state := sCommand
-        bitCnt := 0.U
-        byteCnt := 0.U
+        csReg := false.B
+        bitCounter := 0.U
         shiftReg := Cat(cmdReg, 0.U(24.W))
-        ctrlReg := ctrlReg | 2.U  // set busy
+        busyReg := true.B
+        doneReg := false.B
       }
     }
     
     is(sCommand) {
-      when(clkEn) {
-        when(bitCnt === 7.U) {
-          state := sAddress
-          bitCnt := 0.U
-          shiftReg := Cat(addrReg, 0.U(8.W))
-        }.otherwise {
-          bitCnt := bitCnt + 1.U
-          shiftReg := Cat(shiftReg(30, 0), 0.U(1.W))
+      when(spiNegEdge) {
+        mosiReg := shiftReg(31)
+        shiftReg := Cat(shiftReg(30, 0), false.B)
+        bitCounter := bitCounter + 1.U
+        
+        when(bitCounter === 7.U) {
+          // 命令发送完成
+          when(cmdReg === 0x03.U || cmdReg === 0x0B.U || 
+               cmdReg === 0x02.U || cmdReg === 0x20.U) {
+            // 需要地址的命令
+            state := sAddress
+            bitCounter := 0.U
+            shiftReg := Cat(addrReg, 0.U(8.W))
+          }.elsewhen(cmdReg === 0x05.U) {
+            // READ_STATUS - 直接读数据
+            state := sData
+            bitCounter := 0.U
+            byteCounter := 0.U
+          }.otherwise {
+            // 其他命令（如 WRITE_ENABLE）
+            state := sDone
+          }
         }
       }
     }
     
     is(sAddress) {
-      when(clkEn) {
-        when(bitCnt === 23.U) {
-          // 判断是否需要 dummy cycles
-          when(cmdReg === CMD_FAST_READ) {
+      when(spiNegEdge) {
+        mosiReg := shiftReg(31)
+        shiftReg := Cat(shiftReg(30, 0), false.B)
+        bitCounter := bitCounter + 1.U
+        
+        when(bitCounter === 23.U) {
+          // 地址发送完成
+          when(cmdReg === 0x0B.U) {
+            // FAST_READ 需要 dummy cycles
             state := sDummy
-            bitCnt := 0.U
+            bitCounter := 0.U
           }.otherwise {
+            // 其他命令直接进入数据阶段
             state := sData
-            bitCnt := 0.U
-            byteCnt := 0.U
-            when(cmdReg === CMD_READ || cmdReg === CMD_FAST_READ) {
-              shiftReg := 0.U
-            }.otherwise {
+            bitCounter := 0.U
+            byteCounter := 0.U
+            when(cmdReg === 0x02.U) {
+              // PAGE_PROGRAM - 准备写数据
               shiftReg := dataReg
             }
           }
-        }.otherwise {
-          bitCnt := bitCnt + 1.U
-          shiftReg := Cat(shiftReg(30, 0), 0.U(1.W))
         }
       }
     }
     
     is(sDummy) {
-      when(clkEn) {
-        when(bitCnt === 7.U) {
+      // Dummy cycles (8 个时钟)
+      when(spiNegEdge) {
+        bitCounter := bitCounter + 1.U
+        when(bitCounter === 7.U) {
           state := sData
-          bitCnt := 0.U
-          byteCnt := 0.U
-          shiftReg := 0.U
-        }.otherwise {
-          bitCnt := bitCnt + 1.U
+          bitCounter := 0.U
+          byteCounter := 0.U
         }
       }
     }
     
     is(sData) {
-      when(clkEn) {
-        when(cmdReg === CMD_READ || cmdReg === CMD_FAST_READ) {
-          // 读取数据
+      when(cmdReg === 0x03.U || cmdReg === 0x0B.U || cmdReg === 0x05.U) {
+        // 读操作
+        when(spiPosEdge) {
           shiftReg := Cat(shiftReg(30, 0), io.spi_miso)
-          when(bitCnt === 31.U) {
-            dataOut := Cat(shiftReg(30, 0), io.spi_miso)
+          bitCounter := bitCounter + 1.U
+          
+          when(bitCounter === 31.U) {
+            dataReg := Cat(shiftReg(30, 0), io.spi_miso)
             state := sDone
-          }.otherwise {
-            bitCnt := bitCnt + 1.U
           }
-        }.otherwise {
-          // 写入数据
-          when(bitCnt === 31.U) {
+        }
+      }.otherwise {
+        // 写操作
+        when(spiNegEdge) {
+          mosiReg := shiftReg(31)
+          shiftReg := Cat(shiftReg(30, 0), false.B)
+          bitCounter := bitCounter + 1.U
+          
+          when(bitCounter === 31.U) {
             state := sDone
-          }.otherwise {
-            bitCnt := bitCnt + 1.U
-            shiftReg := Cat(shiftReg(30, 0), 0.U(1.W))
           }
         }
       }
     }
     
     is(sDone) {
-      dataReg := dataOut
-      ctrlReg := (ctrlReg & ~3.U) | 4.U  // clear start/busy, set done
-      statusReg := statusReg | 1.U  // operation complete
+      csReg := true.B
+      busyReg := false.B
+      doneReg := true.B
       state := sIdle
     }
   }
   
+  // ============================================================================
   // 寄存器读写
-  when(io.reg.valid && io.reg.wen) {
-    switch(io.reg.addr(4, 0)) {
-      is(0x00.U) { cmdReg := io.reg.wdata(7, 0) }
-      is(0x04.U) { addrReg := io.reg.wdata(23, 0) }
-      is(0x08.U) { dataReg := io.reg.wdata }
+  // ============================================================================
+  
+  io.ready := true.B
+  io.rdata := 0.U
+  
+  when(io.valid && io.wen) {
+    switch(io.addr(7, 0)) {
+      is(0x00.U) { cmdReg := io.wdata(7, 0) }
+      is(0x04.U) { addrReg := io.wdata(23, 0) }
+      is(0x08.U) { dataReg := io.wdata }
       is(0x0C.U) { 
-        ctrlReg := io.reg.wdata
-        when(io.reg.wdata(0)) {
-          statusReg := 0.U  // clear status on start
-        }
+        // 只允许写 START 位
+        startReq := io.wdata(0)
       }
-      is(0x10.U) { statusReg := io.reg.wdata }
     }
   }
   
-  when(io.reg.valid && io.reg.ren) {
-    io.reg.rdata := MuxLookup(io.reg.addr(4, 0), 0.U)(Seq(
-      0x00.U -> cmdReg,
-      0x04.U -> addrReg,
-      0x08.U -> dataReg,
-      0x0C.U -> ctrlReg,
-      0x10.U -> statusReg
-    ))
+  when(io.valid && io.ren) {
+    switch(io.addr(7, 0)) {
+      is(0x00.U) { io.rdata := cmdReg }
+      is(0x04.U) { io.rdata := addrReg }
+      is(0x08.U) { io.rdata := dataReg }
+      is(0x0C.U) { io.rdata := Cat(0.U(29.W), doneReg, busyReg, false.B) }
+      is(0x10.U) { io.rdata := statusReg }
+    }
   }
+  
+  // ============================================================================
+  // 输出连接
+  // ============================================================================
+  
+  io.spi_clk := spiClkReg
+  io.spi_mosi := mosiReg
+  io.spi_cs := csReg
+}
+
+/**
+ * 顶层包装器 - 用于 Verilog 生成
+ */
+object SPIFlashMain extends App {
+  emitVerilog(
+    new SPIFlash(),
+    Array("--target-dir", "generated/spiflash")
+  )
 }

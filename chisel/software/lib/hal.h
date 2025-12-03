@@ -31,6 +31,64 @@ typedef signed int int32_t;
 #define UART_BASE       0x20000000
 #define LCD_BASE        0x20010000
 #define GPIO_BASE       0x20020000
+#define FLASH_BASE      0x30000000
+#define PSRAM_BASE      0x04000000
+
+// ============================================================================
+// Flash Registers
+// ============================================================================
+
+typedef struct {
+    volatile uint32_t CMD;        // 0x00: Command register
+    volatile uint32_t ADDR;       // 0x04: Address register (24-bit)
+    volatile uint32_t DATA;       // 0x08: Data register
+    volatile uint32_t CTRL;       // 0x0C: Control register
+    volatile uint32_t STATUS;     // 0x10: Status register
+} FLASH_TypeDef;
+
+#define FLASH ((FLASH_TypeDef*)FLASH_BASE)
+
+// Flash commands
+#define FLASH_CMD_READ          0x03
+#define FLASH_CMD_FAST_READ     0x0B
+#define FLASH_CMD_PAGE_PROGRAM  0x02
+#define FLASH_CMD_SECTOR_ERASE  0x20
+#define FLASH_CMD_WRITE_ENABLE  0x06
+#define FLASH_CMD_READ_STATUS   0x05
+
+// Flash control bits
+#define FLASH_CTRL_START        (1 << 0)
+#define FLASH_CTRL_BUSY         (1 << 1)
+#define FLASH_CTRL_DONE         (1 << 2)
+
+// ============================================================================
+// PSRAM Registers
+// ============================================================================
+
+typedef struct {
+    volatile uint32_t CMD;        // 0x00: Command register
+    volatile uint32_t ADDR;       // 0x04: Address register (24-bit)
+    volatile uint32_t DATA;       // 0x08: Data register
+    volatile uint32_t CTRL;       // 0x0C: Control register
+    volatile uint32_t STATUS;     // 0x10: Status register
+    volatile uint32_t CONFIG;     // 0x14: Config register
+} PSRAM_TypeDef;
+
+#define PSRAM ((PSRAM_TypeDef*)PSRAM_BASE)
+
+// PSRAM commands
+#define PSRAM_CMD_READ          0x03
+#define PSRAM_CMD_FAST_READ     0x0B
+#define PSRAM_CMD_WRITE         0x02
+#define PSRAM_CMD_QUAD_READ     0xEB
+#define PSRAM_CMD_QUAD_WRITE    0x38
+#define PSRAM_CMD_ENTER_QPI     0x35
+#define PSRAM_CMD_EXIT_QPI      0xF5
+
+// PSRAM control bits
+#define PSRAM_CTRL_START        (1 << 0)
+#define PSRAM_STATUS_DONE       (1 << 1)
+#define PSRAM_CONFIG_QPI        (1 << 0)
 
 // ============================================================================
 // UART Registers
@@ -136,6 +194,30 @@ char uart_getc(void);
 void uart_puts(const char* str);
 bool uart_rx_ready(void);
 bool uart_tx_ready(void);
+
+// ============================================================================
+// Flash Functions
+// ============================================================================
+
+void flash_init(void);
+uint32_t flash_read(uint32_t addr);
+void flash_write_enable(void);
+void flash_write(uint32_t addr, uint32_t data);
+void flash_erase_sector(uint32_t addr);
+bool flash_busy(void);
+
+// ============================================================================
+// PSRAM Functions
+// ============================================================================
+
+void psram_init(void);
+uint32_t psram_read(uint32_t addr);
+void psram_write(uint32_t addr, uint32_t data);
+void psram_read_block(uint32_t addr, uint8_t *buf, uint32_t len);
+void psram_write_block(uint32_t addr, const uint8_t *buf, uint32_t len);
+void psram_enable_qpi(void);
+void psram_disable_qpi(void);
+bool psram_is_qpi_mode(void);
 
 // ============================================================================
 // LCD Functions

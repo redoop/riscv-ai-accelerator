@@ -39,6 +39,8 @@ class SimpleRegIO extends Bundle {
 object SimpleMemoryMap {
   val RAM_BASE = 0x00000000L
   val RAM_SIZE = 0x10000000L
+  val PSRAM_BASE = 0x04000000L  // PSRAM: 8 MB
+  val PSRAM_SIZE = 0x00800000L
   val COMPACT_BASE = 0x10000000L
   val COMPACT_SIZE = 0x00001000L
   val BITNET_BASE = 0x10001000L
@@ -48,6 +50,8 @@ object SimpleMemoryMap {
   val LCD_BASE = 0x20010000L
   val LCD_SIZE = 0x00010000L
   val GPIO_BASE = 0x20020000L
+  val FLASH_BASE = 0x30000000L
+  val FLASH_SIZE = 0x01000000L  // 16 MB
   val GPIO_SIZE = 0x00010000L
 }
 
@@ -535,6 +539,8 @@ class SimpleAddressDecoder extends Module {
     val uart = Flipped(new SimpleRegIO())
     val lcd = Flipped(new SimpleRegIO())
     val gpio = Flipped(new SimpleRegIO())
+    val flash = Flipped(new SimpleRegIO())
+    val psram = Flipped(new SimpleRegIO())
   })
   
   // 地址解码
@@ -544,6 +550,8 @@ class SimpleAddressDecoder extends Module {
   val sel_uart = addr >= SimpleMemoryMap.UART_BASE.U && addr < (SimpleMemoryMap.UART_BASE + SimpleMemoryMap.UART_SIZE).U
   val sel_lcd = addr >= SimpleMemoryMap.LCD_BASE.U && addr < (SimpleMemoryMap.LCD_BASE + SimpleMemoryMap.LCD_SIZE).U
   val sel_gpio = addr >= SimpleMemoryMap.GPIO_BASE.U && addr < (SimpleMemoryMap.GPIO_BASE + SimpleMemoryMap.GPIO_SIZE).U
+  val sel_flash = addr >= SimpleMemoryMap.FLASH_BASE.U && addr < (SimpleMemoryMap.FLASH_BASE + SimpleMemoryMap.FLASH_SIZE).U
+  val sel_psram = addr >= SimpleMemoryMap.PSRAM_BASE.U && addr < (SimpleMemoryMap.PSRAM_BASE + SimpleMemoryMap.PSRAM_SIZE).U
   
   // 默认连接到 CompactScale
   io.compact.addr := io.cpu.addr
@@ -576,18 +584,34 @@ class SimpleAddressDecoder extends Module {
   io.gpio.ren := io.cpu.ren && sel_gpio
   io.gpio.valid := io.cpu.valid && sel_gpio
   
+  io.flash.addr := io.cpu.addr
+  io.flash.wdata := io.cpu.wdata
+  io.flash.wen := io.cpu.wen && sel_flash
+  io.flash.ren := io.cpu.ren && sel_flash
+  io.flash.valid := io.cpu.valid && sel_flash
+  
+  io.psram.addr := io.cpu.addr
+  io.psram.wdata := io.cpu.wdata
+  io.psram.wen := io.cpu.wen && sel_psram
+  io.psram.ren := io.cpu.ren && sel_psram
+  io.psram.valid := io.cpu.valid && sel_psram
+  
   // 多路复用读数据和 ready
   io.cpu.rdata := Mux(sel_compact, io.compact.rdata,
                    Mux(sel_bitnet, io.bitnet.rdata,
                    Mux(sel_uart, io.uart.rdata,
                    Mux(sel_lcd, io.lcd.rdata,
-                   Mux(sel_gpio, io.gpio.rdata, 0.U)))))
+                   Mux(sel_gpio, io.gpio.rdata,
+                   Mux(sel_flash, io.flash.rdata,
+                   Mux(sel_psram, io.psram.rdata, 0.U)))))))
   
   io.cpu.ready := Mux(sel_compact, io.compact.ready,
                    Mux(sel_bitnet, io.bitnet.ready,
                    Mux(sel_uart, io.uart.ready,
                    Mux(sel_lcd, io.lcd.ready,
-                   Mux(sel_gpio, io.gpio.ready, true.B)))))
+                   Mux(sel_gpio, io.gpio.ready,
+                   Mux(sel_flash, io.flash.ready,
+                   Mux(sel_psram, io.psram.ready, true.B)))))))
 }
 
 // ============================================================================
@@ -668,6 +692,22 @@ class SimpleEdgeAiSoC(clockFreq: Int = 100000000, baudRate: Int = 115200) extend
     val bitnet_irq = Output(Bool())
     val uart_tx_irq = Output(Bool())
     val uart_rx_irq = Output(Bool())
+    // Flash SPI 接口
+    val flash_spi_clk = Output(Bool())
+    val flash_spi_mosi = Output(Bool())
+    val flash_spi_miso = Input(Bool())
+    val flash_spi_cs = Output(Bool())
+    // PSRAM SPI/Quad SPI 接口
+    val psram_spi_clk = Output(Bool())
+    val psram_spi_cs = Output(Bool())
+    val psram_spi_mosi = Output(Bool())
+    val psram_spi_miso = Input(Bool())
+    val psram_spi_sio2_out = Output(Bool())
+    val psram_spi_sio2_oe = Output(Bool())
+    val psram_spi_sio2_in = Input(Bool())
+    val psram_spi_sio3_out = Output(Bool())
+    val psram_spi_sio3_oe = Output(Bool())
+    val psram_spi_sio3_in = Input(Bool())
   })
   
   // RISC-V 核心
@@ -717,6 +757,37 @@ class SimpleEdgeAiSoC(clockFreq: Int = 100000000, baudRate: Int = 115200) extend
   gpio.io.reg <> decoder.io.gpio
   gpio.io.gpio_in := io.gpio_in
   io.gpio_out := gpio.io.gpio_out
+  
+  val flash = Module(new peripherals.SPIFlash())
+  flash.io.addr := decoder.io.flash.addr
+  flash.io.wdata := decoder.io.flash.wdata
+  flash.io.wen := decoder.io.flash.wen
+  flash.io.ren := decoder.io.flash.ren
+  flash.io.valid := decoder.io.flash.valid
+  decoder.io.flash.rdata := flash.io.rdata
+  decoder.io.flash.ready := flash.io.ready
+  io.flash_spi_clk := flash.io.spi_clk
+  io.flash_spi_mosi := flash.io.spi_mosi
+  flash.io.spi_miso := io.flash_spi_miso
+  io.flash_spi_cs := flash.io.spi_cs
+  
+  val psram = Module(new peripherals.PSRAM())
+  psram.io.reg_addr := decoder.io.psram.addr
+  psram.io.reg_wdata := decoder.io.psram.wdata
+  psram.io.reg_wen := decoder.io.psram.wen
+  psram.io.reg_ren := decoder.io.psram.ren
+  decoder.io.psram.rdata := psram.io.reg_rdata
+  decoder.io.psram.ready := true.B  // PSRAM always ready
+  io.psram_spi_clk := psram.io.spi_clk
+  io.psram_spi_cs := psram.io.spi_cs
+  io.psram_spi_mosi := psram.io.spi_mosi
+  psram.io.spi_miso := io.psram_spi_miso
+  io.psram_spi_sio2_out := psram.io.spi_sio2_out
+  io.psram_spi_sio2_oe := psram.io.spi_sio2_oe
+  psram.io.spi_sio2_in := io.psram_spi_sio2_in
+  io.psram_spi_sio3_out := psram.io.spi_sio3_out
+  io.psram_spi_sio3_oe := psram.io.spi_sio3_oe
+  psram.io.spi_sio3_in := io.psram_spi_sio3_in
   
   // 中断
   riscv.io.irq := Cat(

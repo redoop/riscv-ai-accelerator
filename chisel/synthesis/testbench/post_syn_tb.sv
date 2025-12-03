@@ -33,7 +33,7 @@ module post_syn_tb;
   end
   
   // 实例化 DUT (综合后的网表)
-  SimpleEdgeAiSoC dut (
+  ip1_SimpleEdgeAiSoC dut (
     .clock(clk),
     .reset(reset),
     .io_uart_rx(uart_rx),

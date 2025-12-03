@@ -161,3 +161,117 @@ void delay_us(uint32_t us) {
     // Simple delay loop
     for (volatile uint32_t i = 0; i < us * (CLOCK_FREQ / 10000000); i++);
 }
+
+// ============================================================================
+// Flash Functions
+// ============================================================================
+
+void flash_init(void) {
+    // Flash is ready after power-on, no special init needed
+}
+
+static void flash_wait_done(void) {
+    while (FLASH->CTRL & FLASH_CTRL_BUSY);
+}
+
+uint32_t flash_read(uint32_t addr) {
+    flash_wait_done();
+    FLASH->CMD = FLASH_CMD_READ;
+    FLASH->ADDR = addr & 0xFFFFFF;
+    FLASH->CTRL = FLASH_CTRL_START;
+    flash_wait_done();
+    return FLASH->DATA;
+}
+
+void flash_write_enable(void) {
+    flash_wait_done();
+    FLASH->CMD = FLASH_CMD_WRITE_ENABLE;
+    FLASH->CTRL = FLASH_CTRL_START;
+    flash_wait_done();
+}
+
+void flash_write(uint32_t addr, uint32_t data) {
+    flash_write_enable();
+    FLASH->CMD = FLASH_CMD_PAGE_PROGRAM;
+    FLASH->ADDR = addr & 0xFFFFFF;
+    FLASH->DATA = data;
+    FLASH->CTRL = FLASH_CTRL_START;
+    flash_wait_done();
+}
+
+void flash_erase_sector(uint32_t addr) {
+    flash_write_enable();
+    FLASH->CMD = FLASH_CMD_SECTOR_ERASE;
+    FLASH->ADDR = addr & 0xFFFFFF;
+    FLASH->CTRL = FLASH_CTRL_START;
+    flash_wait_done();
+}
+
+bool flash_busy(void) {
+    return (FLASH->CTRL & FLASH_CTRL_BUSY) != 0;
+}
+
+// ============================================================================
+// PSRAM Functions
+// ============================================================================
+
+static void psram_wait_done(void) {
+    while ((PSRAM->STATUS & PSRAM_STATUS_DONE) == 0);
+}
+
+void psram_init(void) {
+    PSRAM->CTRL = 0;
+    PSRAM->CONFIG = 0;
+}
+
+uint32_t psram_read(uint32_t addr) {
+    PSRAM->CMD = PSRAM_CMD_READ;
+    PSRAM->ADDR = addr & 0xFFFFFF;
+    PSRAM->CTRL = PSRAM_CTRL_START;
+    psram_wait_done();
+    return PSRAM->DATA;
+}
+
+void psram_write(uint32_t addr, uint32_t data) {
+    PSRAM->CMD = PSRAM_CMD_WRITE;
+    PSRAM->ADDR = addr & 0xFFFFFF;
+    PSRAM->DATA = data;
+    PSRAM->CTRL = PSRAM_CTRL_START;
+    psram_wait_done();
+}
+
+void psram_read_block(uint32_t addr, uint8_t *buf, uint32_t len) {
+    for (uint32_t i = 0; i < len; i += 4) {
+        uint32_t data = psram_read(addr + i);
+        for (int j = 0; j < 4 && (i + j) < len; j++) {
+            buf[i + j] = (data >> (j * 8)) & 0xFF;
+        }
+    }
+}
+
+void psram_write_block(uint32_t addr, const uint8_t *buf, uint32_t len) {
+    for (uint32_t i = 0; i < len; i += 4) {
+        uint32_t data = 0;
+        for (int j = 0; j < 4 && (i + j) < len; j++) {
+            data |= ((uint32_t)buf[i + j]) << (j * 8);
+        }
+        psram_write(addr + i, data);
+    }
+}
+
+void psram_enable_qpi(void) {
+    PSRAM->CMD = PSRAM_CMD_ENTER_QPI;
+    PSRAM->CTRL = PSRAM_CTRL_START;
+    psram_wait_done();
+}
+
+void psram_disable_qpi(void) {
+    PSRAM->CMD = PSRAM_CMD_EXIT_QPI;
+    PSRAM->CTRL = PSRAM_CTRL_START;
+    psram_wait_done();
+}
+
+bool psram_is_qpi_mode(void) {
+    return (PSRAM->CONFIG & PSRAM_CONFIG_QPI) != 0;
+}
+

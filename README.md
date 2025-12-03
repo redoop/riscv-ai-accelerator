@@ -28,6 +28,18 @@ Complete debugging and interaction capabilities:
 - ✅ **Build System**: Complete software development environment
 - ✅ **Testing**: 97% test coverage (34/35 tests passing)
 
+### 🎉 v0.3 Release (2025-12-03)
+
+External storage expansion:
+- ✅ **SPI Flash**: 16 MB @ 25 MHz (3 MB/s bandwidth)
+- ✅ **PSRAM**: 8 MB @ 50 MHz (6.25 MB/s SPI, 25 MB/s Quad SPI)
+- ✅ **Storage Capacity**: 375× increase (64 KB → 24 MB)
+- ✅ **Quad SPI**: 4-bit parallel transfer, 4× performance boost
+- ✅ **QPI Mode**: Dynamic mode switching for optimal performance
+- ✅ **Complete API**: 14 functions (6 Flash + 8 PSRAM)
+- ✅ **Test Programs**: flash_test.c, psram_test.c
+- ✅ **Documentation**: Comprehensive guide and examples
+
 ### 🕐 Clock Verification (2025-11-21)
 
 Complete clock constraint verification system:
@@ -53,10 +65,11 @@ Complete ASIC synthesis flow with ICS55 55nm PDK:
 - ✅ **Netlist Simulation**: Icarus Verilog environment ready
 - ✅ **Documentation**: Complete synthesis guides and reports
 
-**Development Time**: 1 day (~12 hours) + Clock verification + ASIC synthesis  
-**Total Code**: ~2,500 lines (Chisel + C + Python)  
+**Development Time**: 1 day (~12 hours) + Clock verification + ASIC synthesis + Storage expansion  
+**Total Code**: ~4,100 lines (Chisel + C + Python)  
 **Binary Size**: 24.1 KB (5 programs)  
-**Netlist**: 623,516 lines (ICS55 55nm)
+**Netlist**: 623,516 lines (ICS55 55nm)  
+**Storage**: 24 MB (16 MB Flash + 8 MB PSRAM)
 
 ## 🏗️ Architecture
 
@@ -116,11 +129,13 @@ Complete ASIC synthesis flow with ICS55 55nm PDK:
 | Address Range | Component | Size | Description |
 |---------------|-----------|------|-------------|
 | `0x00000000 - 0x0000FFFF` | RAM | 64 KB | Program memory |
+| `0x04000000 - 0x047FFFFF` | PSRAM | 8 MB | External PSRAM (v0.3) |
 | `0x00010000 - 0x000101FF` | CompactAccel | 512 B | Matrix A/B/C buffers |
 | `0x00010200 - 0x000103FF` | BitNetAccel | 512 B | Activation/Weight/Result |
 | `0x00010400 - 0x0001041F` | UART | 32 B | TX/RX FIFO, Control, Status |
 | `0x00010420 - 0x0001941F` | LCD | 32 KB | Framebuffer + Control |
 | `0x00019420 - 0x0001943F` | GPIO | 32 B | Input/Output registers |
+| `0x30000000 - 0x30FFFFFF` | Flash | 16 MB | SPI Flash (v0.3) |
 
 ## 🎯 Key Innovation: BitNet Multiplier-Free Architecture
 

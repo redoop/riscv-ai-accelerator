@@ -76,13 +76,13 @@ cat > /tmp/ics55_synth.ys << EOF
 plugin -i slang
 
 # 读取 RTL 设计（使用 slang）
-read_slang $RTL_FILE --top SimpleEdgeAiSoC \\
+read_slang $RTL_FILE --top ip1_SimpleEdgeAiSoC \\
     --compat-mode --keep-hierarchy \\
     --allow-use-before-declare --ignore-unknown-modules \\
     --ignore-timing --ignore-initial
 
 # 设置顶层模块
-hierarchy -top SimpleEdgeAiSoC
+hierarchy -top ip1_SimpleEdgeAiSoC
 hierarchy -check
 
 # 综合流程

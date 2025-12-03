@@ -63,7 +63,18 @@ module ip1_SimpleAddressDecoder(
   input  [31:0] io_gpio_rdata,
   output        io_gpio_wen,
                 io_gpio_ren,
-                io_gpio_valid
+                io_gpio_valid,
+  output [31:0] io_flash_addr,
+                io_flash_wdata,
+  input  [31:0] io_flash_rdata,
+  output        io_flash_wen,
+                io_flash_ren,
+                io_flash_valid,
+  output [31:0] io_psram_addr,
+                io_psram_wdata,
+  input  [31:0] io_psram_rdata,
+  output        io_psram_wen,
+                io_psram_ren
 );
 
   wire sel_compact = (|(io_cpu_addr[31:28])) & io_cpu_addr < 32'h10001000;
@@ -71,6 +82,8 @@ module ip1_SimpleAddressDecoder(
   wire sel_uart = (|(io_cpu_addr[31:29])) & io_cpu_addr < 32'h20010000;
   wire sel_lcd = io_cpu_addr > 32'h2000FFFF & io_cpu_addr < 32'h20020000;
   wire sel_gpio = io_cpu_addr > 32'h2001FFFF & io_cpu_addr < 32'h20030000;
+  wire sel_flash = io_cpu_addr > 32'h2FFFFFFF & io_cpu_addr < 32'h31000000;
+  wire sel_psram = (|(io_cpu_addr[31:26])) & io_cpu_addr < 32'h4800000;
   assign io_cpu_rdata =
     sel_compact
       ? io_compact_rdata
@@ -78,7 +91,11 @@ module ip1_SimpleAddressDecoder(
           ? io_bitnet_rdata
           : sel_uart
               ? io_uart_rdata
-              : sel_lcd ? io_lcd_rdata : sel_gpio ? io_gpio_rdata : 32'h0;
+              : sel_lcd
+                  ? io_lcd_rdata
+                  : sel_gpio
+                      ? io_gpio_rdata
+                      : sel_flash ? io_flash_rdata : sel_psram ? io_psram_rdata : 32'h0;
   assign io_cpu_ready = sel_compact | sel_bitnet | sel_uart | ~sel_lcd | io_lcd_ready;
   assign io_compact_addr = io_cpu_addr;
   assign io_compact_wdata = io_cpu_wdata;
@@ -104,6 +121,15 @@ module ip1_SimpleAddressDecoder(
   assign io_gpio_wen = io_cpu_wen & sel_gpio;
   assign io_gpio_ren = io_cpu_ren & sel_gpio;
   assign io_gpio_valid = io_cpu_valid & sel_gpio;
+  assign io_flash_addr = io_cpu_addr;
+  assign io_flash_wdata = io_cpu_wdata;
+  assign io_flash_wen = io_cpu_wen & sel_flash;
+  assign io_flash_ren = io_cpu_ren & sel_flash;
+  assign io_flash_valid = io_cpu_valid & sel_flash;
+  assign io_psram_addr = io_cpu_addr;
+  assign io_psram_wdata = io_cpu_wdata;
+  assign io_psram_wen = io_cpu_wen & sel_psram;
+  assign io_psram_ren = io_cpu_ren & sel_psram;
 endmodule
 
 // VCS coverage exclude_file
@@ -1024,6 +1050,510 @@ module ip1_SimpleGPIO(
   assign io_gpio_out = gpioOut;
 endmodule
 
+module ip1_SPIFlash(
+  input         clock,
+                reset,
+  input  [31:0] io_addr,
+                io_wdata,
+  output [31:0] io_rdata,
+  input         io_wen,
+                io_ren,
+                io_valid,
+  output        io_spi_clk,
+                io_spi_mosi,
+  input         io_spi_miso,
+  output        io_spi_cs
+);
+
+  reg  [7:0]  cmdReg;
+  reg  [23:0] addrReg;
+  reg  [31:0] dataReg;
+  reg         busyReg;
+  reg         doneReg;
+  reg  [7:0]  spiCounter;
+  reg         spiClkReg;
+  reg  [2:0]  state;
+  reg  [7:0]  bitCounter;
+  reg  [31:0] shiftReg;
+  reg         csReg;
+  reg         mosiReg;
+  reg         spiClkLast;
+  wire        _GEN = io_valid & io_wen;
+  wire        _GEN_0 = io_addr[7:0] == 8'h0;
+  wire        _GEN_1 = io_addr[7:0] == 8'h4;
+  wire        _GEN_2 = io_addr[7:0] == 8'h8;
+  wire        _GEN_3 = io_addr[7:0] == 8'hC;
+  wire        startReq = _GEN & ~(_GEN_0 | _GEN_1 | _GEN_2) & _GEN_3 & io_wdata[0];
+  always @(posedge clock) begin
+    if (reset) begin
+      cmdReg <= 8'h0;
+      addrReg <= 24'h0;
+      dataReg <= 32'h0;
+      busyReg <= 1'h0;
+      doneReg <= 1'h0;
+      spiCounter <= 8'h0;
+      spiClkReg <= 1'h0;
+      state <= 3'h0;
+      bitCounter <= 8'h0;
+      shiftReg <= 32'h0;
+      csReg <= 1'h1;
+      mosiReg <= 1'h0;
+    end
+    else begin
+      automatic logic            _GEN_4 = busyReg & (|spiCounter);
+      automatic logic            spiPosEdge;
+      automatic logic            spiNegEdge;
+      automatic logic            _GEN_5;
+      automatic logic            _GEN_6;
+      automatic logic            _GEN_7;
+      automatic logic            _GEN_8;
+      automatic logic            _GEN_9;
+      automatic logic            _GEN_10;
+      automatic logic            _GEN_11;
+      automatic logic            _GEN_12 = cmdReg == 8'h5;
+      automatic logic            _GEN_13;
+      automatic logic            _GEN_14;
+      automatic logic            _GEN_15;
+      automatic logic            _GEN_16;
+      automatic logic            _GEN_17;
+      automatic logic            _GEN_18;
+      automatic logic            _GEN_19 = bitCounter == 8'h1F;
+      automatic logic            _GEN_20;
+      automatic logic [7:0][2:0] _GEN_21;
+      automatic logic [7:0][7:0] _GEN_22;
+      spiPosEdge = spiClkReg & ~spiClkLast;
+      spiNegEdge = ~spiClkReg & spiClkLast;
+      _GEN_5 = state == 3'h0;
+      _GEN_6 = state == 3'h1;
+      _GEN_7 = bitCounter == 8'h7;
+      _GEN_8 = cmdReg == 8'hB;
+      _GEN_9 = cmdReg == 8'h3 | _GEN_8;
+      _GEN_10 = cmdReg == 8'h2;
+      _GEN_11 = _GEN_9 | _GEN_10 | cmdReg == 8'h20;
+      _GEN_13 = spiNegEdge & _GEN_7;
+      _GEN_14 = state == 3'h2;
+      _GEN_15 = bitCounter == 8'h17;
+      _GEN_16 = state == 3'h3;
+      _GEN_17 = state == 3'h4;
+      _GEN_18 = _GEN_9 | _GEN_12;
+      _GEN_20 = spiPosEdge & _GEN_19;
+      if (_GEN & _GEN_0)
+        cmdReg <= io_wdata[7:0];
+      if (~_GEN | _GEN_0 | ~_GEN_1) begin
+      end
+      else
+        addrReg <= io_wdata[23:0];
+      if (~_GEN | _GEN_0 | _GEN_1 | ~_GEN_2) begin
+        if (_GEN_5 | _GEN_6 | _GEN_14 | _GEN_16 | ~(_GEN_17 & _GEN_18 & _GEN_20)) begin
+        end
+        else
+          dataReg <= {shiftReg[30:0], io_spi_miso};
+      end
+      else
+        dataReg <= io_wdata;
+      if (_GEN_5) begin
+        busyReg <= startReq;
+        doneReg <= ~startReq & doneReg;
+        if (startReq)
+          shiftReg <= {cmdReg, 24'h0};
+        csReg <= ~startReq;
+      end
+      else begin
+        automatic logic _GEN_23 = state == 3'h5;
+        automatic logic _GEN_24;
+        automatic logic _GEN_25;
+        _GEN_24 = _GEN_6 | _GEN_14 | _GEN_16 | _GEN_17;
+        _GEN_25 = ~_GEN_24 & _GEN_23;
+        busyReg <= (_GEN_24 | ~_GEN_23) & busyReg;
+        doneReg <= _GEN_25 | doneReg;
+        if (_GEN_6) begin
+          if (spiNegEdge) begin
+            if (_GEN_7 & _GEN_11)
+              shiftReg <= {addrReg, 8'h0};
+            else
+              shiftReg <= {shiftReg[30:0], 1'h0};
+            mosiReg <= shiftReg[31];
+          end
+        end
+        else if (_GEN_14) begin
+          if (spiNegEdge) begin
+            if (~_GEN_15 | _GEN_8 | ~_GEN_10)
+              shiftReg <= {shiftReg[30:0], 1'h0};
+            else
+              shiftReg <= dataReg;
+            mosiReg <= shiftReg[31];
+          end
+        end
+        else begin
+          if (_GEN_16 | ~_GEN_17) begin
+          end
+          else if (_GEN_18) begin
+            if (spiPosEdge)
+              shiftReg <= {shiftReg[30:0], io_spi_miso};
+          end
+          else if (spiNegEdge)
+            shiftReg <= {shiftReg[30:0], 1'h0};
+          if (_GEN_16 | ~_GEN_17 | _GEN_18 | ~spiNegEdge) begin
+          end
+          else
+            mosiReg <= shiftReg[31];
+        end
+        csReg <= _GEN_25 | csReg;
+      end
+      if (_GEN_4 | ~busyReg)
+        spiCounter <= 8'h0;
+      else
+        spiCounter <= spiCounter + 8'h1;
+      if (_GEN_4)
+        spiClkReg <= ~spiClkReg;
+      else
+        spiClkReg <= busyReg & spiClkReg;
+      _GEN_21 =
+        {{state},
+         {state},
+         {3'h0},
+         {(_GEN_18 ? _GEN_20 : spiNegEdge & _GEN_19) ? 3'h5 : state},
+         {_GEN_13 ? 3'h4 : state},
+         {spiNegEdge & _GEN_15 ? (_GEN_8 ? 3'h3 : 3'h4) : state},
+         {_GEN_13 ? (_GEN_11 ? 3'h2 : {2'h2, ~_GEN_12}) : state},
+         {startReq ? 3'h1 : state}};
+      state <= _GEN_21[state];
+      _GEN_22 =
+        {{bitCounter},
+         {bitCounter},
+         {bitCounter},
+         {_GEN_18
+            ? (spiPosEdge ? bitCounter + 8'h1 : bitCounter)
+            : spiNegEdge ? bitCounter + 8'h1 : bitCounter},
+         {spiNegEdge ? (_GEN_7 ? 8'h0 : bitCounter + 8'h1) : bitCounter},
+         {spiNegEdge ? (_GEN_15 ? 8'h0 : bitCounter + 8'h1) : bitCounter},
+         {spiNegEdge
+            ? (_GEN_7 & (_GEN_11 | _GEN_12) ? 8'h0 : bitCounter + 8'h1)
+            : bitCounter},
+         {startReq ? 8'h0 : bitCounter}};
+      bitCounter <= _GEN_22[state];
+    end
+    spiClkLast <= spiClkReg;
+  end // always @(posedge)
+  assign io_rdata =
+    io_valid & io_ren
+      ? (_GEN_0
+           ? {24'h0, cmdReg}
+           : _GEN_1
+               ? {8'h0, addrReg}
+               : _GEN_2 ? dataReg : _GEN_3 ? {29'h0, doneReg, busyReg, 1'h0} : 32'h0)
+      : 32'h0;
+  assign io_spi_clk = spiClkReg;
+  assign io_spi_mosi = mosiReg;
+  assign io_spi_cs = csReg;
+endmodule
+
+module ip1_PSRAM(
+  input         clock,
+                reset,
+                io_reg_wen,
+                io_reg_ren,
+  input  [31:0] io_reg_addr,
+                io_reg_wdata,
+  output [31:0] io_reg_rdata,
+  output        io_spi_clk,
+                io_spi_cs,
+                io_spi_mosi,
+  input         io_spi_miso,
+  output        io_spi_sio2_out,
+                io_spi_sio2_oe,
+  input         io_spi_sio2_in,
+  output        io_spi_sio3_out,
+                io_spi_sio3_oe,
+  input         io_spi_sio3_in
+);
+
+  reg [7:0]  cmdReg;
+  reg [23:0] addrReg;
+  reg [31:0] dataReg;
+  reg [31:0] ctrlReg;
+  reg [31:0] statusReg;
+  reg [31:0] configReg;
+  reg [2:0]  state;
+  reg        clkDiv;
+  reg        spiClk;
+  reg        spiClkEn;
+  reg [5:0]  bitCnt;
+  reg [31:0] shiftReg;
+  reg [31:0] dataOut;
+  reg        mosiReg;
+  reg        csReg;
+  reg        sio2OutReg;
+  reg        sio2OeReg;
+  reg        sio3OutReg;
+  reg        sio3OeReg;
+  always @(posedge clock) begin
+    if (reset) begin
+      cmdReg <= 8'h0;
+      addrReg <= 24'h0;
+      dataReg <= 32'h0;
+      ctrlReg <= 32'h0;
+      statusReg <= 32'h0;
+      configReg <= 32'h0;
+      state <= 3'h0;
+      clkDiv <= 1'h0;
+      spiClk <= 1'h0;
+      spiClkEn <= 1'h0;
+      bitCnt <= 6'h0;
+      shiftReg <= 32'h0;
+      dataOut <= 32'h0;
+      mosiReg <= 1'h0;
+      csReg <= 1'h1;
+      sio2OutReg <= 1'h0;
+      sio2OeReg <= 1'h0;
+      sio3OutReg <= 1'h0;
+      sio3OeReg <= 1'h0;
+    end
+    else begin
+      automatic logic            _GEN;
+      automatic logic            _GEN_0;
+      automatic logic            _GEN_1;
+      automatic logic            _GEN_2;
+      automatic logic            _GEN_3;
+      automatic logic            _GEN_4;
+      automatic logic            _GEN_5;
+      automatic logic            _GEN_6;
+      automatic logic            _GEN_7;
+      automatic logic            _GEN_8;
+      automatic logic            _GEN_9;
+      automatic logic            _GEN_10;
+      automatic logic            _GEN_11;
+      automatic logic            _GEN_12;
+      automatic logic            _GEN_13;
+      automatic logic            _GEN_14 = state == 3'h4;
+      automatic logic            _GEN_15;
+      automatic logic            _GEN_16;
+      automatic logic            _GEN_17;
+      automatic logic            _GEN_18;
+      automatic logic            _GEN_19;
+      automatic logic            _GEN_20;
+      automatic logic            _GEN_21;
+      automatic logic            _GEN_22;
+      automatic logic            _GEN_23 = io_reg_addr[4:0] == 5'h0;
+      automatic logic            _GEN_24 = io_reg_addr[4:0] == 5'h4;
+      automatic logic            _GEN_25 = io_reg_addr[4:0] == 5'h8;
+      automatic logic            _GEN_26 = io_reg_addr[4:0] == 5'hC;
+      automatic logic [7:0][2:0] _GEN_27;
+      _GEN = state == 3'h0;
+      _GEN_0 = cmdReg == 8'h35;
+      _GEN_1 = cmdReg == 8'hF5;
+      _GEN_2 = _GEN_0 | _GEN_1;
+      _GEN_3 = ~(ctrlReg[0]) | _GEN_2;
+      _GEN_4 = cmdReg == 8'hEB;
+      _GEN_5 = cmdReg == 8'h38;
+      _GEN_6 = state == 3'h1;
+      _GEN_7 = spiClk & ~clkDiv;
+      _GEN_8 = bitCnt == 6'h7;
+      _GEN_9 = _GEN_7 & _GEN_8;
+      _GEN_10 = state == 3'h2;
+      _GEN_11 = bitCnt == 6'h17;
+      _GEN_12 = cmdReg == 8'hB;
+      _GEN_13 = state == 3'h3;
+      _GEN_15 = _GEN_4 | _GEN_5;
+      _GEN_16 = _GEN | _GEN_6 | _GEN_10 | _GEN_13;
+      _GEN_17 = cmdReg == 8'h3 | _GEN_12;
+      _GEN_18 = _GEN_14 & _GEN_7;
+      _GEN_19 = _GEN_15 ? bitCnt > 6'h1B : bitCnt == 6'h1F;
+      _GEN_20 = state == 3'h5;
+      _GEN_21 = _GEN_6 | _GEN_10 | _GEN_13 | _GEN_14;
+      _GEN_22 = _GEN_21 | ~_GEN_20;
+      if (io_reg_wen & _GEN_23)
+        cmdReg <= io_reg_wdata[7:0];
+      if (~io_reg_wen | _GEN_23 | ~_GEN_24) begin
+      end
+      else
+        addrReg <= io_reg_wdata[23:0];
+      if (~io_reg_wen | _GEN_23 | _GEN_24 | ~_GEN_25) begin
+        if (_GEN_16 | ~(_GEN_18 & _GEN_19)) begin
+        end
+        else
+          dataReg <= dataOut;
+      end
+      else
+        dataReg <= io_reg_wdata;
+      if (~io_reg_wen | _GEN_23 | _GEN_24 | _GEN_25 | ~_GEN_26) begin
+        automatic logic [1:0]       _GEN_28 = statusReg[1:0] | 2'h2;
+        automatic logic [31:0]      _GEN_29;
+        automatic logic [31:0]      _GEN_30;
+        automatic logic [7:0][31:0] _GEN_31;
+        automatic logic [7:0][31:0] _GEN_32;
+        _GEN_29 = _GEN_22 ? ctrlReg : 32'h0;
+        _GEN_30 = _GEN_22 ? statusReg : {statusReg[31:2], _GEN_28};
+        _GEN_31 =
+          {{_GEN_29},
+           {_GEN_29},
+           {_GEN_29},
+           {ctrlReg},
+           {ctrlReg},
+           {ctrlReg},
+           {ctrlReg},
+           {ctrlReg[0] & _GEN_2 ? 32'h0 : ctrlReg}};
+        ctrlReg <= _GEN_31[state];
+        _GEN_32 =
+          {{_GEN_30},
+           {_GEN_30},
+           {_GEN_30},
+           {statusReg},
+           {statusReg},
+           {statusReg},
+           {statusReg},
+           {ctrlReg[0]
+              ? (_GEN_0
+                   ? {statusReg[31:2], _GEN_28}
+                   : _GEN_1 ? {statusReg[31:2], _GEN_28} : statusReg)
+              : statusReg}};
+        statusReg <= _GEN_32[state];
+      end
+      else begin
+        ctrlReg <= io_reg_wdata;
+        statusReg <= {31'h0, statusReg[0]};
+      end
+      if (~io_reg_wen | _GEN_23 | _GEN_24 | _GEN_25 | _GEN_26
+          | io_reg_addr[4:0] != 5'h14) begin
+        if (_GEN & ctrlReg[0]) begin
+          if (_GEN_0)
+            configReg <= {configReg[31:1], 1'h1};
+          else if (_GEN_1)
+            configReg <= 32'h0;
+        end
+      end
+      else
+        configReg <= io_reg_wdata;
+      _GEN_27 =
+        {{state},
+         {state},
+         {3'h0},
+         {_GEN_7 & _GEN_19 ? 3'h5 : state},
+         {_GEN_9 ? 3'h4 : state},
+         {_GEN_7 & _GEN_11 ? (_GEN_12 ? 3'h3 : 3'h4) : state},
+         {_GEN_9 ? 3'h2 : state},
+         {_GEN_3 ? state : 3'h1}};
+      state <= _GEN_27[state];
+      clkDiv <= spiClkEn ^ clkDiv;
+      spiClk <= spiClkEn & ~clkDiv ^ spiClk;
+      if (_GEN) begin
+        automatic logic _GEN_33;
+        _GEN_33 = ctrlReg[0] & ~(_GEN_0 | _GEN_1 | _GEN_4) & _GEN_5;
+        spiClkEn <= ctrlReg[0] & ~_GEN_0 & ~_GEN_1;
+        bitCnt <= 6'h0;
+        if (_GEN_3) begin
+        end
+        else
+          shiftReg <= {cmdReg, 24'h0};
+        csReg <= ~(ctrlReg[0]) | _GEN_0 | _GEN_1;
+        sio2OeReg <= _GEN_33;
+        sio3OeReg <= _GEN_33;
+      end
+      else begin
+        spiClkEn <= _GEN_22 & spiClkEn;
+        if (_GEN_6) begin
+          if (_GEN_7) begin
+            if (_GEN_8) begin
+              bitCnt <= 6'h0;
+              shiftReg <= {addrReg, 8'h0};
+            end
+            else begin
+              bitCnt <= bitCnt + 6'h1;
+              shiftReg <= {shiftReg[30:0], 1'h0};
+            end
+            mosiReg <= shiftReg[31];
+          end
+        end
+        else if (_GEN_10) begin
+          if (_GEN_7) begin
+            if (_GEN_11)
+              bitCnt <= 6'h0;
+            else
+              bitCnt <= bitCnt + 6'h1;
+            if (~_GEN_11 | _GEN_12)
+              shiftReg <= {shiftReg[30:0], 1'h0};
+            else
+              shiftReg <= dataReg;
+            mosiReg <= shiftReg[31];
+          end
+        end
+        else begin
+          if (_GEN_13) begin
+            if (_GEN_7) begin
+              if (_GEN_8)
+                bitCnt <= 6'h0;
+              else
+                bitCnt <= bitCnt + 6'h1;
+            end
+          end
+          else if (_GEN_18) begin
+            if (_GEN_15) begin
+              if (_GEN_4)
+                bitCnt <= bitCnt + 6'h4;
+              else
+                bitCnt <= bitCnt + 6'h4;
+            end
+            else
+              bitCnt <= bitCnt + 6'h1;
+          end
+          if (_GEN_13 | ~_GEN_18) begin
+          end
+          else if (_GEN_15) begin
+            if (~_GEN_4)
+              shiftReg <= {shiftReg[27:0], 4'h0};
+            if (~_GEN_4)
+              mosiReg <= shiftReg[29];
+          end
+          else begin
+            if (~_GEN_17)
+              shiftReg <= {shiftReg[30:0], 1'h0};
+            if (~_GEN_17)
+              mosiReg <= shiftReg[31];
+          end
+        end
+        csReg <= ~_GEN_21 & (_GEN_20 | csReg);
+      end
+      if (_GEN_16 | ~_GEN_18) begin
+      end
+      else if (_GEN_15) begin
+        if (_GEN_4)
+          dataOut <=
+            {dataOut[27:0], io_spi_sio3_in, io_spi_sio2_in, io_spi_miso, mosiReg};
+      end
+      else if (_GEN_17)
+        dataOut <= {dataOut[30:0], io_spi_miso};
+      if (_GEN_16 | ~(_GEN_14 & _GEN_7 & _GEN_15) | _GEN_4) begin
+      end
+      else begin
+        sio2OutReg <= shiftReg[30];
+        sio3OutReg <= shiftReg[31];
+      end
+    end
+  end // always @(posedge)
+  assign io_reg_rdata =
+    io_reg_ren
+      ? (io_reg_addr[4:0] == 5'h14
+           ? configReg
+           : io_reg_addr[4:0] == 5'h10
+               ? statusReg
+               : io_reg_addr[4:0] == 5'hC
+                   ? ctrlReg
+                   : io_reg_addr[4:0] == 5'h8
+                       ? dataReg
+                       : {8'h0,
+                          io_reg_addr[4:0] == 5'h4
+                            ? addrReg
+                            : {16'h0, io_reg_addr[4:0] == 5'h0 ? cmdReg : 8'h0}})
+      : 32'h0;
+  assign io_spi_clk = spiClkEn & spiClk;
+  assign io_spi_cs = csReg;
+  assign io_spi_mosi = mosiReg;
+  assign io_spi_sio2_out = sio2OutReg;
+  assign io_spi_sio2_oe = sio2OeReg;
+  assign io_spi_sio3_out = sio3OutReg;
+  assign io_spi_sio3_oe = sio3OeReg;
+endmodule
+
 module ip1_SimpleEdgeAiSoC(
   input         clock,
                 reset,
@@ -1041,9 +1571,25 @@ module ip1_SimpleEdgeAiSoC(
                 io_compact_irq,
                 io_bitnet_irq,
                 io_uart_tx_irq,
-                io_uart_rx_irq
+                io_uart_rx_irq,
+                io_flash_spi_clk,
+                io_flash_spi_mosi,
+  input         io_flash_spi_miso,
+  output        io_flash_spi_cs,
+                io_psram_spi_clk,
+                io_psram_spi_cs,
+                io_psram_spi_mosi,
+  input         io_psram_spi_miso,
+  output        io_psram_spi_sio2_out,
+                io_psram_spi_sio2_oe,
+  input         io_psram_spi_sio2_in,
+  output        io_psram_spi_sio3_out,
+                io_psram_spi_sio3_oe,
+  input         io_psram_spi_sio3_in
 );
 
+  wire [31:0] _psram_io_reg_rdata;
+  wire [31:0] _flash_io_rdata;
   wire [31:0] _gpio_io_reg_rdata;
   wire [31:0] _lcd_io_reg_rdata;
   wire        _lcd_io_reg_ready;
@@ -1080,6 +1626,15 @@ module ip1_SimpleEdgeAiSoC(
   wire        _decoder_io_gpio_wen;
   wire        _decoder_io_gpio_ren;
   wire        _decoder_io_gpio_valid;
+  wire [31:0] _decoder_io_flash_addr;
+  wire [31:0] _decoder_io_flash_wdata;
+  wire        _decoder_io_flash_wen;
+  wire        _decoder_io_flash_ren;
+  wire        _decoder_io_flash_valid;
+  wire [31:0] _decoder_io_psram_addr;
+  wire [31:0] _decoder_io_psram_wdata;
+  wire        _decoder_io_psram_wen;
+  wire        _decoder_io_psram_ren;
   wire        _memAdapter_io_mem_ready;
   wire [31:0] _memAdapter_io_mem_rdata;
   wire [31:0] _memAdapter_io_reg_addr;
@@ -1163,7 +1718,18 @@ module ip1_SimpleEdgeAiSoC(
     .io_gpio_rdata    (_gpio_io_reg_rdata),
     .io_gpio_wen      (_decoder_io_gpio_wen),
     .io_gpio_ren      (_decoder_io_gpio_ren),
-    .io_gpio_valid    (_decoder_io_gpio_valid)
+    .io_gpio_valid    (_decoder_io_gpio_valid),
+    .io_flash_addr    (_decoder_io_flash_addr),
+    .io_flash_wdata   (_decoder_io_flash_wdata),
+    .io_flash_rdata   (_flash_io_rdata),
+    .io_flash_wen     (_decoder_io_flash_wen),
+    .io_flash_ren     (_decoder_io_flash_ren),
+    .io_flash_valid   (_decoder_io_flash_valid),
+    .io_psram_addr    (_decoder_io_psram_addr),
+    .io_psram_wdata   (_decoder_io_psram_wdata),
+    .io_psram_rdata   (_psram_io_reg_rdata),
+    .io_psram_wen     (_decoder_io_psram_wen),
+    .io_psram_ren     (_decoder_io_psram_ren)
   );
   ip1_SimpleCompactAccel compactAccel (
     .clock        (clock),
@@ -1228,6 +1794,39 @@ module ip1_SimpleEdgeAiSoC(
     .io_reg_valid (_decoder_io_gpio_valid),
     .io_gpio_out  (io_gpio_out),
     .io_gpio_in   (io_gpio_in)
+  );
+  ip1_SPIFlash flash (
+    .clock       (clock),
+    .reset       (reset),
+    .io_addr     (_decoder_io_flash_addr),
+    .io_wdata    (_decoder_io_flash_wdata),
+    .io_rdata    (_flash_io_rdata),
+    .io_wen      (_decoder_io_flash_wen),
+    .io_ren      (_decoder_io_flash_ren),
+    .io_valid    (_decoder_io_flash_valid),
+    .io_spi_clk  (io_flash_spi_clk),
+    .io_spi_mosi (io_flash_spi_mosi),
+    .io_spi_miso (io_flash_spi_miso),
+    .io_spi_cs   (io_flash_spi_cs)
+  );
+  ip1_PSRAM psram (
+    .clock           (clock),
+    .reset           (reset),
+    .io_reg_wen      (_decoder_io_psram_wen),
+    .io_reg_ren      (_decoder_io_psram_ren),
+    .io_reg_addr     (_decoder_io_psram_addr),
+    .io_reg_wdata    (_decoder_io_psram_wdata),
+    .io_reg_rdata    (_psram_io_reg_rdata),
+    .io_spi_clk      (io_psram_spi_clk),
+    .io_spi_cs       (io_psram_spi_cs),
+    .io_spi_mosi     (io_psram_spi_mosi),
+    .io_spi_miso     (io_psram_spi_miso),
+    .io_spi_sio2_out (io_psram_spi_sio2_out),
+    .io_spi_sio2_oe  (io_psram_spi_sio2_oe),
+    .io_spi_sio2_in  (io_psram_spi_sio2_in),
+    .io_spi_sio3_out (io_psram_spi_sio3_out),
+    .io_spi_sio3_oe  (io_psram_spi_sio3_oe),
+    .io_spi_sio3_in  (io_psram_spi_sio3_in)
   );
   assign io_compact_irq = _compactAccel_io_irq;
   assign io_bitnet_irq = _bitnetAccel_io_irq;
