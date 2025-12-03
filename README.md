@@ -40,6 +40,15 @@ External storage expansion:
 - ✅ **Test Programs**: flash_test.c, psram_test.c
 - ✅ **Documentation**: Comprehensive guide and examples
 
+### 🎯 v0.4.1 Release (2025-12-03)
+
+IO pad optimization for 81-pad limit:
+- ✅ **IO Reduction**: 97 → 61 pads (37% reduction, +20 margin)
+- ✅ **GPIO Optimization**: 32-bit → 16-bit (sufficient for most applications)
+- ✅ **Core Features**: All preserved (Quad SPI, Flash, PSRAM, LCD, UART)
+- ✅ **Test Coverage**: 100% passing (57/57 tests)
+- ✅ **Margin**: 24.7% headroom for future expansion
+
 ### 🕐 Clock Verification (2025-11-21)
 
 Complete clock constraint verification system:

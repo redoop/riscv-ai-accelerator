@@ -1035,18 +1035,18 @@ module ip1_SimpleGPIO(
   input         io_reg_wen,
                 io_reg_ren,
                 io_reg_valid,
-  output [31:0] io_gpio_out,
-  input  [31:0] io_gpio_in
+  output [15:0] io_gpio_out,
+  input  [15:0] io_gpio_in
 );
 
-  reg [31:0] gpioOut;
+  reg [15:0] gpioOut;
   always @(posedge clock) begin
     if (reset)
-      gpioOut <= 32'h0;
+      gpioOut <= 16'h0;
     else if (io_reg_valid & io_reg_wen)
-      gpioOut <= io_reg_wdata;
+      gpioOut <= io_reg_wdata[15:0];
   end // always @(posedge)
-  assign io_reg_rdata = io_reg_valid & io_reg_ren ? io_gpio_in : 32'h0;
+  assign io_reg_rdata = io_reg_valid & io_reg_ren ? {16'h0, io_gpio_in} : 32'h0;
   assign io_gpio_out = gpioOut;
 endmodule
 
@@ -1565,8 +1565,8 @@ module ip1_SimpleEdgeAiSoC(
                 io_lcd_spi_dc,
                 io_lcd_spi_rst,
                 io_lcd_backlight,
-  output [31:0] io_gpio_out,
-  input  [31:0] io_gpio_in,
+  output [15:0] io_gpio_out,
+  input  [15:0] io_gpio_in,
   output        io_trap,
                 io_compact_irq,
                 io_bitnet_irq,

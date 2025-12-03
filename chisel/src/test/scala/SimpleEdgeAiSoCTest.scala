@@ -361,7 +361,7 @@ class SimpleEdgeAiSoCTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.reg.wen.poke(true.B)
       dut.io.reg.ren.poke(false.B)
       
-      val testValues = Array(0x00000000L, 0xFFFFFFFFL, 0xAAAAAAAAL, 0x55555555L)
+      val testValues = Array(0x0000L, 0xFFFFL, 0xAAAAL, 0x5555L)
       
       for (value <- testValues) {
         dut.io.reg.wdata.poke(value.U)
@@ -369,9 +369,9 @@ class SimpleEdgeAiSoCTest extends AnyFlatSpec with ChiselScalatestTester {
         
         val output = dut.io.gpio_out.peek().litValue
         if (output == value) {
-          println(f"  写入 0x$value%08X -> 输出 0x$output%08X ✓")
+          println(f"  写入 0x$value%04X -> 输出 0x$output%04X ✓")
         } else {
-          println(f"  写入 0x$value%08X -> 输出 0x$output%08X ✗")
+          println(f"  写入 0x$value%04X -> 输出 0x$output%04X ✗")
         }
       }
       
@@ -380,7 +380,7 @@ class SimpleEdgeAiSoCTest extends AnyFlatSpec with ChiselScalatestTester {
       dut.io.reg.wen.poke(false.B)
       dut.io.reg.ren.poke(true.B)
       
-      val testInputs = Array(0x12345678L, 0xABCDEF00L, 0xDEADBEEFL)
+      val testInputs = Array(0x1234L, 0xABCDL, 0xBEEFL)
       
       for (value <- testInputs) {
         dut.io.gpio_in.poke(value.U)
@@ -388,9 +388,9 @@ class SimpleEdgeAiSoCTest extends AnyFlatSpec with ChiselScalatestTester {
         
         val readback = dut.io.reg.rdata.peek().litValue
         if (readback == value) {
-          println(f"  输入 0x$value%08X -> 读取 0x$readback%08X ✓")
+          println(f"  输入 0x$value%04X -> 读取 0x$readback%04X ✓")
         } else {
-          println(f"  输入 0x$value%08X -> 读取 0x$readback%08X ✗")
+          println(f"  输入 0x$value%04X -> 读取 0x$readback%04X ✗")
         }
       }
       

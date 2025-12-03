@@ -474,18 +474,18 @@ class SimpleUARTWrapper(clockFreq: Int = 100000000, baudRate: Int = 115200) exte
 class SimpleGPIO extends Module {
   val io = IO(new Bundle {
     val reg = new SimpleRegIO()
-    val gpio_out = Output(UInt(32.W))
-    val gpio_in = Input(UInt(32.W))
+    val gpio_out = Output(UInt(16.W))
+    val gpio_in = Input(UInt(16.W))
   })
   
-  val gpioOut = RegInit(0.U(32.W))
+  val gpioOut = RegInit(0.U(16.W))
   io.gpio_out := gpioOut
   io.reg.rdata := 0.U
   io.reg.ready := true.B
   
   when(io.reg.valid) {
     when(io.reg.wen) {
-      gpioOut := io.reg.wdata
+      gpioOut := io.reg.wdata(15, 0)
     }
     when(io.reg.ren) {
       io.reg.rdata := io.gpio_in
@@ -685,8 +685,8 @@ class SimpleEdgeAiSoC(clockFreq: Int = 100000000, baudRate: Int = 115200) extend
     val lcd_spi_dc = Output(Bool())
     val lcd_spi_rst = Output(Bool())
     val lcd_backlight = Output(Bool())
-    val gpio_out = Output(UInt(32.W))
-    val gpio_in = Input(UInt(32.W))
+    val gpio_out = Output(UInt(16.W))
+    val gpio_in = Input(UInt(16.W))
     val trap = Output(Bool())
     val compact_irq = Output(Bool())
     val bitnet_irq = Output(Bool())
