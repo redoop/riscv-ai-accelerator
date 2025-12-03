@@ -1,0 +1,82 @@
+# ysyx_26000001_with_ai.v 运行所需的所有 Verilog 文件
+# 日期: 2025-12-03
+# 总计: 43 个文件, ~350 KB
+
+## 核心文件 (4 个)
+
+1. chisel/generated/simple_edgeaisoc/ysyx_26000001_with_ai.v  (12 KB)
+   - AI 加速器 Wrapper
+   - 包含: PicoRV32 + CompactAccel + BitNetAccel + Flash + PSRAM
+
+2. chisel/generated/simple_edgeaisoc/SimpleEdgeAiSoC.sv  (149 KB)
+   - 所有 AI 加速器模块 (SystemVerilog)
+   - 包含: ip1_SimpleCompactAccel, ip1_SimpleBitNetAccel, ip1_SPIFlash, ip1_PSRAM
+
+3. chisel/src/main/resources/rtl/picorv32.v  (93 KB)
+   - RISC-V RV32I CPU 核心
+
+4. ecos/ysyxSoC/ready-to-run/D-stage/ysyxSoCFull.v  (85 KB)
+   - ysyxSoC 顶层模块
+
+5. ecos/ysyxSoC/ready-to-run/D-stage/flash_fixed.v  (2.7 KB)
+   - Flash 模块（Verilator 兼容版）
+
+## UART 外设 (9 个文件)
+
+ecos/ysyxSoC/perip/uart16550/rtl/
+├── uart_top.v
+├── uart_receiver.v
+├── uart_regs.v
+├── uart_rfifo.v
+├── uart_sync_flops.v
+├── uart_tfifo.v
+├── uart_transmitter.v
+├── uart_wb.v
+└── raminfr.v
+
+## SPI 外设 (5 个文件)
+
+ecos/ysyxSoC/perip/spi/rtl/
+├── spi_top.v
+├── spi_clgen.v
+├── spi_shift.v
+├── spi_defines.v
+└── timescale.v
+
+## SDRAM 外设 (6 个文件)
+
+ecos/ysyxSoC/perip/sdram/
+├── sdram.v
+├── sdram_top_apb.v
+├── sdram_top_axi.v
+└── core_sdram_axi4/
+    ├── sdram_axi.v
+    ├── sdram_axi_core.v
+    └── sdram_axi_pmem.v
+
+## 其他外设 (10 个文件)
+
+ecos/ysyxSoC/perip/amba/      (2 个)
+ecos/ysyxSoC/perip/bitrev/    (1 个)
+ecos/ysyxSoC/perip/gpio/      (1 个)
+ecos/ysyxSoC/perip/ps2/       (1 个)
+ecos/ysyxSoC/perip/psram/     (4 个)
+ecos/ysyxSoC/perip/vga/       (1 个)
+
+## 统计
+
+核心文件:    5 个  (~342 KB)
+UART:        9 个
+SPI:         5 个
+SDRAM:       6 个
+其他外设:   10 个
+----------------------------
+总计:       43 个文件
+
+## 编译脚本
+
+使用: ecos/ysyxSoC/ready-to-run/D-stage/build_with_ai_simple.sh
+
+## 验证
+
+所有文件已验证存在并可编译。

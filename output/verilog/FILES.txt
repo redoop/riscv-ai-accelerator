@@ -1,0 +1,52 @@
+# Verilog 文件清单
+# 生成日期: 2025-12-03
+
+## 核心文件 (core/)
+
+core/ysyx_26000001_with_ai.v    - AI 加速器 Wrapper
+core/SimpleEdgeAiSoC.sv         - AI 模块 (SystemVerilog)
+core/picorv32.v                 - RISC-V CPU
+core/ysyxSoCFull.v              - ysyxSoC 顶层
+core/flash_fixed.v              - Flash 模块
+
+## 外设文件 (perip/)
+
+### UART (perip/uart16550/rtl/)
+uart_top.v
+uart_receiver.v
+uart_regs.v
+uart_rfifo.v
+uart_sync_flops.v
+uart_tfifo.v
+uart_transmitter.v
+uart_wb.v
+raminfr.v
+
+### SPI (perip/spi/rtl/)
+spi_top.v
+spi_clgen.v
+spi_shift.v
+spi_defines.v
+timescale.v
+
+### SDRAM (perip/sdram/)
+sdram.v
+sdram_top_apb.v
+sdram_top_axi.v
+core_sdram_axi4/sdram_axi.v
+core_sdram_axi4/sdram_axi_core.v
+core_sdram_axi4/sdram_axi_pmem.v
+
+### 其他外设
+perip/amba/          - AMBA 总线 (2 个文件)
+perip/bitrev/        - 位反转 (1 个文件)
+perip/gpio/          - GPIO (1 个文件)
+perip/ps2/           - PS/2 (1 个文件)
+perip/psram/         - PSRAM (4 个文件)
+perip/vga/           - VGA (1 个文件)
+
+## 总计
+
+核心文件: 5 个
+外设文件: 38 个
+总计: 43 个文件
