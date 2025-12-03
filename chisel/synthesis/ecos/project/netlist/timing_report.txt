@@ -16,4 +16,5 @@ No paths found.
 ==========================================
 时序分析完成
 ==========================================
-[?2004h[0;31msta[0m [/opt/github/riscv-ai-accelerator/chisel/synthesis/ecos] 
+[?2004h[0;31msta[0m [/opt/github/riscv-ai-accelerator/chisel/synthesis/ecos] [?2004l
+[?2004l
