@@ -17,7 +17,7 @@ FILELIST="./filelist_ysyxsocfull.f"
 SDC_FILE="fpga/constraints/timing_ysyxsocfull.sdc"
 OUTPUT_DIR="netlist"
 NETLIST_FILE="$OUTPUT_DIR/ysyxSoCFull_ics55.v"
-TOP_MODULE="ysyxSoCFull"
+TOP_MODULE="ysyx_26000001"
 
 # 检查 ysyxSoCFull.v 是否存在
 YSYXSOC_SRC="../../ecos/ysyxSoC/build/ysyxSoCFull.v"
