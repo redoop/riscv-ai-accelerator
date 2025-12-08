@@ -2,7 +2,7 @@
 # v0.4.1 Static Timing Analysis
 
 # Set PDK paths
-set PDK_ROOT "../../pdk/icsprout55-pdk/IP/STD_cell/ics55_LLSC_H7C_V1p10C100/ics55_LLSC_H7CL"
+set PDK_ROOT "../pdk/icsprout55-pdk/IP/STD_cell/ics55_LLSC_H7C_V1p10C100/ics55_LLSC_H7CL"
 
 # Read Liberty file (typical corner)
 puts "Reading Liberty file..."
